@@ -402,9 +402,16 @@
   pointer-events: none;
   transform: translateY(-6px);
   border-radius: 24px;
-  border: 1px solid rgba(212, 176, 106, 0.22);
-  background: rgba(10, 10, 10, 0.92);
-  backdrop-filter: blur(18px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(10, 10, 10, 0.84);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 24px 48px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(20px) saturate(145%);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
   transition: grid-template-rows 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -431,9 +438,13 @@
   border: 1px solid rgba(212, 176, 106, 0.24);
   border-radius: 14px;
   color: #fffaf1;
-  background: rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.045)),
+    rgba(255, 255, 255, 0.04);
   outline: none;
   font-size: 13px;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
 .booking-dropdown-search input::placeholder {
@@ -457,11 +468,17 @@
 .booking-dropdown-list li {
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #f4e9d4;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.028)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(245, 240, 232, 0.012));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -472,7 +489,10 @@
 .booking-dropdown-list li.active {
   transform: translateY(-1px);
   border-color: rgba(212, 176, 106, 0.24);
-  background: rgba(212, 176, 106, 0.12);
+  color: #fff4d6;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    linear-gradient(145deg, rgba(212, 176, 106, 0.1), rgba(245, 240, 232, 0.018));
 }
 
 .booking-dropdown-list li.disabled,
@@ -713,5 +733,118 @@
   .booking-dropdown-panel {
     position: static;
     margin-top: 10px;
+  }
+}
+
+.booking-page.is-management-booking {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.66), rgba(12, 9, 7, 0.76)),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
+}
+
+.booking-page.is-management-booking .appointments-section {
+  width: min(1180px, calc(100% - 44px));
+  padding-top: 46px;
+}
+
+.booking-page.is-management-booking .booking-form-card {
+  padding: 28px;
+  border-radius: 8px;
+  border-color: rgba(212, 176, 106, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(16, 12, 9, 0.86);
+}
+
+.booking-page.is-management-booking .booking-form-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.booking-page.is-management-booking .booking-form-title {
+  font-size: clamp(26px, 2.4vw, 36px);
+}
+
+.booking-page.is-management-booking .booking-summary-inline {
+  padding: 18px;
+  border-radius: 8px;
+}
+
+.booking-page.is-management-booking .booking-summary-inline .booking-summary-stack {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.booking-page.is-management-booking .booking-summary-item,
+.booking-page.is-management-booking .booking-dropdown-trigger,
+.booking-page.is-management-booking .booking-readonly-control,
+.booking-page.is-management-booking .form-group input {
+  border-radius: 8px;
+}
+
+.booking-page.is-management-booking .booking-summary-item {
+  min-height: 104px;
+  padding: 16px;
+}
+
+.booking-page.is-management-booking .booking-form-grid--management {
+  padding: 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.booking-page.is-management-booking .form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.booking-page.is-management-booking .form-group.full-width {
+  grid-column: span 2;
+}
+
+.booking-page.is-management-booking .form-group-separated label {
+  margin-top: 0;
+}
+
+.booking-page.is-management-booking .booking-dropdown-trigger {
+  min-height: 78px;
+}
+
+.booking-page.is-management-booking .booking-actions {
+  justify-content: space-between;
+}
+
+.booking-page.is-management-booking .booking-primary-action,
+.booking-page.is-management-booking .booking-secondary-action {
+  border-radius: 8px;
+}
+
+@media (max-width: 1100px) {
+  .booking-page.is-management-booking .booking-summary-inline .booking-summary-stack,
+  .booking-page.is-management-booking .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-page.is-management-booking .appointments-section {
+    width: min(100%, calc(100% - 28px));
+    padding-top: 28px;
+  }
+
+  .booking-page.is-management-booking .booking-form-card {
+    padding: 18px 16px;
+  }
+
+  .booking-page.is-management-booking .booking-summary-inline .booking-summary-stack,
+  .booking-page.is-management-booking .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-page.is-management-booking .form-group.full-width {
+    grid-column: 1 / -1;
   }
 }

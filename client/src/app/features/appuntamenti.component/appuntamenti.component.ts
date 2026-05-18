@@ -409,10 +409,15 @@ export class AppuntamentiComponent implements OnInit {
       const canDelete = this.isUntilDayBefore(a.dataOraInizio);
       const isVisible = this.canUserViewAppointment(a);
       const isPermission = this.isPermissionAppointment(a);
+      const canSeePermissionLabel = isPermission && this.canCurrentUserSeePermissionLabel();
       const serviceName = isPermission ? '' : (a.note || '').trim();
       const normalizedServiceName = serviceName.toLowerCase();
       const serviceDescription = this.serviceDescriptionByName.get(normalizedServiceName) || '';
-      const displayTitle = isVisible
+      const displayTitle = canSeePermissionLabel
+        ? 'Permesso'
+        : isPermission
+        ? 'Occupato'
+        : isVisible
         ? (serviceName || 'Servizio prenotato')
         : 'Appuntamento prenotato';
 
@@ -436,6 +441,8 @@ export class AppuntamentiComponent implements OnInit {
         },
         classNames: [
           isPastAppointment ? 'past-appointment' : (isMyAppointment ? 'my-appointment' : 'other-appointment'),
+          canSeePermissionLabel ? 'permission-appointment' : '',
+          isPermission && !canSeePermissionLabel ? 'permission-occupied-appointment' : '',
           !isVisible ? 'masked-appointment' : ''
         ].filter(Boolean)
       } as EventInput;
@@ -846,6 +853,10 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     return this.user.ruolo === 'cliente' && appointment.idCliente === this.user.idUtente;
+  }
+
+  private canCurrentUserSeePermissionLabel(): boolean {
+    return this.user?.ruolo === 'admin' || this.user?.ruolo === 'operatore';
   }
 
   get canDeleteSelectedAppointment(): boolean {

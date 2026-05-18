@@ -31,39 +31,41 @@
           </p>
         </div>
 
-        <div class="appointments-select-wrapper">
-          <label>Operatore</label>
-          <div class="booking-dropdown management-operator-dropdown" [class.open]="isOperatorDropdownOpen">
+        <div class="appointments-select-wrapper is-open">
+          <label for="operator-trigger">Operatore</label>
+          <div class="appointments-select-field is-open">
             <button
+              id="operator-trigger"
               type="button"
-              class="booking-dropdown-trigger"
-              [class.open]="isOperatorDropdownOpen"
+              class="appointments-select-trigger"
+              aria-expanded="true"
+              aria-haspopup="listbox"
               [disabled]="operatori.length === 0"
-              (click)="toggleOperatorDropdown()"
-              [attr.aria-expanded]="isOperatorDropdownOpen"
             >
-              <span class="booking-dropdown-trigger-text">
-                <span class="booking-trigger-kicker">Selezionato</span>
-                <span class="booking-trigger-value">{{ selectedOperatorLabel }}</span>
+              <span class="appointments-select-trigger-text">
+                <span class="appointments-select-trigger-label">Selezionato</span>
+                <span class="appointments-select-trigger-value">{{ selectedOperatorLabel }}</span>
               </span>
-              <span class="booking-dropdown-chevron"></span>
             </button>
 
-            <div class="booking-dropdown-panel" [class.open]="isOperatorDropdownOpen">
-              <div class="booking-dropdown-panel-inner">
-                <ul class="booking-dropdown-list" role="listbox" aria-label="Seleziona operatore">
-                  <li
-                    *ngFor="let operatore of operatori"
+            <div class="appointments-select-panel is-open">
+              <ul class="appointments-select-list" role="listbox" aria-label="Seleziona operatore">
+                <li *ngFor="let operatore of availableOperators">
+                  <button
+                    type="button"
+                    class="appointments-select-option"
+                    [class.is-selected]="selectedOperator === operatore.idUtente"
                     (click)="selectOperator(operatore.idUtente)"
-                    [class.active]="selectedOperator === operatore.idUtente"
                   >
                     {{ operatore.nome }} {{ operatore.cognome }}
-                  </li>
-                  <li *ngIf="operatori.length === 0" class="booking-dropdown-empty">
+                  </button>
+                </li>
+                <li *ngIf="operatori.length === 0">
+                  <button type="button" class="appointments-select-option is-disabled" disabled>
                     Nessun operatore disponibile
-                  </li>
-                </ul>
-              </div>
+                  </button>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -91,22 +93,46 @@
           </div>
         </div>
 
-        <full-calendar #calendar [options]="calendarOptions"></full-calendar>
-
         <div
-          *ngIf="isCalendarDatePickerOpen"
-          class="management-calendar-date-popover"
-          (click)="$event.stopPropagation()"
+          *ngIf="calendarPickerOpen || calendarPickerClosing"
+          class="appointments-date-picker-panel"
+          [class.is-closing]="calendarPickerClosing"
+          [ngStyle]="calendarPickerPanelStyle"
+          role="dialog"
+          aria-label="Calendario selezione giorno"
         >
-          <label for="managementCalendarDate">Vai alla data</label>
-          <input
-            id="managementCalendarDate"
-            type="date"
-            [(ngModel)]="calendarPickerDate"
-            (change)="goToCalendarPickerDate()"
-            (keydown.enter)="goToCalendarPickerDate()"
-          />
+          <div class="appointments-date-picker-panel-header">
+            <button type="button" class="appointments-date-picker-nav" (click)="previousCalendarPickerMonth()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <strong class="appointments-date-picker-month">{{ calendarPickerMonthLabel }}</strong>
+
+            <button type="button" class="appointments-date-picker-nav" (click)="nextCalendarPickerMonth()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="appointments-date-picker-weekdays">
+            <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
+          </div>
+
+          <div class="appointments-date-picker-grid">
+            <button
+              *ngFor="let day of calendarPickerDays"
+              type="button"
+              class="appointments-date-picker-day"
+              [class.is-outside]="!day.currentMonth"
+              [class.is-today]="day.isToday"
+              [class.is-selected]="day.isSelected"
+              (click)="selectCalendarPickerDay(day)"
+            >
+              {{ day.label }}
+            </button>
+          </div>
         </div>
+
+        <full-calendar #calendar [options]="calendarOptions"></full-calendar>
       </div>
     </section>
   </main>

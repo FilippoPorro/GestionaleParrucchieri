@@ -1,6 +1,6 @@
 <app-navbar *ngIf="!isManagementBooking"></app-navbar>
 
-<div class="appointments-page booking-page">
+<div class="appointments-page booking-page" [class.is-management-booking]="isManagementBooking">
   <div class="appointments-overlay"></div>
 
   <div class="appointments-section booking-section">
@@ -67,7 +67,7 @@
         </div>
       </div>
 
-      <div class="booking-form-grid">
+      <div class="booking-form-grid" [class.booking-form-grid--management]="isManagementBooking">
         <div class="form-grid">
           <div class="form-group full-width" *ngIf="isManagementBooking">
             <label>Cliente</label>
@@ -260,7 +260,9 @@
           {{
             isLoadingData
               ? 'Sto caricando...'
-              : (isSubmitting ? 'Prenotazione inviata...' : 'Prenota appuntamento')
+              : (isSubmitting
+                ? (isManagementBooking ? 'Salvataggio appuntamento...' : 'Prenotazione inviata...')
+                : (isManagementBooking ? 'Salva appuntamento' : 'Prenota appuntamento'))
           }}
         </button>
 
