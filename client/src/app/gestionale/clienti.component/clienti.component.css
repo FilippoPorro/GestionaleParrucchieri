@@ -2,7 +2,9 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(180deg, #17120d 0%, #100c09 56%, #0b0907 100%);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 
 .management-layout {
@@ -201,13 +203,24 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  margin-top: 16px;
   padding: 15px 17px;
   border-radius: 15px;
   color: #edf5ff;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.customers-alert--inline {
+  margin-top: 0;
+}
+
+.customers-alert--table {
+  margin: 0 0 16px;
+}
+
+.customers-alert--editor {
+  margin: 0 0 18px;
 }
 
 .customers-alert.success {
@@ -427,7 +440,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: auto;
-  min-width: 960px;
+  min-width: 900px;
 }
 
 .customers-table th,
@@ -457,9 +470,24 @@
   width: 78px;
 }
 
+.customers-table th:nth-child(3),
+.customers-table td:nth-child(3) {
+  width: 28%;
+}
+
+.customers-table th:nth-child(4),
+.customers-table td:nth-child(4) {
+  width: 190px;
+}
+
+.customers-table th:nth-child(5),
+.customers-table td:nth-child(5) {
+  width: 150px;
+}
+
 .customers-table th:last-child,
 .customers-table td:last-child {
-  width: 126px;
+  width: 116px;
 }
 
 .customers-table th:last-child {
@@ -518,13 +546,17 @@
 }
 
 .customers-cell-email {
-  max-width: 280px;
+  max-width: 100%;
 }
 
 .customers-cell-phone {
-  min-width: 132px;
+  min-width: 0;
   margin-top: 0;
   color: rgba(248, 241, 231, 0.82);
+}
+
+.customers-cell-contact {
+  min-width: 0;
 }
 
 .customers-avatar {
@@ -570,12 +602,18 @@
   font-weight: 700;
 }
 
+.customers-actions-cell {
+  width: 116px;
+  min-width: 116px;
+  white-space: nowrap;
+}
+
 .customers-actions {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: auto;
+  width: 100%;
   white-space: nowrap;
 }
 
@@ -627,9 +665,22 @@
 .customers-form {
   display: grid;
   gap: 18px;
+  width: 100%;
+}
+
+.customers-panel-form {
+  overflow: visible;
+  transform-origin: top center;
+  animation: customers-panel-in 0.24s ease both;
+}
+
+.customers-panel-form.is-closing {
+  pointer-events: none;
+  animation: customers-panel-out 0.24s ease both;
 }
 
 .customers-card--editor {
+  width: 100%;
   scroll-margin-top: 24px;
 }
 
@@ -644,6 +695,8 @@
 }
 
 .customers-create-header {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -653,6 +706,31 @@
   background:
     linear-gradient(90deg, rgba(242, 209, 139, 0.1), transparent 36%),
     rgba(255, 255, 255, 0.035);
+}
+
+.customers-edit-header {
+  align-items: stretch;
+  gap: 18px;
+  padding: 18px;
+}
+
+.customers-create-header--new {
+  align-items: stretch;
+  gap: 18px;
+  padding: 18px;
+}
+
+.customers-edit-header .customers-avatar,
+.customers-create-header--new .customers-avatar {
+  width: 64px;
+  height: 64px;
+  align-self: center;
+  font-size: 18px;
+}
+
+.customers-create-header > div {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .customers-create-header > div > strong,
@@ -672,8 +750,61 @@
   font-size: 13px;
 }
 
+.customers-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.customers-profile-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  min-width: 0;
+  flex: 1 1 180px;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid rgba(242, 209, 139, 0.18);
+  border-radius: 8px;
+  background: rgba(10, 8, 6, 0.32);
+  color: rgba(255, 240, 205, 0.88);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.customers-profile-tag.is-muted {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(248, 241, 231, 0.62);
+}
+
+.customers-generated-password-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(120, 242, 148, 0.18);
+  border-radius: 8px;
+  background: rgba(18, 76, 42, 0.22);
+  color: rgba(230, 255, 236, 0.88);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.customers-generated-password-note i {
+  flex: 0 0 auto;
+  color: #78f294;
+  font-size: 18px;
+}
+
 .customers-create-shell {
   display: block;
+  width: 100%;
 }
 
 .customers-create-profile,
@@ -731,19 +862,63 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  width: 100%;
 }
 
 .customers-form__grid--create {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.customers-form--create .customers-form__grid--create {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.customers-form--create .customers-create-field--half {
+  grid-column: span 3;
+}
+
+.customers-form--create .customers-create-field--wide {
+  grid-column: span 4;
+}
+
+.customers-form--create .customers-create-field--compact {
+  grid-column: span 2;
+}
+
+.customers-form--create .customers-create-field--full {
+  grid-column: 1 / -1;
+}
+
+.customers-form--edit .customers-form__grid--create {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.customers-form--edit .customers-edit-field--half {
+  grid-column: span 3;
+}
+
+.customers-form--edit .customers-edit-field--wide {
+  grid-column: span 4;
+}
+
+.customers-form--edit .customers-edit-field--compact {
+  grid-column: span 2;
 }
 
 .customers-field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .customers-field--full {
   grid-column: span 2;
+}
+
+.customers-field--wide {
+  grid-column: 1 / -1;
 }
 
 .customers-field span,
@@ -754,6 +929,8 @@
 }
 
 .customers-field input {
+  width: 100%;
+  box-sizing: border-box;
   min-height: 50px;
   padding: 12px 14px;
   border-radius: 8px;
@@ -770,8 +947,332 @@
 
 .customers-field input:focus {
   outline: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(10, 8, 6, 0.66);
   border-color: rgba(242, 209, 139, 0.52);
   box-shadow: 0 0 0 4px rgba(212, 176, 106, 0.08);
+}
+
+.customers-field input:-webkit-autofill,
+.customers-field input:-webkit-autofill:hover,
+.customers-field input:-webkit-autofill:focus,
+.customers-field input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff8ec !important;
+  caret-color: #f2d18b;
+  box-shadow:
+    0 0 0 1000px rgba(16, 12, 9, 0.96) inset,
+    0 0 0 4px rgba(212, 176, 106, 0.08) !important;
+  -webkit-box-shadow:
+    0 0 0 1000px rgba(16, 12, 9, 0.96) inset,
+    0 0 0 4px rgba(212, 176, 106, 0.08) !important;
+  border-color: rgba(212, 176, 106, 0.28) !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.customers-birthdate-picker {
+  position: relative;
+}
+
+.customers-birthdate-picker.is-open {
+  z-index: 120;
+}
+
+.customers-date-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 8, 6, 0.58);
+  color: #fff8ec;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.customers-date-trigger:hover,
+.customers-date-trigger.open {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(10, 8, 6, 0.66);
+  border-color: rgba(242, 209, 139, 0.52);
+  box-shadow: 0 0 0 4px rgba(212, 176, 106, 0.08);
+}
+
+.customers-date-trigger span {
+  min-width: 0;
+  color: #fff8ec;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.customers-date-trigger span.is-placeholder {
+  color: rgba(248, 241, 231, 0.44);
+}
+
+.customers-date-trigger i {
+  flex: 0 0 auto;
+  color: #d4b06a;
+  font-size: 16px;
+}
+
+.customers-date-picker-panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 120;
+  width: min(342px, calc(100vw - 40px));
+  max-width: calc(100vw - 40px);
+  max-height: clamp(240px, calc(100vh - 132px), 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(212, 176, 106, 0.22);
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, 0.92), rgba(10, 10, 10, 0.84)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(244, 239, 231, 0.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 46px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  animation: customersDatePickerPanelIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+}
+
+.customers-date-picker-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.customers-date-picker-panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(212, 176, 106, 0.36);
+}
+
+.customers-date-picker-panel.is-closing {
+  animation: customersDatePickerPanelOut 0.18s ease forwards;
+}
+
+.customers-date-picker-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.customers-date-picker-current {
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(212, 176, 106, 0.18);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(10, 8, 6, 0.42);
+  color: #f4ddac;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.customers-date-picker-current:hover,
+.customers-date-picker-current.is-active,
+.customers-date-picker-current:focus-visible {
+  border-color: rgba(242, 209, 139, 0.46);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(10, 8, 6, 0.5);
+  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.08);
+  outline: none;
+}
+
+.customers-date-picker-current i {
+  flex: 0 0 auto;
+  font-size: 12px;
+  transition: transform 0.18s ease;
+}
+
+.customers-date-picker-current.is-active i {
+  transform: rotate(180deg);
+}
+
+.customers-date-picker-month {
+  color: #f4ddac;
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.customers-date-picker-nav {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid rgba(212, 176, 106, 0.2);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.02));
+  color: #d4b06a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.customers-date-picker-nav:hover {
+  transform: translateY(-1px);
+  border-color: #d4b06a;
+  color: #f3dfb5;
+}
+
+.customers-date-picker-weekdays,
+.customers-date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.customers-date-picker-weekdays {
+  margin-bottom: 10px;
+}
+
+.customers-date-picker-weekdays span {
+  color: rgba(244, 221, 172, 0.74);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.customers-date-picker-grid {
+  gap: 7px;
+}
+
+.customers-date-picker-day {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff3d2;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.customers-date-picker-day:hover {
+  transform: translateY(-1px);
+  border-color: rgba(212, 176, 106, 0.32);
+  background: rgba(212, 176, 106, 0.12);
+}
+
+.customers-date-picker-day.is-outside {
+  color: rgba(255, 243, 210, 0.34);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.customers-date-picker-day.is-today {
+  border-color: rgba(212, 176, 106, 0.34);
+  color: #f4ddac;
+}
+
+.customers-date-picker-day.is-selected {
+  border-color: #d4b06a;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.26), rgba(142, 108, 42, 0.3)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.02));
+  color: #fff7e3;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 20px rgba(0, 0, 0, 0.14);
+}
+
+.customers-date-picker-years {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 236px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.customers-date-picker-years::-webkit-scrollbar {
+  width: 7px;
+}
+
+.customers-date-picker-years::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(212, 176, 106, 0.34);
+}
+
+.customers-date-picker-year-option {
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff3d2;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.customers-date-picker-year-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(212, 176, 106, 0.32);
+  background: rgba(212, 176, 106, 0.12);
+}
+
+.customers-date-picker-year-option.is-selected {
+  border-color: #d4b06a;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.26), rgba(142, 108, 42, 0.3)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.02));
+  color: #fff7e3;
+}
+
+@keyframes customersDatePickerPanelIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes customersDatePickerPanelOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
 }
 
 ::ng-deep .customers-field intl-tel-input {
@@ -976,8 +1477,9 @@
 
 .customers-editor-meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
+  width: 100%;
 }
 
 .customers-meta-chip {
@@ -1009,7 +1511,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
   padding-top: 2px;
+}
+
+.customers-editor-actions .customers-button {
+  flex: 1 1 180px;
+}
+
+.customers-editor-actions .customers-button--danger-inline {
+  margin-left: 0;
 }
 
 .customers-button--save {
@@ -1098,6 +1609,34 @@
   }
 }
 
+@keyframes customers-panel-in {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-8px) scaleY(0.985);
+  }
+
+  to {
+    opacity: 1;
+    max-height: 1100px;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes customers-panel-out {
+  from {
+    opacity: 1;
+    max-height: 1100px;
+    transform: translateY(0) scaleY(1);
+  }
+
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-8px) scaleY(0.985);
+  }
+}
+
 @media (max-width: 980px) {
   .management-layout,
   .management-layout__content,
@@ -1163,7 +1702,7 @@
   }
 
   .customers-table {
-    min-width: 900px;
+    min-width: 820px;
   }
 
   .customers-form__grid {
@@ -1181,6 +1720,23 @@
 
   .customers-field--full {
     grid-column: 1;
+  }
+
+  .customers-form--edit .customers-form__grid--create,
+  .customers-form--edit .customers-edit-field--half,
+  .customers-form--edit .customers-edit-field--wide,
+  .customers-form--edit .customers-edit-field--compact,
+  .customers-form--create .customers-form__grid--create,
+  .customers-form--create .customers-create-field--half,
+  .customers-form--create .customers-create-field--wide,
+  .customers-form--create .customers-create-field--compact,
+  .customers-form--create .customers-create-field--full {
+    grid-column: 1;
+  }
+
+  .customers-form--create .customers-form__grid--create,
+  .customers-form--edit .customers-form__grid--create {
+    grid-template-columns: 1fr;
   }
 
   .customers-button--danger-inline {

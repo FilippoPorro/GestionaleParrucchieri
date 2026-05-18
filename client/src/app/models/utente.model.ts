@@ -10,4 +10,5 @@ export interface Utente {
     picture?: string | null;
     avatar_url?: string | null;
     avatar?: string | null;
+    mustChangePassword?: boolean;
   }

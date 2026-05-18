@@ -3,8 +3,9 @@
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top right, rgba(212, 176, 106, 0.1), transparent 22%),
-    linear-gradient(180deg, #17120d, #0f0c09 58%, #0b0907);
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 
 .management-layout {
@@ -1172,7 +1173,9 @@
 
 /* Minimal management skin aligned with clienti */
 :host {
-  background: linear-gradient(180deg, #17120d 0%, #100c09 56%, #0b0907 100%) !important;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
 }
 
 .management-layout__toggle {

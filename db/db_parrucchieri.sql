@@ -147,15 +147,19 @@ CREATE TABLE `utenti` (
   `password` varchar(255) NOT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `data_nascita` date DEFAULT NULL,
-  `ruolo` enum('cliente','operatore','admin','salone') NOT NULL
+  `ruolo` enum('cliente','operatore','admin','salone') NOT NULL,
+  `photoURL` text DEFAULT NULL,
+  `resetPasswordToken` varchar(255) DEFAULT NULL,
+  `resetPasswordExpires` datetime DEFAULT NULL,
+  `mustChangePassword` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dump dei dati per la tabella `utenti`
 --
 
-INSERT INTO `utenti` (`idUtente`, `nome`, `cognome`, `email`, `password`, `telefono`, `data_nascita`, `ruolo`) VALUES
-(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'admin');
+INSERT INTO `utenti` (`idUtente`, `nome`, `cognome`, `email`, `password`, `telefono`, `data_nascita`, `ruolo`, `photoURL`, `resetPasswordToken`, `resetPasswordExpires`, `mustChangePassword`) VALUES
+(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'admin', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 

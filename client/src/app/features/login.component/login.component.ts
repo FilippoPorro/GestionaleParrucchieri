@@ -120,6 +120,12 @@ export class LoginComponent implements OnInit {
   }
 
   redirectAfterLogin(): void {
+    if (this.auth.mustChangePassword()) {
+      localStorage.removeItem('postLoginRedirect');
+      this.router.navigate(['/account']);
+      return;
+    }
+
     const returnUrl = localStorage.getItem('postLoginRedirect');
 
     localStorage.removeItem('postLoginRedirect');

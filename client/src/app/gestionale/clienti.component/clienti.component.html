@@ -46,29 +46,6 @@
       </div>
     </section>
 
-    <div
-      *ngIf="feedbackMessage"
-      class="customers-alert"
-      [ngClass]="feedbackType"
-      role="status"
-    >
-      <div class="customers-alert__icon">
-        <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
-        <span *ngIf="feedbackType === 'error'">!</span>
-      </div>
-
-      <div class="customers-alert__copy">
-        <strong class="customers-alert__title">
-          {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
-        </strong>
-        <div class="customers-alert__text">{{ feedbackMessage }}</div>
-      </div>
-
-      <button type="button" class="customers-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      </button>
-    </div>
-
     <section class="customers-layout">
       <article class="customers-card customers-card--table">
         <div class="customers-card__head">
@@ -101,6 +78,29 @@
           <span class="customers-count">{{ filteredClienti.length }} risultati</span>
         </div>
 
+        <div
+          *ngIf="feedbackMessage && feedbackPlacement === 'table'"
+          class="customers-alert customers-alert--inline customers-alert--table"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="customers-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+
+          <div class="customers-alert__copy">
+            <strong class="customers-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="customers-alert__text">{{ feedbackMessage }}</div>
+          </div>
+
+          <button type="button" class="customers-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
         <div *ngIf="isLoading" class="customers-empty-state">
           <span class="customers-loader" aria-hidden="true"></span>
           Sto caricando i clienti dal database...
@@ -120,9 +120,9 @@
               <tr>
                 <th>ID</th>
                 <th>Cliente</th>
-                <th>Contatti</th>
+                <th>Email</th>
+                <th>Telefono</th>
                 <th>Data nascita</th>
-                <th>Profilo</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -152,21 +152,22 @@
                     </span>
                   </button>
                 </td>
-                <td>
+                <td class="customers-cell-contact">
                   <span class="customers-cell-email">{{ cliente.email || '-' }}</span>
+                </td>
+                <td class="customers-cell-contact">
                   <span class="customers-cell-phone">{{ cliente.telefono || 'Telefono non inserito' }}</span>
                 </td>
                 <td class="customers-cell-date">{{ formatDate(cliente.data_nascita) }}</td>
-                <td>
-                  <span class="customers-role-badge">{{ cliente.ruolo || 'cliente' }}</span>
-                </td>
-                <td class="customers-actions">
-                  <button type="button" class="customers-action-button" (click)="selectCliente(cliente)" title="Modifica cliente" aria-label="Modifica cliente">
-                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                  </button>
-                  <button type="button" class="customers-action-button customers-action-button--delete" (click)="requestDeleteCliente(cliente)" [disabled]="isDeleting" title="Elimina cliente" aria-label="Elimina cliente">
-                    <i class="bi bi-trash3" aria-hidden="true"></i>
-                  </button>
+                <td class="customers-actions-cell">
+                  <div class="customers-actions" aria-label="Azioni cliente">
+                    <button type="button" class="customers-action-button" (click)="selectCliente(cliente, true)" title="Modifica cliente" aria-label="Modifica cliente">
+                      <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="customers-action-button customers-action-button--delete" (click)="requestDeleteCliente(cliente)" [disabled]="isDeleting" title="Elimina cliente" aria-label="Elimina cliente">
+                      <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -198,35 +199,77 @@
           </button>
         </div>
 
-        <form *ngIf="isCreateMode" class="customers-form" (ngSubmit)="saveNewCliente()">
-          <div class="customers-create-header">
+        <div
+          *ngIf="feedbackMessage && (feedbackPlacement === 'create' || feedbackPlacement === 'editor')"
+          class="customers-alert customers-alert--inline customers-alert--editor"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="customers-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+
+          <div class="customers-alert__copy">
+            <strong class="customers-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="customers-alert__text">{{ feedbackMessage }}</div>
+          </div>
+
+          <button type="button" class="customers-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <form
+          *ngIf="isCreateMode"
+          class="customers-form customers-form--create customers-panel-form"
+          [class.is-closing]="isCreateClosing"
+          (ngSubmit)="saveNewCliente()"
+        >
+          <div class="customers-create-header customers-create-header--new">
             <span class="customers-avatar customers-avatar--large customers-avatar--create">
               {{ getInitials(newCliente) }}
             </span>
             <div>
               <strong>{{ newCliente.nome || 'Nuovo' }} {{ newCliente.cognome || 'cliente' }}</strong>
               <span>{{ newCliente.email || 'Account cliente con ruolo cliente' }}</span>
+              <div class="customers-profile-tags">
+                <span class="customers-profile-tag">
+                  <i class="bi bi-person-plus" aria-hidden="true"></i>
+                  Nuova anagrafica
+                </span>
+                <span class="customers-profile-tag" [class.is-muted]="!newCliente.telefono">
+                  <i class="bi bi-telephone" aria-hidden="true"></i>
+                  {{ newCliente.telefono || 'Telefono da inserire' }}
+                </span>
+                <span class="customers-profile-tag">
+                  <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                  Password via email
+                </span>
+              </div>
             </div>
           </div>
 
           <div class="customers-create-shell">
             <div class="customers-form__grid customers-form__grid--create">
-              <label class="customers-field">
+              <label class="customers-field customers-create-field customers-create-field--half">
                 <span>Nome</span>
                 <input [(ngModel)]="newCliente.nome" name="newNome" type="text" required />
               </label>
 
-              <label class="customers-field">
+              <label class="customers-field customers-create-field customers-create-field--half">
                 <span>Cognome</span>
                 <input [(ngModel)]="newCliente.cognome" name="newCognome" type="text" required />
               </label>
 
-              <label class="customers-field customers-field--full">
+              <label class="customers-field customers-create-field customers-create-field--wide">
                 <span>Email</span>
                 <input [(ngModel)]="newCliente.email" name="newEmail" type="email" required />
               </label>
 
-              <label class="customers-field">
+              <label class="customers-field customers-create-field customers-create-field--compact">
                 <span>Numero telefono</span>
                 <intl-tel-input
                   name="newTelefono"
@@ -242,25 +285,90 @@
                 ></intl-tel-input>
               </label>
 
-              <label class="customers-field">
+              <div
+                class="customers-field customers-create-field customers-create-field--half customers-birthdate-picker"
+                [class.is-open]="createBirthDatePickerOpen || createBirthDatePickerClosing"
+              >
                 <span>Data di nascita</span>
-                <input [(ngModel)]="newCliente.data_nascita" name="newDataNascita" type="date" />
-              </label>
+                <button
+                  type="button"
+                  class="customers-date-trigger"
+                  [class.open]="createBirthDatePickerOpen"
+                  (click)="toggleCreateBirthDatePicker()"
+                >
+                  <span [class.is-placeholder]="!newCliente.data_nascita">{{ createBirthDateDisplayValue }}</span>
+                  <i class="bi bi-calendar-date" aria-hidden="true"></i>
+                </button>
 
-              <label class="customers-field">
+                <div
+                  *ngIf="createBirthDatePickerOpen || createBirthDatePickerClosing"
+                  class="customers-date-picker-panel"
+                  [class.is-closing]="createBirthDatePickerClosing"
+                  role="dialog"
+                  aria-label="Calendario selezione data di nascita"
+                >
+                  <div class="customers-date-picker-panel-header">
+                    <button type="button" class="customers-date-picker-nav" (click)="previousCreateBirthDatePickerMonth()">
+                      <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="customers-date-picker-current"
+                      [class.is-active]="createBirthDatePickerMode === 'years'"
+                      (click)="toggleCreateBirthDatePickerYears()"
+                      aria-label="Scegli anno"
+                    >
+                      <strong class="customers-date-picker-month">{{ createBirthDatePickerMonthLabel }}</strong>
+                      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+
+                    <button type="button" class="customers-date-picker-nav" (click)="nextCreateBirthDatePickerMonth()">
+                      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+
+                  <div *ngIf="createBirthDatePickerMode === 'days'" class="customers-date-picker-weekdays">
+                    <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
+                  </div>
+
+                  <div *ngIf="createBirthDatePickerMode === 'days'" class="customers-date-picker-grid">
+                    <button
+                      *ngFor="let day of createBirthDatePickerDays"
+                      type="button"
+                      class="customers-date-picker-day"
+                      [class.is-outside]="!day.currentMonth"
+                      [class.is-today]="day.isToday"
+                      [class.is-selected]="day.isSelected"
+                      (click)="selectCreateBirthDatePickerDay(day)"
+                    >
+                      {{ day.label }}
+                    </button>
+                  </div>
+
+                  <div *ngIf="createBirthDatePickerMode === 'years'" class="customers-date-picker-years">
+                    <button
+                      *ngFor="let year of createBirthDatePickerYears"
+                      type="button"
+                      class="customers-date-picker-year-option"
+                      [class.is-selected]="year === createBirthDatePickerYear"
+                      (click)="selectCreateBirthDatePickerYear(year)"
+                    >
+                      {{ year }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <label class="customers-field customers-create-field customers-create-field--half">
                 <span>Ruolo</span>
                 <input [ngModel]="newCliente.ruolo" name="newRuolo" type="text" readonly />
               </label>
 
-              <label class="customers-field">
-                <span>Password iniziale</span>
-                <input [(ngModel)]="newCliente.password" name="newPassword" type="password" required minlength="6" autocomplete="new-password" />
-              </label>
-
-              <label class="customers-field">
-                <span>Conferma password</span>
-                <input [(ngModel)]="newCliente.confirmPassword" name="newConfirmPassword" type="password" required minlength="6" autocomplete="new-password" />
-              </label>
+              <div class="customers-generated-password-note customers-create-field customers-create-field--full">
+                <i class="bi bi-envelope-check" aria-hidden="true"></i>
+                <span>Il sistema generera una password temporanea sicura e inviera al cliente il link per impostarne una personale.</span>
+              </div>
             </div>
           </div>
 
@@ -281,9 +389,14 @@
           Seleziona un cliente dalla tabella per modificarlo oppure crea una nuova anagrafica.
         </div>
 
-        <form *ngIf="!isCreateMode && selectedCliente && draftCliente" class="customers-form" (ngSubmit)="saveCliente()">
-          <div class="customers-editor-profile">
-            <span class="customers-avatar customers-avatar--large">
+        <form
+          *ngIf="!isCreateMode && selectedCliente && draftCliente"
+          class="customers-form customers-form--edit customers-panel-form"
+          [class.is-closing]="isEditClosing"
+          (ngSubmit)="saveCliente()"
+        >
+          <div class="customers-create-header customers-edit-header">
+            <span class="customers-avatar customers-avatar--large customers-avatar--create">
               <img
                 *ngIf="getClientePhotoUrl(draftCliente) as photoUrl"
                 [src]="photoUrl"
@@ -297,40 +410,63 @@
             </span>
             <div>
               <strong>{{ selectedCliente.nome }} {{ selectedCliente.cognome }}</strong>
-              <span>{{ selectedCliente.email }}</span>
+              <span>{{ selectedCliente.email || 'Account cliente con ruolo cliente' }}</span>
+              <div class="customers-profile-tags">
+                <span class="customers-profile-tag">
+                  <i class="bi bi-person-badge" aria-hidden="true"></i>
+                  ID {{ selectedCliente.idUtente }}
+                </span>
+                <span class="customers-profile-tag" [class.is-muted]="!selectedCliente.telefono">
+                  <i class="bi bi-telephone" aria-hidden="true"></i>
+                  {{ selectedCliente.telefono || 'Telefono da completare' }}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="customers-form__grid">
-            <label class="customers-field">
-              <span>Nome</span>
-              <input [(ngModel)]="draftCliente.nome" name="nome" type="text" required />
-            </label>
+          <div class="customers-create-shell">
+            <div class="customers-form__grid customers-form__grid--create">
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Nome</span>
+                <input [(ngModel)]="draftCliente.nome" name="nome" type="text" required />
+              </label>
 
-            <label class="customers-field">
-              <span>Cognome</span>
-              <input [(ngModel)]="draftCliente.cognome" name="cognome" type="text" required />
-            </label>
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Cognome</span>
+                <input [(ngModel)]="draftCliente.cognome" name="cognome" type="text" required />
+              </label>
 
-            <label class="customers-field customers-field--full">
-              <span>Email</span>
-              <input [(ngModel)]="draftCliente.email" name="email" type="email" required />
-            </label>
+              <label class="customers-field customers-edit-field customers-edit-field--wide">
+                <span>Email</span>
+                <input [(ngModel)]="draftCliente.email" name="email" type="email" required />
+              </label>
 
-            <label class="customers-field">
-              <span>Numero telefono</span>
-              <input [(ngModel)]="draftCliente.telefono" name="telefono" type="tel" placeholder="+39 ..." />
-            </label>
+              <label class="customers-field customers-edit-field customers-edit-field--compact">
+                <span>Numero telefono</span>
+                <intl-tel-input
+                  name="telefono"
+                  [initialValue]="draftCliente.telefono || ''"
+                  [initOptions]="initTelOptions"
+                  [inputProps]="{
+                    id: 'telefono',
+                    class: 'customers-phone-input',
+                    placeholder: 'Inserisci il numero'
+                  }"
+                  (numberChange)="onEditPhoneNumberChange($event)"
+                  (validityChange)="onEditPhoneValidityChange($event)"
+                ></intl-tel-input>
+              </label>
 
-            <label class="customers-field">
-              <span>Data di nascita</span>
-              <input [(ngModel)]="draftCliente.data_nascita" name="data_nascita" type="date" />
-            </label>
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Data di nascita</span>
+                <input [(ngModel)]="draftCliente.data_nascita" name="data_nascita" type="date" />
+              </label>
 
-            <label class="customers-field">
-              <span>Ruolo</span>
-              <input [ngModel]="draftCliente.ruolo || 'cliente'" name="ruolo" type="text" readonly />
-            </label>
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Ruolo</span>
+                <input [ngModel]="draftCliente.ruolo || 'cliente'" name="ruolo" type="text" readonly />
+              </label>
+            </div>
           </div>
 
           <div class="customers-editor-meta">
@@ -353,13 +489,10 @@
               <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
               Ripristina
             </button>
-            <button type="button" class="customers-button customers-button--delete customers-button--danger-inline" (click)="requestDeleteCliente(selectedCliente)" [disabled]="isDeleting">
-              <i class="bi bi-trash3" aria-hidden="true"></i>
-              Elimina
-            </button>
           </div>
         </form>
       </article>
+
     </section>
   </main>
 

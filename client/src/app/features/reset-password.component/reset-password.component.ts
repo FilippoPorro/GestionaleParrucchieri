@@ -49,6 +49,38 @@ export class ResetPasswordComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  getPasswordChecklist() {
+    return [
+      {
+        label: 'Almeno 6 caratteri',
+        valid: this.newPassword.length >= 6
+      },
+      {
+        label: 'Almeno una lettera maiuscola',
+        valid: /[A-Z]/.test(this.newPassword)
+      },
+      {
+        label: 'Almeno un numero o carattere speciale',
+        valid: /[0-9!@#$%^&*(),.?":{}|<>]/.test(this.newPassword)
+      },
+      {
+        label: 'Le password coincidono',
+        valid:
+          this.newPassword.length > 0 &&
+          this.confirmPassword.length > 0 &&
+          this.newPassword === this.confirmPassword
+      }
+    ];
+  }
+
+  isPasswordValid(): boolean {
+    return this.getPasswordChecklist().every(item => item.valid);
+  }
+
+  isResetFormValid(): boolean {
+    return this.token.trim() !== '' && this.isPasswordValid();
+  }
+
   resetPasswordAction(): void {
     if (!this.token.trim()) {
       this.showAlert('Token di reset mancante.', 'error');
@@ -60,18 +92,8 @@ export class ResetPasswordComponent implements OnInit {
       return;
     }
 
-    if (this.newPassword.trim().length < 6) {
-      this.showAlert('La password deve contenere almeno 6 caratteri.', 'warning');
-      return;
-    }
-
-    if (!this.confirmPassword.trim()) {
-      this.showAlert('Conferma la nuova password.', 'warning');
-      return;
-    }
-
-    if (this.newPassword !== this.confirmPassword) {
-      this.showAlert('Le password non coincidono.', 'warning');
+    if (!this.isPasswordValid()) {
+      this.showAlert('La password deve rispettare tutti i requisiti e coincidere con la conferma.', 'warning');
       return;
     }
 

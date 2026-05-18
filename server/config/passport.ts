@@ -87,6 +87,31 @@ function buildFallbackNames(profile: Profile) {
   };
 }
 
+function isMissingPhotoColumnError(error: any): boolean {
+  const message = String(error?.message ?? "").toLowerCase();
+  const details = String(error?.details ?? "").toLowerCase();
+  const hint = String(error?.hint ?? "").toLowerCase();
+  const combined = `${message} ${details} ${hint}`;
+
+  return combined.includes("photourl") &&
+    (combined.includes("column") || combined.includes("schema cache"));
+}
+
+async function persistGooglePhotoURL(idUtente: number, photoURL: string | null): Promise<void> {
+  if (!photoURL) {
+    return;
+  }
+
+  const { error } = await db
+    .from("utenti")
+    .update({ photoURL })
+    .eq("idUtente", idUtente);
+
+  if (error && !isMissingPhotoColumnError(error)) {
+    console.warn("Impossibile salvare la foto profilo Google:", error);
+  }
+}
+
 passport.use(
   new GoogleStrategy(
     {
@@ -162,6 +187,8 @@ passport.use(
             throw insertError;
           }
 
+          await persistGooglePhotoURL(createdUser.idUtente, fotoProfilo || null);
+
           const newUser: GoogleUser = {
             id: createdUser.idUtente,
             nome: createdUser.nome,
@@ -182,6 +209,8 @@ passport.use(
         if (updateError) {
           throw updateError;
         }
+
+        await persistGooglePhotoURL(user.idUtente, fotoProfilo || null);
 
         const existingUser: GoogleUser = {
           id: user.idUtente,

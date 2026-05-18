@@ -23,6 +23,7 @@ interface UserProfile {
   data_nascita: string;
   ruolo: string;
   hasPassword?: boolean;
+  mustChangePassword?: boolean;
   photoURL?: string | null;
 }
 
@@ -235,7 +236,7 @@ export class InfoUtenteComponent implements OnInit {
 
     this.missingRequiredFields = !nome || !cognome || !telefono || !dataNascita;
 
-    this.requirePasswordForCompletion = !hasPassword;
+    this.requirePasswordForCompletion = !hasPassword || !!this.user.mustChangePassword;
     this.passwordRequired = this.requirePasswordForCompletion;
 
     this.showCompletionWarning =
@@ -246,13 +247,14 @@ export class InfoUtenteComponent implements OnInit {
 
     if (this.missingRequiredFields && this.requirePasswordForCompletion) {
       this.completionMessage =
-        'Completa i dati mancanti e imposta una password per terminare la registrazione.';
+        'Completa i dati mancanti e imposta una nuova password per terminare la registrazione.';
     } else if (this.missingRequiredFields) {
       this.completionMessage =
         'Completa i dati mancanti per terminare la registrazione.';
     } else if (this.requirePasswordForCompletion) {
-      this.completionMessage =
-        'Imposta una password per terminare la registrazione.';
+      this.completionMessage = this.user.mustChangePassword
+        ? 'Per sicurezza devi impostare una nuova password prima di continuare.'
+        : 'Imposta una password per terminare la registrazione.';
     } else {
       this.completionMessage = '';
     }
@@ -284,6 +286,7 @@ export class InfoUtenteComponent implements OnInit {
             : '',
           ruolo: res.ruolo ?? '',
           hasPassword: !!res.hasPassword,
+          mustChangePassword: !!res.mustChangePassword,
           photoURL:
             res.photoURL ??
             res.picture ??
@@ -667,6 +670,7 @@ export class InfoUtenteComponent implements OnInit {
 
         if (this.user) {
           this.user.hasPassword = true;
+          this.user.mustChangePassword = false;
         }
 
         this.computeProfileCompletionState();
@@ -757,6 +761,7 @@ export class InfoUtenteComponent implements OnInit {
 
         if (this.passwordRequired && this.user) {
           this.user.hasPassword = true;
+          this.user.mustChangePassword = false;
         }
 
         this.resetCompletionPasswordFields();

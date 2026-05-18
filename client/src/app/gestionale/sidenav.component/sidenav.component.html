@@ -46,5 +46,13 @@
     <p class="management-sidenav__footer-copy">
       Gestione operativa del salone.
     </p>
+    <a
+      class="management-sidenav__site-link"
+      routerLink="/home"
+      [attr.title]="isCollapsed ? 'Torna al sito' : null"
+    >
+      <i class="bi bi-house-door" aria-hidden="true"></i>
+      <span>Torna al sito</span>
+    </a>
   </div>
 </aside>

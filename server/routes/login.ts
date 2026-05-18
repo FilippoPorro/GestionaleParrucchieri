@@ -17,11 +17,16 @@ interface User {
   telefono: string | null;
   data_nascita: string | null;
   ruolo: string;
+  photoURL?: string | null;
+  picture?: string | null;
+  avatar_url?: string | null;
+  avatar?: string | null;
+  mustChangePassword?: boolean;
   resetPasswordToken?: string | null;
   resetPasswordExpires?: string | null;
 }
 
-function buildJwt(user: Pick<User, "idUtente" | "nome" | "cognome" | "email" | "ruolo">): string {
+function buildJwt(user: Pick<User, "idUtente" | "nome" | "cognome" | "email" | "ruolo"> & { mustChangePassword?: boolean }): string {
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
@@ -34,7 +39,8 @@ function buildJwt(user: Pick<User, "idUtente" | "nome" | "cognome" | "email" | "
       nome: user.nome,
       cognome: user.cognome,
       email: user.email,
-      ruolo: user.ruolo
+      ruolo: user.ruolo,
+      mustChangePassword: !!user.mustChangePassword
     },
     jwtSecret,
     { expiresIn: "1d" }
@@ -44,7 +50,7 @@ function buildJwt(user: Pick<User, "idUtente" | "nome" | "cognome" | "email" | "
 async function getUserByEmail(email: string): Promise<User | null> {
   const { data, error } = await db
     .from("utenti")
-    .select("idUtente, nome, cognome, email, password, telefono, data_nascita, ruolo, resetPasswordToken, resetPasswordExpires")
+    .select("*")
     .eq("email", email)
     .maybeSingle();
 
@@ -58,7 +64,7 @@ async function getUserByEmail(email: string): Promise<User | null> {
 async function getUserById(idUtente: number): Promise<User | null> {
   const { data, error } = await db
     .from("utenti")
-    .select("idUtente, nome, cognome, email, password, telefono, data_nascita, ruolo, resetPasswordToken, resetPasswordExpires")
+    .select("*")
     .eq("idUtente", idUtente)
     .maybeSingle();
 
@@ -107,7 +113,8 @@ router.post("/login", async (req: Request, res: Response) => {
         email: user.email,
         telefono: user.telefono,
         data_nascita: user.data_nascita,
-        ruolo: user.ruolo
+        ruolo: user.ruolo,
+        mustChangePassword: !!user.mustChangePassword
       }
     });
   } catch (err: any) {
@@ -134,7 +141,14 @@ router.get("/me", verifyToken, async (req: any, res: Response) => {
       data_nascita: user.data_nascita,
       ruolo: user.ruolo,
       hasPassword: !!user.password && user.password.trim() !== "",
-      photoURL: req.user?.photoURL ?? null
+      mustChangePassword: !!user.mustChangePassword,
+      photoURL:
+        req.user?.photoURL ??
+        (user as any).photoURL ??
+        (user as any).picture ??
+        (user as any).avatar_url ??
+        (user as any).avatar ??
+        null
     });
   } catch (error: any) {
     console.error("Errore GET /me:", error);
@@ -168,6 +182,7 @@ router.put("/me", verifyToken, async (req: any, res: Response) => {
       }
 
       updatePayload.password = await bcrypt.hash(password.trim(), 10);
+      updatePayload.mustChangePassword = false;
     }
 
     const { error } = await db
@@ -235,7 +250,8 @@ router.post("/register", async (req: Request, res: Response) => {
       nome: createdUser.nome,
       cognome: createdUser.cognome,
       email: createdUser.email,
-      ruolo: createdUser.ruolo
+      ruolo: createdUser.ruolo,
+      mustChangePassword: false
     });
 
     return res.status(201).json({
@@ -368,7 +384,10 @@ router.post("/change-password", verifyToken, async (req: any, res: Response) => 
 
     const { error } = await db
       .from("utenti")
-      .update({ password: hashedPassword })
+      .update({
+        password: hashedPassword,
+        mustChangePassword: false
+      })
       .eq("idUtente", userId);
 
     if (error) {
@@ -644,6 +663,7 @@ router.post("/reset-password", async (req: Request, res: Response) => {
       .from("utenti")
       .update({
         password: hashedPassword,
+        mustChangePassword: false,
         resetPasswordToken: null,
         resetPasswordExpires: null
       })

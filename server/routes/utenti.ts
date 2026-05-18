@@ -1,6 +1,8 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { db } from "../db_parrucchieri";
+import { sendManagedClientPasswordEmail } from "../services/managed-client-email";
 
 interface Utente {
   idUtente: number;
@@ -10,6 +12,8 @@ interface Utente {
   telefono: string | null;
   data_nascita: string | null;
   ruolo: string;
+  photoURL?: string | null;
+  mustChangePassword?: boolean;
 }
 
 type ClienteSource = "clienti" | "utenti";
@@ -42,8 +46,19 @@ function normalizeClienteRow(row: any, source: ClienteSource): Utente | null {
     data_nascita: row?.data_nascita != null ? String(row.data_nascita).trim() : null,
     ruolo: source === "clienti"
       ? "cliente"
-      : String(row?.ruolo ?? "cliente").trim() || "cliente"
+      : String(row?.ruolo ?? "cliente").trim() || "cliente",
+    photoURL: row?.photoURL ?? row?.picture ?? row?.avatar_url ?? row?.avatar ?? null,
+    mustChangePassword: !!row?.mustChangePassword
   };
+}
+
+function generateTemporaryPassword(): string {
+  return `${crypto.randomBytes(18).toString("base64url")}Aa1!`;
+}
+
+function buildResetLink(resetToken: string): string {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";
+  return `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
 }
 
 function sortClienti(clienti: Utente[]): Utente[] {
@@ -69,6 +84,18 @@ function isMissingTableError(error: any): boolean {
     combined.includes("schema cache");
 }
 
+function isMissingManagedPasswordColumnError(error: any): boolean {
+  const message = String(error?.message ?? "").toLowerCase();
+  const details = String(error?.details ?? "").toLowerCase();
+  const hint = String(error?.hint ?? "").toLowerCase();
+  const combined = `${message} ${details} ${hint}`;
+
+  return (combined.includes("mustchangepassword") ||
+    combined.includes("resetpasswordtoken") ||
+    combined.includes("resetpasswordexpires")) &&
+    (combined.includes("column") || combined.includes("schema cache"));
+}
+
 async function getClientiFromClientiTable(): Promise<Utente[]> {
   const { data, error } = await db
     .from("clienti")
@@ -88,7 +115,7 @@ async function getClientiFromClientiTable(): Promise<Utente[]> {
 async function getClientiFromUtentiTable(): Promise<Utente[]> {
   const { data, error } = await db
     .from("utenti")
-    .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
+    .select("*")
     .order("cognome", { ascending: true })
     .order("nome", { ascending: true });
 
@@ -230,20 +257,11 @@ router.post("/clienti", async (req: Request, res: Response) => {
     const nome = String(req.body?.nome ?? "").trim();
     const cognome = String(req.body?.cognome ?? "").trim();
     const email = String(req.body?.email ?? "").trim().toLowerCase();
-    const password = String(req.body?.password ?? "").trim();
     const telefono = String(req.body?.telefono ?? "").trim();
     const data_nascita = String(req.body?.data_nascita ?? "").trim();
 
-    if (!nome || !cognome || !email || !password || !telefono || !data_nascita) {
-      return res.status(400).json({ message: "Nome, cognome, email, password, telefono e data di nascita sono obbligatori" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: "La password deve contenere almeno 6 caratteri" });
-    }
-
-    if (!/[A-Z]/.test(password) || !/[0-9!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return res.status(400).json({ message: "La password deve contenere almeno una maiuscola e un numero o carattere speciale" });
+    if (!nome || !cognome || !email || !telefono || !data_nascita) {
+      return res.status(400).json({ message: "Nome, cognome, email, telefono e data di nascita sono obbligatori" });
     }
 
     if (!isAdultBirthDate(data_nascita)) {
@@ -264,7 +282,10 @@ router.post("/clienti", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Esiste gia un utente con questa email" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const temporaryPassword = generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+    const resetPasswordToken = crypto.randomBytes(32).toString("hex");
+    const resetPasswordExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await db
       .from("utenti")
@@ -275,9 +296,12 @@ router.post("/clienti", async (req: Request, res: Response) => {
         password: hashedPassword,
         telefono: telefono || null,
         data_nascita: data_nascita || null,
-        ruolo: "cliente"
+        ruolo: "cliente",
+        mustChangePassword: true,
+        resetPasswordToken,
+        resetPasswordExpires
       })
-      .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
+      .select("*")
       .single();
 
     if (error) {
@@ -290,9 +314,18 @@ router.post("/clienti", async (req: Request, res: Response) => {
       return res.status(500).json({ message: "Cliente creato ma non leggibile" });
     }
 
+    await sendManagedClientPasswordEmail(cliente, buildResetLink(resetPasswordToken));
+
     return res.status(201).json(cliente);
   } catch (err: any) {
     console.error("Errore POST /clienti:", err);
+
+    if (isMissingManagedPasswordColumnError(err)) {
+      return res.status(500).json({
+        message: "Prima di inserire clienti dal gestionale devi eseguire la migrazione db/managed_client_password_flow.sql in Supabase, poi ricaricare lo schema cache."
+      });
+    }
+
     return res.status(500).json({ message: err.message });
   }
 });
@@ -368,7 +401,7 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
         data_nascita: data_nascita || null
       })
       .eq("idUtente", idUtente)
-      .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
+      .select("*")
       .maybeSingle();
 
     if (error) {

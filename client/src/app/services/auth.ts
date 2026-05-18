@@ -11,6 +11,7 @@ interface LoginResponse {
     id: number;
     email: string;
     ruolo: string;
+    mustChangePassword?: boolean;
   };
 }
 
@@ -48,6 +49,22 @@ export class AuthService {
   isAdmin = computed(() => this.userRole() === 'admin');
 
   isOperatore = computed(() => this.userRole() === 'operatore' || this.userRole() === 'admin');
+
+  mustChangePassword = computed(() => {
+    const token = this._token();
+    if (!token) return false;
+
+    try {
+      const payloadBase64 = token.split('.')[1];
+      if (!payloadBase64) return false;
+
+      const decodedPayload = JSON.parse(atob(payloadBase64));
+      return !!decodedPayload.mustChangePassword;
+    } catch (e) {
+      console.error('Errore decodifica stato password dal token', e);
+      return false;
+    }
+  });
 
   constructor(
     private http: HttpClient,
