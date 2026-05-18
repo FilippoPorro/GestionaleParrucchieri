@@ -31,41 +31,42 @@
           </p>
         </div>
 
-        <div class="appointments-select-wrapper is-open">
-          <label for="operator-trigger">Operatore</label>
-          <div class="appointments-select-field is-open">
+        <div class="appointments-select-wrapper">
+          <label>Operatore</label>
+          <div class="booking-dropdown" [class.open]="isOperatorDropdownOpen">
             <button
               id="operator-trigger"
               type="button"
-              class="appointments-select-trigger"
-              aria-expanded="true"
+              class="booking-dropdown-trigger"
+              [class.open]="isOperatorDropdownOpen"
+              [attr.aria-expanded]="isOperatorDropdownOpen"
               aria-haspopup="listbox"
               [disabled]="operatori.length === 0"
+              (click)="toggleOperatorDropdown()"
             >
-              <span class="appointments-select-trigger-text">
-                <span class="appointments-select-trigger-label">Selezionato</span>
-                <span class="appointments-select-trigger-value">{{ selectedOperatorLabel }}</span>
+              <span class="booking-dropdown-trigger-text">
+                <span class="booking-trigger-kicker">Selezionato</span>
+                <span class="booking-trigger-value">{{ selectedOperatorLabel }}</span>
               </span>
+              <span class="booking-dropdown-chevron" aria-hidden="true"></span>
             </button>
 
-            <div class="appointments-select-panel is-open">
-              <ul class="appointments-select-list" role="listbox" aria-label="Seleziona operatore">
-                <li *ngFor="let operatore of availableOperators">
-                  <button
-                    type="button"
-                    class="appointments-select-option"
-                    [class.is-selected]="selectedOperator === operatore.idUtente"
+            <div class="booking-dropdown-panel" [class.open]="isOperatorDropdownOpen">
+              <div class="booking-dropdown-panel-inner">
+                <ul class="booking-dropdown-list" role="listbox" aria-label="Seleziona operatore">
+                  <li
+                    *ngFor="let operatore of operatori"
+                    role="option"
+                    [class.active]="selectedOperator === operatore.idUtente"
                     (click)="selectOperator(operatore.idUtente)"
                   >
                     {{ operatore.nome }} {{ operatore.cognome }}
-                  </button>
-                </li>
-                <li *ngIf="operatori.length === 0">
-                  <button type="button" class="appointments-select-option is-disabled" disabled>
+                  </li>
+                  <li *ngIf="operatori.length === 0" class="booking-dropdown-empty">
                     Nessun operatore disponibile
-                  </button>
-                </li>
-              </ul>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

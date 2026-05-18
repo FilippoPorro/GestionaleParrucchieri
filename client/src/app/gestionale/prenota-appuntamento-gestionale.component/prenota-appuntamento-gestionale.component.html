@@ -225,12 +225,6 @@
         *ngIf="bookingAlertMessage"
         class="appointments-alert booking-alert"
         [ngClass]="bookingAlertType"
-        [class.is-clickable]="isLoginAlert"
-        [attr.role]="isLoginAlert ? 'button' : null"
-        [attr.tabindex]="isLoginAlert ? '0' : null"
-        (click)="goToLoginFromAlert()"
-        (keydown.enter)="goToLoginFromAlert()"
-        (keydown.space)="goToLoginFromAlert(); $event.preventDefault()"
       >
         <div class="appointments-alert-icon">
           @if (bookingAlertType === 'success') {
@@ -254,8 +248,8 @@
             isLoadingData
               ? 'Sto caricando...'
               : (isSubmitting
-                ? (isManagementBooking ? 'Salvataggio appuntamento...' : 'Prenotazione inviata...')
-                : (isManagementBooking ? 'Salva appuntamento' : 'Prenota appuntamento'))
+                ? 'Salvataggio appuntamento...'
+                : 'Salva appuntamento')
           }}
         </button>
 

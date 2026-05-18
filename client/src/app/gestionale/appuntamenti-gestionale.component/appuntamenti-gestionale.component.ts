@@ -307,7 +307,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.router.navigate(['/prenotazione'], {
+    this.router.navigate(['/gestionale/prenotazione'], {
       queryParams: {
         data: arg.dateStr,
         operatore: this.selectedOperator,

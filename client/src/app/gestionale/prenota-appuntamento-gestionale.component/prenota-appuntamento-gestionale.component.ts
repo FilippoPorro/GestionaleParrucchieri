@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { NavbarComponent } from '../navbar.component/navbar.component';
+import { NavbarComponent } from '../../features/navbar.component/navbar.component';
 import { UtentiService } from '../../services/utentiService';
 import { AppuntamentoService } from '../../services/appuntamentoService';
 import { Appuntamento } from '../../models/appuntamento.model';
@@ -23,17 +23,17 @@ interface DailySchedule {
 }
 
 @Component({
-  selector: 'app-prenota-appuntamento.component',
+  selector: 'app-prenota-appuntamento-gestionale',
   imports: [
     CommonModule,
     FormsModule,
     RouterModule,
     NavbarComponent
   ],
-  templateUrl: './prenota-appuntamento.component.html',
-  styleUrls: ['./prenota-appuntamento.component.css'],
+  templateUrl: './prenota-appuntamento-gestionale.component.html',
+  styleUrls: ['./prenota-appuntamento-gestionale.component.css'],
 })
-export class PrenotaAppuntamentoComponent implements OnInit {
+export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
   operatori: Utente[] = [];
   clienti: Utente[] = [];
   servizi: Servizio[] = [];
@@ -50,8 +50,8 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   isOperatoreOpen = false;
   isServizioOpen = false;
   isClienteOpen = false;
-  isManagementBooking = false;
-  returnRoute = '/appointments';
+  isManagementBooking = true; // Always true for management booking component!
+  returnRoute = '/gestionale/appuntamenti';
   private selectedServizioFromQuery: number | null = null;
   private hasLoadedManagementClienti = false;
   private readonly minimumAppointmentDurationMinutes = 30;
@@ -112,12 +112,10 @@ export class PrenotaAppuntamentoComponent implements OnInit {
       const selectedOperator = params.get('operatore');
       const selectedServizio = params.get('servizio');
       const selectedCliente = params.get('cliente');
-      this.isManagementBooking = params.get('gestionale') === '1';
-      this.returnRoute = params.get('ritorno') || (this.isManagementBooking ? '/gestionale/appuntamenti' : '/appointments');
+      this.isManagementBooking = true; // Always true for this component!
+      this.returnRoute = params.get('ritorno') || '/gestionale/appuntamenti';
 
-      if (this.isManagementBooking) {
-        this.loadManagementClienti();
-      }
+      this.loadManagementClienti();
 
       if (selectedDate) {
         this.form.dataOraInizio = this.toDateTimeLocalValue(selectedDate);
@@ -181,7 +179,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   }
 
   toggleClienteDropdown(): void {
-    if (this.isLoadingData || this.isSubmitting || !this.isManagementBooking) {
+    if (this.isLoadingData || this.isSubmitting) {
       return;
     }
 
@@ -256,7 +254,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   }
 
   selectCliente(idCliente: number): void {
-    if (this.isLoadingData || this.isSubmitting || !this.isManagementBooking) {
+    if (this.isLoadingData || this.isSubmitting) {
       return;
     }
 
@@ -582,19 +580,13 @@ export class PrenotaAppuntamentoComponent implements OnInit {
       return;
     }
 
-    const decodedPayload = this.isManagementBooking
-      ? null
-      : this.decodeTokenPayload<{ userId?: number }>();
-    const idCliente = this.isManagementBooking ? this.form.idCliente : decodedPayload?.userId;
+    const idCliente = this.form.idCliente;
     const note = this.getSelectedServizioNome();
 
     if (!idCliente) {
       this.showBookingAlert(
-        this.isManagementBooking
-          ? 'Seleziona un cliente prima di confermare l\'appuntamento.'
-          : 'Impossibile identificare l\'utente. Effettua di nuovo il login.',
-        'error',
-        this.isManagementBooking ? undefined : 'Login richiesto'
+        'Seleziona un cliente prima di confermare l\'appuntamento.',
+        'error'
       );
       return;
     }
@@ -857,7 +849,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   }
 
   private loadManagementClienti(): void {
-    if (!this.isManagementBooking || this.hasLoadedManagementClienti) {
+    if (this.hasLoadedManagementClienti) {
       return;
     }
 
@@ -984,37 +976,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
       .trim();
   }
 
-  private decodeTokenPayload<T extends object>(): T | null {
-    const token = this.authService.getToken();
-    const payloadBase64 = token?.split('.')[1];
-
-    if (!payloadBase64) {
-      this.showBookingAlert(
-        'Sessione non valida. Effettua di nuovo il login.',
-        'error',
-        'Login richiesto'
-      );
-      return null;
-    }
-
-    try {
-      const normalizedPayload = payloadBase64
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
-
-      return JSON.parse(atob(normalizedPayload)) as T;
-    } catch (error) {
-      console.error('Errore decodifica token prenotazione:', error);
-      this.showBookingAlert(
-        'Sessione non valida. Effettua di nuovo il login.',
-        'error',
-        'Login richiesto'
-      );
-      return null;
-    }
-  }
-
   private clearBookingAlert(): void {
     this.bookingAlertTitle = '';
     this.bookingAlertMessage = '';
@@ -1043,20 +1004,5 @@ export class PrenotaAppuntamentoComponent implements OnInit {
         alertElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
-  }
-
-  goToLoginFromAlert(): void {
-    if (!this.isLoginAlert) {
-      return;
-    }
-
-    const currentUrl = this.router.url;
-
-    if (currentUrl && currentUrl !== '/login') {
-      localStorage.setItem('loginBackUrl', currentUrl);
-      localStorage.setItem('postLoginRedirect', currentUrl);
-    }
-
-    this.router.navigate(['/login']);
   }
 }

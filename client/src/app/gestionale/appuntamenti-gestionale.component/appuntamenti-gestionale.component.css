@@ -1631,9 +1631,9 @@
 
 :host ::ng-deep .fc-event.my-appointment {
   background:
-    linear-gradient(145deg, rgba(116, 172, 118, 0.36), rgba(61, 116, 77, 0.28)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)) !important;
-  border-left-color: #74c77b !important;
+    linear-gradient(145deg, rgba(209, 167, 79, 0.32), rgba(144, 102, 35, 0.26)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.045)) !important;
+  border-left-color: #d4b06a !important;
   backdrop-filter: blur(14px) saturate(145%);
   -webkit-backdrop-filter: blur(14px) saturate(145%);
 }
@@ -1728,15 +1728,32 @@
   justify-content: center !important;
   position: relative !important;
   overflow: visible !important;
-  padding: 30px 28px !important;
+  padding: 34px 36px !important;
   border-radius: 28px !important;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
-  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(244, 239, 231, 0.025)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 34px rgba(0, 0, 0, 0.08) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 18px 36px rgba(0, 0, 0, 0.16) !important;
+  backdrop-filter: blur(20px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(145%) !important;
+}
+
+.management-appointments-section .calendar-wrapper {
+  border-radius: 28px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)),
+    rgba(15, 12, 10, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 24px 48px rgba(0, 0, 0, 0.32) !important;
+  backdrop-filter: blur(24px) saturate(145%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+  padding: 34px 36px !important;
 }
 
 .management-appointments-section .appointments-select-wrapper::before {
@@ -1963,60 +1980,124 @@
   }
 }
 
-/* Operatore gestionale allineato alla vista pubblica */
-.management-appointments-section .appointments-select-wrapper.is-open {
+/* Dropdown operatore interattiva — allineata visivamente alla card sinistra */
+
+/* Il wrapper usa flex per far crescere la dropdown in altezza */
+.management-appointments-section .appointments-select-wrapper {
   justify-content: flex-start !important;
-  padding: 22px 22px 20px !important;
 }
 
-.management-appointments-section .appointments-select-field.is-open {
-  flex: 1 1 auto !important;
+/* La booking-dropdown occupa tutto lo spazio disponibile dopo il label */
+.management-appointments-section .appointments-select-wrapper .booking-dropdown {
+  position: relative !important;
+  z-index: 2 !important;
+  flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 16px !important;
 }
 
-.management-appointments-section .appointments-select-trigger {
-  padding-right: 22px !important;
-  cursor: default !important;
+/* Il trigger si espande a tutta l'altezza residua */
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-trigger {
+  flex: 1 !important;
+  min-height: 80px !important;
+  padding: 18px 52px 18px 22px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(212, 176, 106, 0.28) !important;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(212, 176, 106, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(245, 240, 232, 0.02)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
 }
 
-.management-appointments-section .appointments-select-chevron {
-  display: none !important;
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-trigger:hover,
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-trigger.open {
+  border-color: rgba(212, 176, 106, 0.5) !important;
 }
 
-.management-appointments-section .appointments-select-panel.is-open {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  z-index: 1 !important;
-  flex: 1 1 auto !important;
-  display: grid !important;
-  grid-template-rows: 1fr !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  transform: none !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-trigger:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
 }
 
-.management-appointments-section .appointments-select-panel.is-open > * {
-  overflow: visible !important;
+/* Testo kicker e value allineati come il vecchio stile */
+.management-appointments-section .appointments-select-wrapper .booking-trigger-kicker {
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  color: rgba(255, 244, 221, 0.76) !important;
+  font-weight: 700 !important;
 }
 
-.management-appointments-section .appointments-select-list {
-  padding: 0 !important;
-  gap: 12px !important;
+.management-appointments-section .appointments-select-wrapper .booking-trigger-value {
+  font-size: 1.45rem !important;
+  font-weight: 700 !important;
+  line-height: 1.05 !important;
+  color: #fff4d3 !important;
 }
 
-.management-appointments-section .appointments-select-option {
-  min-height: 66px !important;
-  border-radius: 20px !important;
-  color: #f4e9d4 !important;
+/* Pannello dropdown con z-index alto per sovrapporsi al calendario */
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-panel {
+  z-index: 90 !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(212, 176, 106, 0.1), transparent 44%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    rgba(12, 9, 8, 0.96) !important; /* Rich solid base for high contrast and readability! */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 28px 56px rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(28px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(150%) !important;
 }
+
+/* Opzioni della dropdown */
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-list li {
+  min-height: 56px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.045)),
+    rgba(255, 255, 255, 0.06) !important; /* Semi-opaque background base for better visibility */
+  color: #f8f1e7 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  padding: 14px 18px !important;
+}
+
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-list li:hover,
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-list li.active {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
+    linear-gradient(145deg, rgba(212, 176, 106, 0.14), rgba(245, 240, 232, 0.025)) !important;
+  border-color: rgba(212, 176, 106, 0.32) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.1) !important;
+}
+
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-list::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.management-appointments-section .appointments-select-wrapper .booking-dropdown-list::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: rgba(212, 176, 106, 0.45) !important;
+}
+
