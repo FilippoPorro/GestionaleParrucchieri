@@ -13,6 +13,12 @@ export interface CreaAppuntamentoPayload {
   note?: string | null;
 }
 
+export interface CreaSlotVuotoPayload {
+  idOperatore: number;
+  dataOraInizio: string;
+  dataOraFine: string;
+}
+
 export interface AggiornaAppuntamentoPayload {
   dataOraInizio: string;
   dataOraFine: string;
@@ -37,6 +43,10 @@ export class AppuntamentoService {
 
   creaAppuntamento(appuntamento: CreaAppuntamentoPayload): Observable<Appuntamento> {
     return this.http.post<Appuntamento>(this.api, appuntamento);
+  }
+
+  creaSlotVuoto(payload: CreaSlotVuotoPayload): Observable<Appuntamento> {
+    return this.http.post<Appuntamento>(`${this.api}/slot-vuoto`, payload);
   }
 
   aggiornaAppuntamento(

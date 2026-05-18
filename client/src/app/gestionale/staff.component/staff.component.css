@@ -1,0 +1,145 @@
+.staff-layout {
+  gap: 18px;
+}
+
+.staff-table {
+  min-width: 900px;
+}
+
+.staff-table th:last-child,
+.staff-table td:last-child {
+  width: 92px;
+}
+
+.staff-role-badge--admin {
+  border-color: rgba(114, 178, 255, 0.32);
+  background: rgba(114, 178, 255, 0.12);
+  color: #d7eaff;
+}
+
+.staff-calendar-card {
+  position: relative;
+}
+
+.staff-calendar-selected {
+  min-width: 210px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  text-align: right;
+}
+
+.staff-calendar-selected span {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(255, 226, 175, 0.66);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.staff-calendar-selected strong {
+  color: #fff4df;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.staff-calendar-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.staff-calendar-wrapper {
+  position: relative;
+  padding: 24px;
+}
+
+.staff-calendar-wrapper .appointments-date-picker-panel {
+  z-index: 40;
+}
+
+:host ::ng-deep .staff-empty-slot {
+  --fc-event-bg-color: #5d6978;
+  --fc-event-border-color: rgba(225, 235, 248, 0.32);
+  background: repeating-linear-gradient(
+    135deg,
+    #5d6978,
+    #5d6978 8px,
+    #4e5967 8px,
+    #4e5967 16px
+  ) !important;
+  color: #f4f8ff !important;
+}
+
+:host ::ng-deep .permission-appointment {
+  --fc-event-bg-color: #b64242;
+  --fc-event-border-color: rgba(255, 210, 210, 0.34);
+  background: linear-gradient(135deg, #b64242, #7e2424) !important;
+  border-color: rgba(255, 210, 210, 0.34) !important;
+  color: #fff4f4 !important;
+}
+
+.permission-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 4, 3, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.permission-card {
+  width: min(520px, calc(100% - 24px));
+  border-radius: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.2);
+  background: #18120d;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.44);
+  padding: 24px;
+  color: #fff4d3;
+  animation: appointmentCardIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.permission-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.permission-body {
+  display: grid;
+  gap: 14px;
+}
+
+.permission-time-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+:host ::ng-deep .permission-card .appointment-action.danger {
+  border-color: rgba(220, 95, 95, 0.64);
+  background: rgba(220, 95, 95, 0.2);
+  color: #ffdede;
+}
+
+@media (max-width: 720px) {
+  .staff-calendar-selected,
+  .staff-calendar-meta {
+    width: 100%;
+    text-align: left;
+    grid-template-columns: 1fr;
+  }
+
+  .permission-time-row {
+    grid-template-columns: 1fr;
+  }
+}

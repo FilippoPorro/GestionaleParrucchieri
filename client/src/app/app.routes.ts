@@ -22,6 +22,7 @@ import { HomeComponent } from './gestionale/home.component/home.component';
 import { AppuntamentiGestionaleComponent } from './gestionale/appuntamenti-gestionale.component/appuntamenti-gestionale.component';
 import { CassaComponent } from './gestionale/cassa.component/cassa.component';
 import { ClientiComponent } from './gestionale/clienti.component/clienti.component';
+import { StaffComponent } from './gestionale/staff.component/staff.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -44,5 +45,6 @@ export const routes: Routes = [
     { path: 'gestionale/appuntamenti', component: AppuntamentiGestionaleComponent, canActivate: [managementGuard]},
     { path: 'gestionale/cassa', component: CassaComponent, canActivate: [managementGuard]},
     { path: 'gestionale/clienti', component: ClientiComponent, canActivate: [managementGuard]},
+    { path: 'gestionale/staff', component: StaffComponent, canActivate: [managementGuard]},
     { path: '**', redirectTo: '/home' }
 ];

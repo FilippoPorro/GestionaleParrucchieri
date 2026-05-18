@@ -84,7 +84,7 @@ export class SidenavComponent {
         {
           label: 'Staff',
           href: '/gestionale/staff',
-          description: 'Operatori, turni e permessi',
+          description: 'Operatori e permessi',
         },
         {
           label: 'Promozioni',

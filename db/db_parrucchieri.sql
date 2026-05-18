@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `appuntamenti` (
   `idAppuntamento` int(11) NOT NULL,
-  `idCliente` int(11) NOT NULL,
+  `idCliente` int(11) DEFAULT NULL,
   `idOperatore` int(11) NOT NULL,
   `dataOraInizio` datetime NOT NULL,
   `dataOraFine` datetime NOT NULL,

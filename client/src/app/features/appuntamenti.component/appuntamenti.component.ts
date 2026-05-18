@@ -408,7 +408,8 @@ export class AppuntamentiComponent implements OnInit {
       const canModify = this.isUntilDayBefore(a.dataOraInizio);
       const canDelete = this.isUntilDayBefore(a.dataOraInizio);
       const isVisible = this.canUserViewAppointment(a);
-      const serviceName = (a.note || '').trim();
+      const isPermission = this.isPermissionAppointment(a);
+      const serviceName = isPermission ? '' : (a.note || '').trim();
       const normalizedServiceName = serviceName.toLowerCase();
       const serviceDescription = this.serviceDescriptionByName.get(normalizedServiceName) || '';
       const displayTitle = isVisible
@@ -816,6 +817,10 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private canUserViewAppointment(appointment: Appuntamento): boolean {
+    if (this.isPermissionAppointment(appointment)) {
+      return false;
+    }
+
     if (!this.user) {
       return false;
     }
@@ -828,6 +833,10 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private canUserManageAppointment(appointment: Appuntamento): boolean {
+    if (this.isPermissionAppointment(appointment)) {
+      return false;
+    }
+
     if (!this.user) {
       return false;
     }
@@ -1208,6 +1217,14 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     return this.canUserManageAppointment(appointment) ? 'tone-my' : 'tone-other';
+  }
+
+  private isPermissionAppointment(appointment: Appuntamento): boolean {
+    return !appointment.idCliente &&
+      !appointment.idServizio &&
+      !appointment.servizioNome &&
+      !appointment.note &&
+      !appointment.stato;
   }
 
   private buildAppointmentLabel(appointment: Appuntamento): string {

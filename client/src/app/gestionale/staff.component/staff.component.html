@@ -1,0 +1,352 @@
+<div class="management-layout" [class.is-sidenav-collapsed]="isSidenavCollapsed">
+  <button
+    type="button"
+    class="management-layout__toggle"
+    (click)="toggleSidenav()"
+    [class.is-collapsed]="isSidenavCollapsed"
+    [attr.aria-label]="isSidenavCollapsed ? 'Apri navigazione gestionale' : 'Chiudi navigazione gestionale'"
+    [attr.aria-expanded]="!isSidenavCollapsed"
+  >
+    <span class="management-layout__toggle-shell" aria-hidden="true">
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--rail"></span>
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--body"></span>
+    </span>
+  </button>
+
+  <div class="management-layout__sidebar">
+    <app-sidenav
+      [isCollapsed]="isSidenavCollapsed"
+      (collapsedChange)="isSidenavCollapsed = $event"
+    ></app-sidenav>
+  </div>
+
+  <main class="management-layout__content">
+    <section class="management-hero">
+      <div>
+        <p class="management-hero__eyebrow">Gestionale</p>
+        <h1>Staff</h1>
+        <p class="management-hero__copy">
+          Operatori, admin e disponibilita operative raccolti in una vista unica.
+        </p>
+      </div>
+
+      <div class="management-hero__stats">
+        <div class="management-hero__badge">
+          <span>Staff</span>
+          <strong>{{ staff.length }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--soft">
+          <span>Admin</span>
+          <strong>{{ adminCount }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--muted">
+          <span>Operatori</span>
+          <strong>{{ operatoriCount }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <div
+      *ngIf="feedbackMessage"
+      class="customers-alert"
+      [ngClass]="feedbackType"
+      role="status"
+    >
+      <div class="customers-alert__icon">
+        <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+        <span *ngIf="feedbackType === 'error'">!</span>
+      </div>
+
+      <div class="customers-alert__copy">
+        <strong class="customers-alert__title">{{ feedbackTitle }}</strong>
+        <div class="customers-alert__text">{{ feedbackMessage }}</div>
+      </div>
+
+      <button type="button" class="customers-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <section class="customers-layout staff-layout">
+      <article class="customers-card customers-card--table">
+        <div class="customers-card__head">
+          <div>
+            <p class="customers-card__eyebrow">Database</p>
+            <h2>Admin e operatori</h2>
+          </div>
+          <button type="button" class="customers-icon-button" (click)="loadStaff()" [disabled]="isLoadingStaff" title="Aggiorna staff">
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            <span>{{ isLoadingStaff ? 'Carico' : 'Aggiorna' }}</span>
+          </button>
+        </div>
+
+        <div class="customers-toolbar">
+          <label class="customers-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input
+              [(ngModel)]="searchTerm"
+              name="searchTerm"
+              type="search"
+              placeholder="Cerca per nome, email, ruolo o ID"
+            />
+          </label>
+          <span class="customers-count">{{ filteredStaff.length }} risultati</span>
+        </div>
+
+        <div *ngIf="isLoadingStaff" class="customers-empty-state">
+          <span class="customers-loader" aria-hidden="true"></span>
+          Sto caricando lo staff dal database...
+        </div>
+
+        <div *ngIf="!isLoadingStaff && staff.length === 0" class="customers-empty-state">
+          Nessun admin o operatore presente nel database.
+        </div>
+
+        <div *ngIf="!isLoadingStaff && staff.length > 0 && filteredStaff.length === 0" class="customers-empty-state">
+          Nessun membro dello staff corrisponde alla ricerca.
+        </div>
+
+        <div *ngIf="!isLoadingStaff && filteredStaff.length > 0" class="customers-table-wrap">
+          <table class="customers-table staff-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Staff</th>
+                <th>Contatti</th>
+                <th>Data nascita</th>
+                <th>Ruolo</th>
+                <th>Agenda</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let utente of filteredStaff"
+                [class.is-selected]="selectedOperator === utente.idUtente"
+              >
+                <td class="customers-cell-id">#{{ utente.idUtente }}</td>
+                <td class="customers-cell-primary">
+                  <button type="button" class="customers-person" (click)="selectOperator(utente)">
+                    <span class="customers-avatar">{{ getInitials(utente) }}</span>
+                    <span>
+                      <strong>{{ utente.nome }} {{ utente.cognome }}</strong>
+                      <small>{{ utente.email || 'Email non inserita' }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td>
+                  <span class="customers-cell-email">{{ utente.email || '-' }}</span>
+                  <span class="customers-cell-phone">{{ utente.telefono || 'Telefono non inserito' }}</span>
+                </td>
+                <td class="customers-cell-date">{{ formatDate(utente.data_nascita) }}</td>
+                <td>
+                  <span class="customers-role-badge staff-role-badge" [class.staff-role-badge--admin]="utente.ruolo === 'admin'">
+                    {{ utente.ruolo || 'operatore' }}
+                  </span>
+                </td>
+                <td class="customers-actions">
+                  <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="customers-card staff-calendar-card">
+        <div class="customers-card__head">
+            <div>
+              <p class="customers-card__eyebrow">Calendario</p>
+            <h2>Appuntamenti e permessi</h2>
+            </div>
+          <div class="staff-calendar-selected">
+            <span>Agenda</span>
+            <strong>{{ selectedOperatorLabel }}</strong>
+          </div>
+        </div>
+
+        <div *ngIf="isLoadingCalendar || isCreatingEmptySlot" class="appointments-alert info appointments-service-alert">
+          <div class="appointments-alert-icon">i</div>
+          <div class="appointments-alert-text">
+            {{ isCreatingEmptySlot ? 'Salvataggio spazio vuoto...' : 'Caricamento calendario...' }}
+          </div>
+        </div>
+
+        <div class="staff-calendar-meta">
+          <div class="appointments-calendar-meta-item">
+            <span class="appointments-calendar-operator-label">Staff selezionato</span>
+            <strong class="appointments-calendar-operator-value">{{ selectedOperatorLabel }}</strong>
+          </div>
+          <div class="appointments-calendar-meta-item">
+            <span class="appointments-calendar-operator-label">Vista</span>
+            <strong class="appointments-calendar-operator-value">Agenda live</strong>
+          </div>
+        </div>
+
+        <div class="calendar-wrapper staff-calendar-wrapper">
+          <div
+            *ngIf="calendarPickerOpen || calendarPickerClosing"
+            class="appointments-date-picker-panel"
+            [class.is-closing]="calendarPickerClosing"
+            [ngStyle]="calendarPickerPanelStyle"
+            role="dialog"
+            aria-label="Calendario selezione giorno"
+          >
+            <div class="appointments-date-picker-panel-header">
+              <button type="button" class="appointments-date-picker-nav" (click)="previousCalendarPickerMonth()">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+
+              <strong class="appointments-date-picker-month">{{ calendarPickerMonthLabel }}</strong>
+
+              <button type="button" class="appointments-date-picker-nav" (click)="nextCalendarPickerMonth()">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+
+            <div class="appointments-date-picker-weekdays">
+              <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
+            </div>
+
+            <div class="appointments-date-picker-grid">
+              <button
+                *ngFor="let day of calendarPickerDays"
+                type="button"
+                class="appointments-date-picker-day"
+                [class.is-outside]="!day.currentMonth"
+                [class.is-today]="day.isToday"
+                [class.is-selected]="day.isSelected"
+                (click)="selectCalendarPickerDay(day)"
+              >
+                {{ day.label }}
+              </button>
+            </div>
+          </div>
+
+          <full-calendar #calendar [options]="calendarOptions"></full-calendar>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+
+<div
+  *ngIf="(isAppointmentDetailOpen || isAppointmentDetailClosing) && selectedAppointment"
+  class="appointment-detail-modal"
+  [class.is-closing]="isAppointmentDetailClosing"
+  (click)="onAppointmentModalOverlayClick($event)"
+>
+  <div
+    class="appointment-detail-card"
+    [ngClass]="appointmentDetailToneClass"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Dettaglio appuntamento"
+  >
+    <div class="appointment-detail-head">
+      <div>
+        <p class="appointment-detail-kicker">Appuntamento</p>
+        <h3 class="appointment-detail-title">{{ selectedAppointmentLabel }}</h3>
+      </div>
+      <button type="button" class="appointment-detail-close" (click)="closeAppointmentDetail()" aria-label="Chiudi dettaglio">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="appointment-detail-body appointment-detail-body--grid">
+      <div class="appointment-detail-row appointment-detail-row--wide">
+        <span class="appointment-detail-label">Servizio</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentServiceLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Operatore</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentOperatorLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Inizio</span>
+        <strong class="appointment-detail-value">{{ formatAppointmentDateTime(selectedAppointment.dataOraInizio) }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Fine</span>
+        <strong class="appointment-detail-value">{{ formatAppointmentDateTime(selectedAppointment.dataOraFine) }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Durata</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentDurationLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Stato</span>
+        <strong class="appointment-detail-value">{{ selectedAppointment.stato || 'prenotato' }}</strong>
+      </div>
+
+      <div class="appointment-detail-row appointment-detail-row--wide">
+        <span class="appointment-detail-label">Note</span>
+        <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota inserita' }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="isPermissionModalOpen"
+  class="permission-modal"
+  (click)="closePermissionModal()"
+>
+  <div class="permission-card" role="dialog" aria-modal="true" aria-label="Aggiungi permesso" (click)="$event.stopPropagation()">
+    <div class="permission-head">
+      <div>
+        <p class="appointment-detail-kicker">Permesso</p>
+        <h3 class="appointment-detail-title">Aggiungi fascia oraria</h3>
+      </div>
+      <button type="button" class="appointment-detail-close" (click)="closePermissionModal()" aria-label="Chiudi">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="permission-body">
+      <label class="appointment-detail-field">
+        <span>Data</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-calendar-date"></i>
+          <input type="date" [(ngModel)]="permissionSlotForm.date" [disabled]="isCreatingEmptySlot" />
+        </div>
+      </label>
+
+      <div class="permission-time-row">
+        <label class="appointment-detail-field">
+          <span>Ora inizio</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-clock"></i>
+            <input type="time" step="1800" [(ngModel)]="permissionSlotForm.startTime" [disabled]="isCreatingEmptySlot" />
+          </div>
+        </label>
+
+        <label class="appointment-detail-field">
+          <span>Ora fine</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-clock-history"></i>
+            <input type="time" step="1800" [(ngModel)]="permissionSlotForm.endTime" [disabled]="isCreatingEmptySlot" />
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="appointment-detail-actions">
+      <button type="button" class="appointment-action secondary with-icon" [disabled]="isCreatingEmptySlot" (click)="closePermissionModal()">
+        <i class="bi bi-x-circle"></i>
+        Annulla
+      </button>
+
+      <button type="button" class="appointment-action danger with-icon" [disabled]="isCreatingEmptySlot" (click)="confirmPermissionSlot()">
+        <i class="bi bi-check2-circle"></i>
+        {{ isCreatingEmptySlot ? 'Salvataggio...' : 'Conferma permesso' }}
+      </button>
+    </div>
+  </div>
+</div>

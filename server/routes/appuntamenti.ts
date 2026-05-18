@@ -12,11 +12,11 @@ import {
 
 interface Appuntamento {
   idAppuntamento: number;
-  idCliente: number;
+  idCliente: number | null;
   idOperatore: number;
   dataOraInizio: string;
   dataOraFine: string;
-  stato: string;
+  stato: string | null;
   note: string | null;
   idServizio?: number | null;
   servizioNome?: string | null;
@@ -35,6 +35,10 @@ function normalizeEndDateTime(dataOraInizio: string, dataOraFine: string): strin
 
 function isStaffRole(ruolo: unknown): boolean {
   return ruolo === "admin" || ruolo === "operatore";
+}
+
+function isAdminRole(ruolo: unknown): boolean {
+  return ruolo === "admin";
 }
 
 function isAppointmentConflictError(error: any): boolean {
@@ -104,6 +108,10 @@ async function getAppointmentMailServiceByAppointmentId(
 }
 
 async function buildAppointmentMailPayload(appointment: Appuntamento): Promise<AppointmentMailPayload | null> {
+  if (!appointment.idCliente) {
+    return null;
+  }
+
   const cliente = await getAppointmentMailUser(appointment.idCliente);
 
   if (!cliente?.email) {
@@ -126,7 +134,7 @@ async function buildAppointmentMailPayload(appointment: Appuntamento): Promise<A
 }
 
 async function createAppointmentFallback(payload: {
-  idCliente: number;
+  idCliente: number | null;
   idOperatore: number;
   idServizio?: number | null;
   dataOraInizio: string;
@@ -205,6 +213,61 @@ async function createAppointmentFallback(payload: {
     ...appointment,
     idServizio: payload.idServizio ?? null,
     servizioNome: payload.note ?? null
+  };
+}
+
+async function createBlankStaffSlot(payload: {
+  idOperatore: number;
+  dataOraInizio: string;
+  dataOraFine: string;
+}): Promise<Appuntamento | null> {
+  const start = new Date(payload.dataOraInizio);
+  const end = new Date(payload.dataOraFine);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    throw new Error("Date riserva non valide");
+  }
+
+  const minimumEnd = new Date(start);
+  minimumEnd.setMinutes(minimumEnd.getMinutes() + 30);
+  const guardedEnd = end < minimumEnd ? minimumEnd : end;
+
+  const { data: overlappingAppointments, error: overlapError } = await db
+    .from("appuntamenti")
+    .select("idAppuntamento, dataOraInizio, dataOraFine")
+    .eq("idOperatore", payload.idOperatore)
+    .lt("dataOraInizio", guardedEnd.toISOString())
+    .gt("dataOraFine", payload.dataOraInizio);
+
+  if (overlapError) {
+    throw overlapError;
+  }
+
+  if ((overlappingAppointments || []).length > 0) {
+    return null;
+  }
+
+  const { data, error } = await db
+    .from("appuntamenti")
+    .insert({
+      idCliente: null,
+      idOperatore: payload.idOperatore,
+      dataOraInizio: payload.dataOraInizio,
+      dataOraFine: payload.dataOraFine,
+      stato: null,
+      note: null
+    })
+    .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, stato, note")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    ...(data as Appuntamento),
+    idServizio: null,
+    servizioNome: null
   };
 }
 
@@ -450,6 +513,60 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
     return res.status(201).json(data);
   } catch (err: any) {
     console.error("Errore POST /appuntamenti:", err);
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
+  try {
+    const userRole = req.user?.ruolo;
+    const idOperatore = Number(req.body?.idOperatore);
+    const dataOraInizio = String(req.body?.dataOraInizio ?? "").trim();
+    const dataOraFine = normalizeEndDateTime(
+      dataOraInizio,
+      String(req.body?.dataOraFine ?? "").trim()
+    );
+
+    if (!isAdminRole(userRole)) {
+      return res.status(403).json({ message: "Solo gli admin possono riservare slot vuoti" });
+    }
+
+    if (!Number.isFinite(idOperatore) || idOperatore <= 0 || !dataOraInizio || !dataOraFine) {
+      return res.status(400).json({
+        message: "idOperatore, dataOraInizio e dataOraFine sono obbligatori"
+      });
+    }
+
+    const { data: operatore, error: operatoreError } = await db
+      .from("utenti")
+      .select("idUtente, ruolo")
+      .eq("idUtente", idOperatore)
+      .in("ruolo", ["admin", "operatore"])
+      .maybeSingle();
+
+    if (operatoreError) {
+      throw operatoreError;
+    }
+
+    if (!operatore) {
+      return res.status(404).json({ message: "Operatore non trovato" });
+    }
+
+    const slot = await createBlankStaffSlot({
+      idOperatore,
+      dataOraInizio,
+      dataOraFine
+    });
+
+    if (!slot) {
+      return res.status(409).json({
+        message: "Lo slot selezionato si sovrappone a un appuntamento esistente"
+      });
+    }
+
+    return res.status(201).json(slot);
+  } catch (err: any) {
+    console.error("Errore POST /appuntamenti/slot-vuoto:", err);
     return res.status(500).json({ message: err.message });
   }
 });

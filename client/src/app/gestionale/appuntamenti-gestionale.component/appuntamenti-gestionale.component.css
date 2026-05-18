@@ -609,6 +609,14 @@
   color: #fff4f4;
 }
 
+:host ::ng-deep .permission-appointment {
+  --fc-event-bg-color: #b64242;
+  --fc-event-border-color: rgba(255, 210, 210, 0.34);
+  background: linear-gradient(135deg, #b64242, #7e2424) !important;
+  border-color: rgba(255, 210, 210, 0.34) !important;
+  color: #fff4f4 !important;
+}
+
 @keyframes management-spin {
   to {
     transform: rotate(360deg);

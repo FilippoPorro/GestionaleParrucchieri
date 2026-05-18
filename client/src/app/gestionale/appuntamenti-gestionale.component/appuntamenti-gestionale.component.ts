@@ -284,9 +284,12 @@ export class AppuntamentiGestionaleComponent implements OnInit, OnDestroy {
   }
 
   private mapAppointmentToEvent(appointment: Appuntamento): EventInput {
-    const label = this.getAppointmentServiceLabel(appointment);
+    const isPermission = this.isPermissionAppointment(appointment);
+    const label = isPermission ? 'Permesso' : this.getAppointmentServiceLabel(appointment);
     const eventEnd = this.getVisualEventEnd(appointment.dataOraInizio, appointment.dataOraFine);
-    const classNames = [`appointment-status-${appointment.stato?.replace(/\s+/g, '-') || 'prenotato'}`];
+    const classNames = [
+      isPermission ? 'permission-appointment' : `appointment-status-${appointment.stato?.replace(/\s+/g, '-') || 'prenotato'}`
+    ];
 
     if (this.isPastAppointment(appointment)) {
       classNames.push('appointment-is-past');
@@ -380,6 +383,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, OnDestroy {
   }
 
   private getAppointmentServiceLabel(appointment: Appuntamento): string {
+    if (this.isPermissionAppointment(appointment)) {
+      return 'Permesso';
+    }
+
     return appointment.servizioNome?.trim()
       || appointment.note?.trim()
       || 'Servizio non indicato';
@@ -396,6 +403,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, OnDestroy {
   getSelectedAppointmentClientLabel(): string {
     if (!this.selectedAppointment) {
       return '';
+    }
+
+    if (!this.selectedAppointment.idCliente) {
+      return this.isPermissionAppointment(this.selectedAppointment) ? 'Permesso' : 'Slot riservato';
     }
 
     const cliente = this.clienti.find(
@@ -456,6 +467,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, OnDestroy {
   private isPastAppointment(appointment: Appuntamento): boolean {
     const appointmentEnd = new Date(appointment.dataOraFine);
     return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() < Date.now();
+  }
+
+  private isPermissionAppointment(appointment: Appuntamento): boolean {
+    return !appointment.idCliente &&
+      !appointment.idServizio &&
+      !appointment.servizioNome &&
+      !appointment.note &&
+      !appointment.stato;
   }
 
   private isBookableSlot(slotStart: Date): boolean {
