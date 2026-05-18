@@ -220,6 +220,7 @@ async function createBlankStaffSlot(payload: {
   idOperatore: number;
   dataOraInizio: string;
   dataOraFine: string;
+  note?: string | null;
 }): Promise<Appuntamento | null> {
   const start = new Date(payload.dataOraInizio);
   const end = new Date(payload.dataOraFine);
@@ -255,7 +256,7 @@ async function createBlankStaffSlot(payload: {
       dataOraInizio: payload.dataOraInizio,
       dataOraFine: payload.dataOraFine,
       stato: null,
-      note: null
+      note: payload.note || null
     })
     .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, stato, note")
     .single();
@@ -526,6 +527,7 @@ router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
       dataOraInizio,
       String(req.body?.dataOraFine ?? "").trim()
     );
+    const note = req.body?.note ? String(req.body.note).trim() : null;
 
     if (!isAdminRole(userRole)) {
       return res.status(403).json({ message: "Solo gli admin possono riservare slot vuoti" });
@@ -555,7 +557,8 @@ router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
     const slot = await createBlankStaffSlot({
       idOperatore,
       dataOraInizio,
-      dataOraFine
+      dataOraFine,
+      note
     });
 
     if (!slot) {
@@ -720,7 +723,7 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
     const todayStart = startOfDay(new Date());
     const appointmentDayStart = startOfDay(appointmentStart);
 
-    if (appointmentDayStart <= todayStart) {
+    if (!appointment.idCliente ? false : appointmentDayStart <= todayStart) {
       return res.status(409).json({
         message: "L'eliminazione e consentita solo fino al giorno prima dell'appuntamento"
       });

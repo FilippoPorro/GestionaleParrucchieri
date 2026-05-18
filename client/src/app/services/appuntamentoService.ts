@@ -17,6 +17,7 @@ export interface CreaSlotVuotoPayload {
   idOperatore: number;
   dataOraInizio: string;
   dataOraFine: string;
+  note?: string | null;
 }
 
 export interface AggiornaAppuntamentoPayload {

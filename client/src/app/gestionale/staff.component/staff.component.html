@@ -160,9 +160,15 @@
               <p class="customers-card__eyebrow">Calendario</p>
             <h2>Appuntamenti e permessi</h2>
             </div>
-          <div class="staff-calendar-selected">
-            <span>Agenda</span>
-            <strong>{{ selectedOperatorLabel }}</strong>
+          <div class="staff-calendar-selected" style="display: flex; align-items: center; gap: 14px;">
+            <button *ngIf="selectedOperator" type="button" class="customers-icon-button add-ferie-btn" (click)="openFerieModal()">
+              <i class="bi bi-airplane-fill" aria-hidden="true" style="margin-right: 6px;"></i>
+              <span>Aggiungi ferie</span>
+            </button>
+            <div style="text-align: right;">
+              <span>Agenda</span>
+              <strong>{{ selectedOperatorLabel }}</strong>
+            </div>
           </div>
         </div>
 
@@ -246,8 +252,8 @@
   >
     <div class="appointment-detail-head">
       <div>
-        <p class="appointment-detail-kicker">Appuntamento</p>
-        <h3 class="appointment-detail-title">{{ selectedAppointmentLabel }}</h3>
+        <p class="appointment-detail-kicker" *ngIf="!isPermissionAppointment(selectedAppointment)">Appuntamento</p>
+        <h3 class="appointment-detail-title">{{ isPermissionAppointment(selectedAppointment) ? 'Permesso' : selectedAppointmentLabel }}</h3>
       </div>
       <button type="button" class="appointment-detail-close" (click)="closeAppointmentDetail()" aria-label="Chiudi dettaglio">
         <i class="bi bi-x-lg"></i>
@@ -255,7 +261,7 @@
     </div>
 
     <div class="appointment-detail-body appointment-detail-body--grid">
-      <div class="appointment-detail-row appointment-detail-row--wide">
+      <div *ngIf="!isPermissionAppointment(selectedAppointment)" class="appointment-detail-row appointment-detail-row--wide">
         <span class="appointment-detail-label">Servizio</span>
         <strong class="appointment-detail-value">{{ getSelectedAppointmentServiceLabel() }}</strong>
       </div>
@@ -280,7 +286,7 @@
         <strong class="appointment-detail-value">{{ getSelectedAppointmentDurationLabel() }}</strong>
       </div>
 
-      <div class="appointment-detail-row">
+      <div class="appointment-detail-row" *ngIf="!isPermissionAppointment(selectedAppointment)">
         <span class="appointment-detail-label">Stato</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.stato || 'prenotato' }}</strong>
       </div>
@@ -289,6 +295,13 @@
         <span class="appointment-detail-label">Note</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota inserita' }}</strong>
       </div>
+    </div>
+
+    <div *ngIf="isPermissionAppointment(selectedAppointment)" class="appointment-detail-actions">
+      <button type="button" class="appointment-action danger with-icon" (click)="openDeleteConfirmModal()">
+        <i class="bi bi-trash"></i>
+        Elimina permesso
+      </button>
     </div>
   </div>
 </div>
@@ -310,20 +323,25 @@
     </div>
 
     <div class="permission-body">
-      <label class="appointment-detail-field">
-        <span>Data</span>
-        <div class="appointment-field-control with-icon">
-          <i class="bi bi-calendar-date"></i>
-          <input type="date" [(ngModel)]="permissionSlotForm.date" [disabled]="isCreatingEmptySlot" />
-        </div>
-      </label>
-
       <div class="permission-time-row">
+        <label class="appointment-detail-field" style="grid-column: span 2;">
+          <span>Data</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-calendar-date"></i>
+            <input type="date" [min]="minDate" [(ngModel)]="permissionSlotForm.date" (change)="onPermissionDateChange()" [disabled]="isCreatingEmptySlot" />
+          </div>
+        </label>
+      </div>
+
+      <div class="permission-time-row" *ngIf="availableStartTimes.length > 0">
         <label class="appointment-detail-field">
           <span>Ora inizio</span>
           <div class="appointment-field-control with-icon">
             <i class="bi bi-clock"></i>
-            <input type="time" step="1800" [(ngModel)]="permissionSlotForm.startTime" [disabled]="isCreatingEmptySlot" />
+            <select class="appointment-time-select" [(ngModel)]="permissionSlotForm.startTime" (change)="onStartTimeChange()" [disabled]="isCreatingEmptySlot">
+              <option *ngFor="let time of availableStartTimes" [value]="time">{{ time }}</option>
+            </select>
+            <i class="bi bi-chevron-down appointment-select-arrow"></i>
           </div>
         </label>
 
@@ -331,10 +349,26 @@
           <span>Ora fine</span>
           <div class="appointment-field-control with-icon">
             <i class="bi bi-clock-history"></i>
-            <input type="time" step="1800" [(ngModel)]="permissionSlotForm.endTime" [disabled]="isCreatingEmptySlot" />
+            <select class="appointment-time-select" [(ngModel)]="permissionSlotForm.endTime" [disabled]="isCreatingEmptySlot">
+              <option *ngFor="let time of availableEndTimes" [value]="time">{{ time }}</option>
+            </select>
+            <i class="bi bi-chevron-down appointment-select-arrow"></i>
           </div>
         </label>
       </div>
+
+      <p *ngIf="availableStartTimes.length === 0" style="color: #ff6b6b; font-size: 13px; margin: 4px 0 8px; line-height: 1.4; display: flex; align-items: center; gap: 6px;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        Il salone è chiuso nel giorno selezionato. Scegli una data lavorativa.
+      </p>
+
+      <label class="appointment-detail-field">
+        <span>Note / Causale</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-chat-text"></i>
+          <input type="text" [(ngModel)]="permissionSlotForm.note" placeholder="Es. Visita medica, Ferie, Corso..." [disabled]="isCreatingEmptySlot" />
+        </div>
+      </label>
     </div>
 
     <div class="appointment-detail-actions">
@@ -343,9 +377,91 @@
         Annulla
       </button>
 
-      <button type="button" class="appointment-action danger with-icon" [disabled]="isCreatingEmptySlot" (click)="confirmPermissionSlot()">
+      <button type="button" class="appointment-action success with-icon" [disabled]="isCreatingEmptySlot" (click)="confirmPermissionSlot()">
         <i class="bi bi-check2-circle"></i>
         {{ isCreatingEmptySlot ? 'Salvataggio...' : 'Conferma permesso' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="isDeleteConfirmModalOpen"
+  class="permission-modal delete-confirm-modal"
+  (click)="closeDeleteConfirmModal()"
+>
+  <div class="permission-card delete-confirm-card" role="dialog" aria-modal="true" aria-label="Conferma eliminazione" (click)="$event.stopPropagation()">
+    <div class="permission-head">
+      <div>
+        <p class="appointment-detail-kicker" style="color: #e74c3c;">Attenzione</p>
+        <h3 class="appointment-detail-title">Elimina permesso</h3>
+      </div>
+      <button type="button" class="appointment-detail-close" (click)="closeDeleteConfirmModal()" aria-label="Chiudi">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="permission-body">
+      <p style="color: #fff4d3; font-size: 14px; margin: 0; line-height: 1.5;">
+        Sei sicuro di voler eliminare definitivamente questo permesso? L'operazione non può essere annullata.
+      </p>
+    </div>
+
+    <div class="appointment-detail-actions">
+      <button type="button" class="appointment-action secondary with-icon" (click)="closeDeleteConfirmModal()">
+        <i class="bi bi-x-circle"></i>
+        Annulla
+      </button>
+      <button type="button" class="appointment-action danger with-icon" (click)="confirmDeletePermission()">
+        <i class="bi bi-trash3"></i>
+        Elimina
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Aggiunta Ferie -->
+<div *ngIf="isFerieModalOpen" class="permission-modal" (click)="closeFerieModal()">
+  <div class="permission-card" role="dialog" aria-modal="true" aria-label="Aggiungi ferie" (click)="$event.stopPropagation()">
+    <div class="permission-head">
+      <div>
+        <p class="appointment-detail-kicker">Ferie</p>
+        <h3 class="appointment-detail-title">Aggiungi ferie</h3>
+      </div>
+      <button type="button" class="appointment-detail-close" (click)="closeFerieModal()" aria-label="Chiudi popup">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="permission-body">
+      <div class="permission-time-row">
+        <label class="appointment-detail-field">
+          <span>Data inizio</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-calendar-date"></i>
+            <input type="date" [min]="minDate" [(ngModel)]="ferieForm.startDate" (change)="onFerieStartDateChange()" [disabled]="isCreatingEmptySlot" />
+          </div>
+        </label>
+
+        <label class="appointment-detail-field">
+          <span>Data fine</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-calendar-date-fill"></i>
+            <input type="date" [min]="minDate" [(ngModel)]="ferieForm.endDate" [disabled]="isCreatingEmptySlot" />
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="appointment-detail-actions" style="margin-top: 24px;">
+      <button type="button" class="appointment-action secondary with-icon" [disabled]="isCreatingEmptySlot" (click)="closeFerieModal()">
+        <i class="bi bi-x-circle"></i>
+        Annulla
+      </button>
+
+      <button type="button" class="appointment-action success with-icon" [disabled]="isCreatingEmptySlot" (click)="confirmFerie()">
+        <i class="bi bi-check2-circle"></i>
+        {{ isCreatingEmptySlot ? 'Salvataggio...' : 'Conferma ferie' }}
       </button>
     </div>
   </div>

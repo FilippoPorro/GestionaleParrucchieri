@@ -34,8 +34,10 @@ interface CalendarPickerDay {
 
 interface PermissionSlotForm {
   date: string;
+  endDate: string;
   startTime: string;
   endTime: string;
+  note: string;
 }
 
 @Component({
@@ -84,17 +86,28 @@ export class StaffComponent implements OnInit, OnDestroy {
   readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
   isMobileCalendar = false;
   events: EventInput[] = [];
+  availabilityMaskEvents: EventInput[] = [];
   selectedAppointment: Appuntamento | null = null;
   selectedAppointmentLabel = '';
   isAppointmentDetailOpen = false;
   isAppointmentDetailClosing = false;
   appointmentDetailToneClass = 'tone-my';
   isPermissionModalOpen = false;
+  isFerieModalOpen = false;
+  ferieForm = {
+    startDate: '',
+    endDate: ''
+  };
   permissionSlotForm: PermissionSlotForm = {
     date: '',
+    endDate: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    note: ''
   };
+  availableStartTimes: string[] = [];
+  availableEndTimes: string[] = [];
+  minDate = '';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarPickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarScrollTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -136,7 +149,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     nowIndicator: true,
     stickyHeaderDates: true,
     selectable: true,
-    selectMirror: true,
+    selectMirror: false,
     businessHours: [
       { daysOfWeek: [2, 4], startTime: '08:00', endTime: '12:30' },
       { daysOfWeek: [2, 4], startTime: '14:00', endTime: '19:30' },
@@ -179,6 +192,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.syncCalendarResponsiveMode();
     this.calendarDatePickerValue = this.formatDateForInput(new Date());
+    this.minDate = this.formatDateForInput(new Date());
     this.syncCalendarPickerMonth(new Date());
     this.loadStaff();
   }
@@ -303,6 +317,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   private loadAppointments(): void {
     if (!this.selectedOperator) {
       this.events = [];
+      this.availabilityMaskEvents = [];
       this.syncCalendarEvents();
       return;
     }
@@ -315,6 +330,7 @@ export class StaffComponent implements OnInit, OnDestroy {
         this.events = appointments
           .map((appointment) => this.mapAppointmentToEvent(appointment));
         this.isLoadingCalendar = false;
+        this.availabilityMaskEvents = this.buildAvailabilityMaskEvents();
         this.syncCalendarEvents();
         this.refreshView();
       },
@@ -343,6 +359,12 @@ export class StaffComponent implements OnInit, OnDestroy {
   private handleSlotSelect(arg: any): void {
     const start = arg.start instanceof Date ? arg.start : new Date(arg.start);
     const end = arg.end instanceof Date ? arg.end : new Date(arg.end);
+    
+    const calendarApi = this.calendarComponent?.getApi();
+    if (calendarApi) {
+      calendarApi.unselect();
+    }
+    
     this.openPermissionModal(start, end);
   }
 
@@ -352,6 +374,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.syncDatePickerValue(arg.start);
     this.setupClickableCalendarTitle();
     this.updateCalendarPickerPosition();
+    this.availabilityMaskEvents = this.buildAvailabilityMaskEvents();
     this.syncCalendarEvents();
     this.scrollCalendarToCurrentTimeIfNeeded(arg.start, arg.end);
   }
@@ -444,7 +467,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     const calendarEnd = this.getCalendarEventEnd(normalizedStart, normalizedEnd);
     const isPastAppointment = this.isPastAppointment(appointment);
     const isPermission = this.isPermissionAppointment(appointment);
-    const serviceName = isPermission ? 'Permesso' : this.getAppointmentLabel(appointment);
+    const isFerie = isPermission && appointment.note === 'Ferie';
+    const serviceName = isFerie ? 'Ferie' : (isPermission ? 'Permesso' : this.getAppointmentLabel(appointment));
 
     return {
       id: String(appointment.idAppuntamento),
@@ -452,7 +476,7 @@ export class StaffComponent implements OnInit, OnDestroy {
       start: normalizedStart,
       end: calendarEnd,
       classNames: [
-        isPermission ? 'permission-appointment' : (isPastAppointment ? 'past-appointment' : 'my-appointment')
+        isFerie ? 'ferie-appointment' : (isPermission ? 'permission-appointment' : (isPastAppointment ? 'past-appointment' : 'my-appointment'))
       ],
       extendedProps: {
         appointment,
@@ -467,12 +491,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     };
   }
 
-  private isPermissionAppointment(appointment: Appuntamento): boolean {
-    return !appointment.idCliente &&
-      !appointment.idServizio &&
-      !appointment.servizioNome &&
-      !appointment.note &&
-      !appointment.stato;
+  isPermissionAppointment(appointment: Appuntamento): boolean {
+    return !appointment.idCliente;
   }
 
   openPermissionModal(start: Date, end: Date): void {
@@ -493,9 +513,12 @@ export class StaffComponent implements OnInit, OnDestroy {
 
     this.permissionSlotForm = {
       date: this.formatDateForInput(start),
+      endDate: this.formatDateForInput(start),
       startTime: this.formatTimeForInput(start),
-      endTime: this.formatTimeForInput(end)
+      endTime: this.formatTimeForInput(end),
+      note: ''
     };
+    this.updateAvailableTimes();
     this.isPermissionModalOpen = true;
     this.refreshView();
   }
@@ -508,25 +531,104 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.isPermissionModalOpen = false;
     this.permissionSlotForm = {
       date: '',
+      endDate: '',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      note: ''
     };
     this.refreshView();
   }
 
   confirmPermissionSlot(): void {
-    const start = this.buildDateFromPermissionForm(this.permissionSlotForm.date, this.permissionSlotForm.startTime);
-    const end = this.buildDateFromPermissionForm(this.permissionSlotForm.date, this.permissionSlotForm.endTime);
+    const dateVal = this.permissionSlotForm.date;
+    const start = this.buildDateFromPermissionForm(dateVal, this.permissionSlotForm.startTime);
+    const end = this.buildDateFromPermissionForm(dateVal, this.permissionSlotForm.endTime);
 
-    if (!start || !end) {
-      this.showFeedback('Completa data, ora inizio e ora fine del permesso.', 'error', 'Campi mancanti');
+    if (!start || !end || end <= start) {
+      this.showFeedback('Completa i campi della data e delle ore del permesso.', 'error', 'Campi mancanti');
       return;
     }
 
-    this.createEmptySlot(start, end);
+    this.createEmptySlots([{ start, end }], this.permissionSlotForm.note || null);
   }
 
-  private createEmptySlot(start: Date, end: Date): void {
+  openFerieModal(): void {
+    if (!this.authService.isAdmin()) {
+      this.showFeedback('Solo gli admin possono aggiungere le ferie.', 'error', 'Permesso negato');
+      return;
+    }
+
+    if (!this.selectedOperator) {
+      this.showFeedback('Seleziona una persona dello staff prima di aggiungere le ferie.', 'error', 'Staff non selezionato');
+      return;
+    }
+
+    const todayStr = this.formatDateForInput(new Date());
+    this.ferieForm = {
+      startDate: todayStr,
+      endDate: todayStr
+    };
+    this.isFerieModalOpen = true;
+    this.refreshView();
+  }
+
+  closeFerieModal(): void {
+    if (this.isCreatingEmptySlot) {
+      return;
+    }
+    this.isFerieModalOpen = false;
+    this.ferieForm = {
+      startDate: '',
+      endDate: ''
+    };
+    this.refreshView();
+  }
+
+  onFerieModalOverlayClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeFerieModal();
+    }
+  }
+
+  onFerieStartDateChange(): void {
+    if (!this.ferieForm.endDate || this.ferieForm.endDate < this.ferieForm.startDate) {
+      this.ferieForm.endDate = this.ferieForm.startDate;
+    }
+  }
+
+  confirmFerie(): void {
+    const startDateVal = this.ferieForm.startDate;
+    const endDateVal = this.ferieForm.endDate || startDateVal;
+
+    const startDay = new Date(`${startDateVal}T00:00:00`);
+    const endDay = new Date(`${endDateVal}T00:00:00`);
+
+    if (Number.isNaN(startDay.getTime()) || Number.isNaN(endDay.getTime()) || endDay < startDay) {
+      this.showFeedback('Completa la data inizio e data fine delle ferie.', 'error', 'Campi mancanti');
+      return;
+    }
+
+    const datesToCreate: { start: Date; end: Date }[] = [];
+    const current = new Date(startDay);
+
+    while (current <= endDay) {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const date = current.getDate();
+
+      const dayStart = new Date(year, month, date, 0, 0, 0);
+      const dayEnd = new Date(year, month, date, 23, 59, 59);
+      
+      datesToCreate.push({ start: dayStart, end: dayEnd });
+      current.setDate(current.getDate() + 1);
+    }
+
+    this.createEmptySlots(datesToCreate, 'Ferie', () => {
+      this.closeFerieModal();
+    });
+  }
+
+  private createEmptySlots(slots: { start: Date; end: Date }[], note: string | null = null, onSuccess?: () => void): void {
     if (!this.authService.isAdmin()) {
       this.showFeedback('Solo gli admin possono aggiungere uno spazio vuoto.', 'error', 'Permesso negato');
       return;
@@ -537,13 +639,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (
-      !this.isBookableDateTime(start) ||
-      Number.isNaN(end.getTime()) ||
-      end <= start ||
-      !this.isRangeWithinOpeningHours(start, end)
-    ) {
-      this.showFeedback('Seleziona una fascia futura valida negli orari di apertura.', 'error', 'Fascia non valida');
+    if (slots.length === 0) {
+      this.showFeedback('Nessun giorno lavorativo selezionato nel periodo indicato o il salone è chiuso.', 'error', 'Periodo non valido');
       return;
     }
 
@@ -551,34 +648,150 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.clearFeedback();
     this.refreshView();
 
-    this.appuntamentoService.creaSlotVuoto({
-      idOperatore: this.selectedOperator,
-      dataOraInizio: this.toLocalDateTimeString(start),
-      dataOraFine: this.toLocalDateTimeString(end)
-    }).subscribe({
-      next: () => {
-        this.isCreatingEmptySlot = false;
-        this.isPermissionModalOpen = false;
-        this.showFeedback('Permesso aggiunto correttamente.', 'success', 'Permesso salvato');
-        this.loadAppointments();
-      },
-      error: (error) => {
-        console.error('Errore creazione spazio vuoto staff:', error);
-        this.isCreatingEmptySlot = false;
-        this.showFeedback(
-          error?.error?.message || 'Non riesco ad aggiungere il permesso selezionato.',
-          'error',
-          'Spazio non salvato'
-        );
-        this.refreshView();
-      }
+    const requests = slots.map(slot => 
+      this.appuntamentoService.creaSlotVuoto({
+        idOperatore: this.selectedOperator!,
+        dataOraInizio: this.toLocalDateTimeString(slot.start),
+        dataOraFine: this.toLocalDateTimeString(slot.end),
+        note: note
+      })
+    );
+
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin(requests).subscribe({
+        next: () => {
+          const successMsg = slots.length > 1
+            ? `${slots.length} fasce orarie bloccate con successo.`
+            : 'Permesso creato con successo.';
+          this.showFeedback(successMsg, 'success', 'Salvataggio completato');
+          this.isCreatingEmptySlot = false;
+          
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            this.closePermissionModal();
+          }
+          this.loadAppointments();
+        },
+        error: (error) => {
+          console.error('Errore creazione permessi staff:', error);
+          this.isCreatingEmptySlot = false;
+          this.showFeedback(
+            error?.error?.message || 'Non riesco ad aggiungere i permessi o ferie selezionati.',
+            'error',
+            'Spazio non salvato'
+          );
+          this.refreshView();
+        }
+      });
+    }).catch(err => {
+      console.error('Errore nel caricamento dinamico di rxjs forkJoin:', err);
+      this.isCreatingEmptySlot = false;
+      this.refreshView();
     });
+  }
+
+  onPermissionDateChange(): void {
+    if (!this.permissionSlotForm.endDate || this.permissionSlotForm.endDate < this.permissionSlotForm.date) {
+      this.permissionSlotForm.endDate = this.permissionSlotForm.date;
+    }
+    this.updateAvailableTimes();
+  }
+
+  updateAvailableTimes(): void {
+    const selectedDate = this.parseInputDate(this.permissionSlotForm.date);
+    if (!selectedDate) {
+      this.availableStartTimes = [];
+      this.availableEndTimes = [];
+      return;
+    }
+
+    const daySchedule = this.openingSchedule[selectedDate.getDay()];
+    if (!daySchedule || daySchedule.intervals.length === 0) {
+      this.availableStartTimes = [];
+      this.availableEndTimes = [];
+      return;
+    }
+
+    const now = new Date();
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const starts: string[] = [];
+    const ends: string[] = [];
+
+    for (const interval of daySchedule.intervals) {
+      const startMin = this.timeToMinutes(interval.start);
+      const endMin = this.timeToMinutes(interval.end);
+
+      for (let min = startMin; min < endMin; min += 30) {
+        if (isToday && min <= currentMinutes) {
+          continue;
+        }
+        starts.push(this.minutesToTime(min));
+      }
+
+      for (let min = startMin + 30; min <= endMin; min += 30) {
+        if (isToday && min <= currentMinutes + 15) {
+          continue;
+        }
+        ends.push(this.minutesToTime(min));
+      }
+    }
+
+    this.availableStartTimes = starts;
+    this.availableEndTimes = ends;
+
+    if (!this.availableStartTimes.includes(this.permissionSlotForm.startTime)) {
+      this.permissionSlotForm.startTime = this.availableStartTimes[0] || '';
+    }
+
+    this.onStartTimeChange();
+  }
+
+  onStartTimeChange(): void {
+    const startMin = this.timeToMinutes(this.permissionSlotForm.startTime);
+    const selectedDate = this.parseInputDate(this.permissionSlotForm.date);
+    
+    if (!selectedDate) {
+      return;
+    }
+
+    const daySchedule = this.openingSchedule[selectedDate.getDay()];
+    if (!daySchedule) {
+      return;
+    }
+
+    const validEnds: string[] = [];
+    for (const interval of daySchedule.intervals) {
+      const intervalStart = this.timeToMinutes(interval.start);
+      const intervalEnd = this.timeToMinutes(interval.end);
+
+      if (startMin >= intervalStart && startMin < intervalEnd) {
+        for (let min = startMin + 30; min <= intervalEnd; min += 30) {
+          validEnds.push(this.minutesToTime(min));
+        }
+        break;
+      }
+    }
+
+    this.availableEndTimes = validEnds;
+
+    if (!this.availableEndTimes.includes(this.permissionSlotForm.endTime)) {
+      this.permissionSlotForm.endTime = this.availableEndTimes[0] || '';
+    }
+  }
+
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   }
 
   private getAppointmentLabel(appointment: Appuntamento): string {
     return appointment.servizioNome?.trim()
       || appointment.note?.trim()
-      || 'Appuntamento';
+      || 'Permesso';
   }
 
   private buildDateFromPermissionForm(dateValue: string, timeValue: string): Date | null {
@@ -622,7 +835,10 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private syncCalendarEvents(): void {
-    const calendarEvents = [...this.events];
+    const calendarEvents = [
+      ...this.events,
+      ...this.availabilityMaskEvents
+    ];
 
     this.calendarOptions = {
       ...this.calendarOptions,
@@ -673,6 +889,42 @@ export class StaffComponent implements OnInit, OnDestroy {
       this.appointmentDetailCloseTimeout = null;
       this.refreshView();
     }, 220);
+  }
+
+  isDeleteConfirmModalOpen = false;
+
+  openDeleteConfirmModal(): void {
+    this.isDeleteConfirmModalOpen = true;
+    this.refreshView();
+  }
+
+  closeDeleteConfirmModal(): void {
+    this.isDeleteConfirmModalOpen = false;
+    this.refreshView();
+  }
+
+  confirmDeletePermission(): void {
+    if (!this.selectedAppointment) {
+      return;
+    }
+
+    this.isDeleteConfirmModalOpen = false;
+    this.isLoadingCalendar = true;
+    this.refreshView();
+
+    this.appuntamentoService.eliminaAppuntamento(this.selectedAppointment.idAppuntamento).subscribe({
+      next: () => {
+        this.showFeedback('Permesso eliminato con successo.', 'success', 'Permesso eliminato');
+        this.closeAppointmentDetail();
+        this.loadAppointments();
+      },
+      error: (error) => {
+        console.error('Errore eliminazione permesso:', error);
+        this.isLoadingCalendar = false;
+        this.showFeedback('Impossibile eliminare il permesso.', 'error', 'Errore eliminazione');
+        this.refreshView();
+      }
+    });
   }
 
   onAppointmentModalOverlayClick(event: MouseEvent): void {
@@ -1143,6 +1395,9 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private renderAppointmentEvent(arg: EventContentArg): { html: string } {
+    if (arg.event.display === 'background') {
+      return { html: '' };
+    }
     const props = arg.event.extendedProps as {
       displayTitle?: string;
       serviceName?: string;

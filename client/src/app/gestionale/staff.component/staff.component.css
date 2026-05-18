@@ -75,11 +75,13 @@
 }
 
 :host ::ng-deep .permission-appointment {
-  --fc-event-bg-color: #b64242;
-  --fc-event-border-color: rgba(255, 210, 210, 0.34);
-  background: linear-gradient(135deg, #b64242, #7e2424) !important;
-  border-color: rgba(255, 210, 210, 0.34) !important;
-  color: #fff4f4 !important;
+  --fc-event-bg-color: rgba(39, 174, 96, 0.28);
+  --fc-event-border-color: rgba(46, 204, 113, 0.4);
+  background: rgba(39, 174, 96, 0.28) !important;
+  border-color: rgba(46, 204, 113, 0.4) !important;
+  color: #eafaf1 !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .permission-modal {
@@ -131,6 +133,97 @@
   color: #ffdede;
 }
 
+:host ::ng-deep .permission-card .appointment-action.success {
+  border-color: rgba(93, 172, 121, 0.64);
+  background: rgba(93, 172, 121, 0.2);
+  color: #deffeb;
+}
+
+:host ::ng-deep .permission-card .appointment-action.success:hover:not(:disabled) {
+  border-color: rgba(104, 216, 134, 0.8);
+  background: rgba(104, 216, 134, 0.35);
+  color: #f0fff4;
+}
+
+:host ::ng-deep .delete-confirm-card {
+  border-color: rgba(231, 76, 60, 0.38) !important;
+  background: linear-gradient(180deg, #1c140f 0%, #16100c 100%) !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6) !important;
+}
+
+:host ::ng-deep .delete-confirm-card .appointment-action.danger {
+  border-color: rgba(231, 76, 60, 0.58) !important;
+  background: rgba(231, 76, 60, 0.2) !important;
+  color: #ffdede !important;
+}
+
+:host ::ng-deep .delete-confirm-card .appointment-action.danger:hover:not(:disabled) {
+  border-color: rgba(231, 76, 60, 0.8) !important;
+  background: rgba(231, 76, 60, 0.35) !important;
+  color: #ffeded !important;
+}
+
+:host ::ng-deep .appointment-time-select {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #fff6e1;
+  font: inherit;
+  outline: none;
+  padding: 11px 34px 11px 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  cursor: pointer;
+}
+
+:host ::ng-deep .appointment-time-select option {
+  background: #1c140f !important;
+  color: #fff4d3 !important;
+  padding: 10px;
+}
+
+:host ::ng-deep .ferie-appointment {
+  --fc-event-bg-color: rgba(41, 128, 185, 0.28);
+  --fc-event-border-color: rgba(52, 152, 219, 0.4);
+  background: rgba(41, 128, 185, 0.28) !important;
+  border-color: rgba(52, 152, 219, 0.4) !important;
+  color: #ebf8ff !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+:host ::ng-deep .my-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.28);
+  --fc-event-border-color: rgba(212, 176, 106, 0.4);
+  background: rgba(212, 176, 106, 0.28) !important;
+  border-color: rgba(212, 176, 106, 0.4) !important;
+  color: #fff4df !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+:host ::ng-deep .add-ferie-btn {
+  background: rgba(212, 176, 106, 0.1) !important;
+  border-color: rgba(212, 176, 106, 0.22) !important;
+  color: #d4b06a !important;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+:host ::ng-deep .add-ferie-btn:hover {
+  background: rgba(212, 176, 106, 0.18) !important;
+  border-color: rgba(212, 176, 106, 0.4) !important;
+  color: #f3dfb5 !important;
+  transform: translateY(-1px);
+}
+
 @media (max-width: 720px) {
   .staff-calendar-selected,
   .staff-calendar-meta {
@@ -142,4 +235,16 @@
   .permission-time-row {
     grid-template-columns: 1fr;
   }
+}
+
+:host ::ng-deep .fc-bg-event.invalid-slot-background {
+  background: rgba(170, 170, 170, 0.08) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: not-allowed !important;
+}
+
+:host ::ng-deep .fc-bg-event.invalid-slot-background.is-past-slot {
+  background: rgba(170, 170, 170, 0.2) !important;
+  cursor: not-allowed !important;
 }
