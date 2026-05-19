@@ -1,0 +1,464 @@
+<div class="management-layout" [class.is-sidenav-collapsed]="isSidenavCollapsed">
+  <button
+    type="button"
+    class="management-layout__toggle"
+    (click)="toggleSidenav()"
+    [class.is-collapsed]="isSidenavCollapsed"
+    [attr.aria-label]="isSidenavCollapsed ? 'Apri navigazione gestionale' : 'Chiudi navigazione gestionale'"
+    [attr.aria-expanded]="!isSidenavCollapsed"
+  >
+    <span class="management-layout__toggle-shell" aria-hidden="true">
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--rail"></span>
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--body"></span>
+    </span>
+  </button>
+
+  <div class="management-layout__sidebar">
+    <app-sidenav
+      [isCollapsed]="isSidenavCollapsed"
+      (collapsedChange)="isSidenavCollapsed = $event"
+    ></app-sidenav>
+  </div>
+
+  <main class="management-layout__content">
+    <section class="management-hero">
+      <div>
+        <p class="management-hero__eyebrow">Gestionale</p>
+        <h1>Listino servizi</h1>
+        <p class="management-hero__copy">
+          Servizi, categorie, prezzi e durata dei trattamenti in un pannello organizzato, essenziale e sempre sincronizzato con il database.
+        </p>
+      </div>
+
+      <div class="management-hero__stats">
+        <div class="management-hero__badge">
+          <span>Servizi</span>
+          <strong>{{ servizi.length }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--soft">
+          <span>Prenotabili Sito</span>
+          <strong>{{ serviziSito }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--muted">
+          <span>Altri Canali</span>
+          <strong>{{ serviziAltro }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="services-layout">
+      <article class="services-card services-card--table">
+        <div class="services-card__head">
+          <div>
+            <p class="services-card__eyebrow">Database</p>
+            <h2>Servizi registrati</h2>
+          </div>
+          <div class="services-head-actions">
+            <button type="button" class="services-icon-button services-icon-button--primary" (click)="startCreateServizio()" title="Nuovo servizio">
+              <i class="bi bi-plus-circle" aria-hidden="true"></i>
+              <span>Nuovo servizio</span>
+            </button>
+            <button type="button" class="services-icon-button" (click)="loadServizi()" [disabled]="isLoading" title="Aggiorna servizi">
+              <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+              <span>{{ isLoading ? 'Carico' : 'Aggiorna' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="services-toolbar">
+          <label class="services-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input
+              [ngModel]="searchTerm"
+              (ngModelChange)="onSearchTermChange($event)"
+              name="searchTerm"
+              type="search"
+              placeholder="Cerca per nome, descrizione, categoria o ID"
+            />
+          </label>
+          <span class="services-count">{{ filteredServizi.length }} risultati</span>
+        </div>
+
+        <div
+          *ngIf="feedbackMessage && feedbackPlacement === 'table'"
+          class="services-alert services-alert--inline services-alert--table"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="services-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+
+          <div class="services-alert__copy">
+            <strong class="services-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="services-alert__text">{{ feedbackMessage }}</div>
+          </div>
+
+          <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div *ngIf="isLoading" class="services-empty-state">
+          <span class="services-loader" aria-hidden="true"></span>
+          Sto caricando i servizi dal database...
+        </div>
+
+        <div *ngIf="!isLoading && servizi.length === 0" class="services-empty-state">
+          Nessun servizio presente nel database.
+        </div>
+
+        <div *ngIf="!isLoading && servizi.length > 0 && filteredServizi.length === 0" class="services-empty-state">
+          Nessun servizio corrisponde alla ricerca.
+        </div>
+
+        <div *ngIf="!isLoading && filteredServizi.length > 0" class="services-table-wrap">
+          <table class="services-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Servizio</th>
+                <th>Categoria</th>
+                <th>Prezzo</th>
+                <th>Durata</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let servizio of paginatedServizi"
+                [class.is-selected]="selectedServizio?.idServizio === servizio.idServizio"
+              >
+                <td class="services-cell-id" data-label="ID">#{{ servizio.idServizio }}</td>
+                <td class="services-cell-primary" data-label="Servizio">
+                  <button type="button" class="services-person" (click)="selectServizio(servizio)">
+                    <span class="services-avatar">
+                      {{ getInitials(servizio) }}
+                    </span>
+                    <span>
+                      <strong>{{ servizio.nome }}</strong>
+                      <small>{{ servizio.descrizione || servizio.tipoPrenotazione }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td class="services-cell-contact" data-label="Categoria">
+                  <span class="services-cell-email">{{ servizio.categoria || '-' }}</span>
+                  <span class="services-cell-phone">{{ servizio.sottocategoria || servizio.tipoPrenotazione }}</span>
+                </td>
+                <td class="services-cell-contact" data-label="Prezzo">
+                  <span class="services-cell-email">{{ servizio.prezzo | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
+                </td>
+                <td class="services-cell-date" data-label="Durata">
+                  {{ servizio.durata ? servizio.durata + ' min' : '-' }}
+                  <span class="services-cell-phone">{{ servizio.visualizzazioneSito ? 'Visibile sul sito' : 'Nascosto sul sito' }}</span>
+                </td>
+                <td class="services-actions-cell" data-label="Azioni">
+                  <div class="services-actions" aria-label="Azioni servizio">
+                    <button type="button" class="services-action-button" (click)="selectServizio(servizio, true)" title="Modifica servizio" aria-label="Modifica servizio">
+                      <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="services-action-button services-action-button--delete" (click)="requestDeleteServizio(servizio)" [disabled]="isDeleting" title="Elimina servizio" aria-label="Elimina servizio">
+                      <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!isLoading && filteredServizi.length > 0" class="services-pagination" aria-label="Paginazione servizi">
+          <button
+            type="button"
+            class="services-action-button"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1"
+            aria-label="Mostra i 10 servizi precedenti"
+            title="Precedenti"
+          >
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          </button>
+
+          <span class="services-pagination__status">
+            {{ pageStart }}-{{ pageEnd }} di {{ filteredServizi.length }}
+          </span>
+
+          <button
+            type="button"
+            class="services-action-button"
+            (click)="nextPage()"
+            [disabled]="currentPage === totalPages"
+            aria-label="Mostra i 10 servizi successivi"
+            title="Successivi"
+          >
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </article>
+
+      <article class="services-card services-card--editor" id="modifica-servizio">
+        <div class="services-card__head">
+          <div>
+            <p class="services-card__eyebrow">{{ isCreateMode ? 'Inserimento' : 'Dettaglio' }}</p>
+            <h2>
+              {{
+                isCreateMode
+                  ? 'Inserisci nuovo servizio'
+                  : selectedServizio
+                    ? 'Modifica servizio selezionato'
+                    : 'Seleziona un servizio da modificare'
+              }}
+            </h2>
+          </div>
+          <button *ngIf="isCreateMode" type="button" class="services-icon-button services-icon-button--ghost" (click)="cancelCreateServizio()" title="Chiudi inserimento">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Chiudi</span>
+          </button>
+          <button *ngIf="!isCreateMode && selectedServizio" type="button" class="services-icon-button services-icon-button--ghost" (click)="clearSelection()" title="Chiudi dettaglio">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Chiudi</span>
+          </button>
+        </div>
+
+        <div
+          *ngIf="feedbackMessage && (feedbackPlacement === 'create' || feedbackPlacement === 'editor')"
+          class="services-alert services-alert--inline services-alert--editor"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="services-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+
+          <div class="services-alert__copy">
+            <strong class="services-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="services-alert__text">{{ feedbackMessage }}</div>
+          </div>
+
+          <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <form
+          *ngIf="isCreateMode"
+          class="services-form services-form--create services-panel-form"
+          [class.is-closing]="isCreateClosing"
+          (ngSubmit)="saveNewServizio()"
+        >
+          <div class="services-create-header services-create-header--new">
+            <span class="services-avatar services-avatar--large services-avatar--create">
+              {{ getInitials(newServizio) }}
+            </span>
+            <div>
+              <strong>{{ newServizio.nome || 'Nuovo servizio' }}</strong>
+              <span>{{ newServizio.categoria || 'Categoria da specificare' }}</span>
+              <div class="services-profile-tags">
+                <span class="services-profile-tag">
+                  <i class="bi bi-tag" aria-hidden="true"></i>
+                  Prezzo: {{ newServizio.prezzo ? (newServizio.prezzo | currency:'EUR':'symbol':'1.2-2':'it-IT') : 'Da specificare' }}
+                </span>
+                <span class="services-profile-tag" [class.is-muted]="!newServizio.durata">
+                  <i class="bi bi-clock" aria-hidden="true"></i>
+                  Durata: {{ newServizio.durata ? newServizio.durata + ' min' : 'Da specificare' }}
+                </span>
+                <span class="services-profile-tag">
+                  <i class="bi bi-globe" aria-hidden="true"></i>
+                  {{ newServizio.tipoPrenotazione }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="services-create-shell">
+            <div class="services-form__grid services-form__grid--create">
+              <label class="services-field services-create-field services-create-field--wide">
+                <span>Nome Servizio</span>
+                <input [(ngModel)]="newServizio.nome" name="newNome" type="text" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--wide">
+                <span>Descrizione</span>
+                <textarea [(ngModel)]="newServizio.descrizione" name="newDescrizione" rows="3" style="width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 10px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Prezzo (€)</span>
+                <input [(ngModel)]="newServizio.prezzo" name="newPrezzo" type="number" step="0.01" min="0" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Durata (minuti)</span>
+                <input [(ngModel)]="newServizio.durata" name="newDurata" type="number" step="1" min="1" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Categoria</span>
+                <input [(ngModel)]="newServizio.categoria" name="newCategoria" type="text" />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Sottocategoria</span>
+                <input [(ngModel)]="newServizio.sottocategoria" name="newSottocategoria" type="text" />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Tipo Prenotazione</span>
+                <select [(ngModel)]="newServizio.tipoPrenotazione" name="newTipoPrenotazione" style="width: 100%; height: 46px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 0 14px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; cursor: pointer;">
+                  <option value="sito">Sito (Prenotazione online)</option>
+                  <option value="telefono">Telefono (Solo chiamata)</option>
+                  <option value="consulenza">Consulenza (Pre-approvazione)</option>
+                </select>
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half" style="display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; min-height: 46px;">
+                <input [(ngModel)]="newServizio.visualizzazioneSito" name="newVisualizzazioneSito" type="checkbox" style="width: 20px; height: 20px; accent-color: #be8640; cursor: pointer;" />
+                <span style="margin: 0;">Visibile sul sito web pubblico</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="services-editor-actions">
+            <button type="submit" class="services-button services-button--save" [disabled]="isCreating || !isNewServizioValid">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              {{ isCreating ? 'Inserimento...' : 'Inserisci servizio' }}
+            </button>
+            <button type="button" class="services-button services-button--ghost" (click)="cancelCreateServizio()" [disabled]="isCreating">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+              Annulla
+            </button>
+          </div>
+        </form>
+
+        <div *ngIf="!isCreateMode && (!selectedServizio || !draftServizio)" class="services-empty-state services-empty-state--editor">
+          <i class="bi bi-journal-text" aria-hidden="true"></i>
+          Seleziona un servizio dalla tabella per modificarlo oppure creane uno nuovo.
+        </div>
+
+        <form
+          *ngIf="!isCreateMode && selectedServizio && draftServizio"
+          class="services-form services-form--edit services-panel-form"
+          [class.is-closing]="isEditClosing"
+          (ngSubmit)="saveServizio()"
+        >
+          <div class="services-create-header services-edit-header">
+            <span class="services-avatar services-avatar--large services-avatar--create">
+              {{ getInitials(draftServizio) }}
+            </span>
+            <div>
+              <strong>{{ selectedServizio.nome }}</strong>
+              <span>{{ selectedServizio.categoria || 'Senza categoria' }}</span>
+              <div class="services-profile-tags">
+                <span class="services-profile-tag">
+                  <i class="bi bi-tag" aria-hidden="true"></i>
+                  ID {{ selectedServizio.idServizio }}
+                </span>
+                <span class="services-profile-tag">
+                  <i class="bi bi-coin" aria-hidden="true"></i>
+                  {{ selectedServizio.prezzo | currency:'EUR':'symbol':'1.2-2':'it-IT' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="services-create-shell">
+            <div class="services-form__grid services-form__grid--create">
+              <label class="services-field services-edit-field services-edit-field--wide">
+                <span>Nome Servizio</span>
+                <input [(ngModel)]="draftServizio.nome" name="nome" type="text" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--wide">
+                <span>Descrizione</span>
+                <textarea [(ngModel)]="draftServizio.descrizione" name="descrizione" rows="3" style="width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 10px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Prezzo (€)</span>
+                <input [(ngModel)]="draftServizio.prezzo" name="prezzo" type="number" step="0.01" min="0" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Durata (minuti)</span>
+                <input [(ngModel)]="draftServizio.durata" name="durata" type="number" step="1" min="1" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Categoria</span>
+                <input [(ngModel)]="draftServizio.categoria" name="categoria" type="text" />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Sottocategoria</span>
+                <input [(ngModel)]="draftServizio.sottocategoria" name="sottocategoria" type="text" />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Tipo Prenotazione</span>
+                <select [(ngModel)]="draftServizio.tipoPrenotazione" name="tipoPrenotazione" style="width: 100%; height: 46px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 0 14px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; cursor: pointer;">
+                  <option value="sito">Sito (Prenotazione online)</option>
+                  <option value="telefono">Telefono (Solo chiamata)</option>
+                  <option value="consulenza">Consulenza (Pre-approvazione)</option>
+                </select>
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half" style="display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; min-height: 46px;">
+                <input [(ngModel)]="draftServizio.visualizzazioneSito" name="visualizzazioneSito" type="checkbox" style="width: 20px; height: 20px; accent-color: #be8640; cursor: pointer;" />
+                <span style="margin: 0;">Visibile sul sito web pubblico</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="services-editor-meta">
+            <div class="services-meta-chip">
+              <span>Canale principale</span>
+              <strong>{{ draftServizio.tipoPrenotazione }}</strong>
+            </div>
+            <div class="services-meta-chip">
+              <span>ID Servizio</span>
+              <strong>{{ draftServizio.idServizio }}</strong>
+            </div>
+          </div>
+
+          <div class="services-editor-actions">
+            <button type="submit" class="services-button services-button--save" [disabled]="isSaving || !hasDraftChanges">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              {{ isSaving ? 'Salvataggio...' : 'Salva modifiche' }}
+            </button>
+            <button type="button" class="services-button services-button--ghost" (click)="selectServizio(selectedServizio)">
+              <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+              Ripristina
+            </button>
+          </div>
+        </form>
+      </article>
+
+    </section>
+  </main>
+
+  <div *ngIf="pendingDeleteServizio" class="services-modal" role="dialog" aria-modal="true" aria-labelledby="deleteServizioTitle">
+    <div class="services-modal__panel">
+      <div class="services-modal__icon">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      </div>
+      <h2 id="deleteServizioTitle">Eliminare questo servizio?</h2>
+      <p>
+        Il servizio <strong>{{ pendingDeleteServizio.nome }}</strong> verra rimosso dal database. L'operazione non puo essere annullata.
+      </p>
+      <div class="services-modal__actions">
+        <button type="button" class="services-button services-button--ghost" (click)="cancelDeleteServizio()" [disabled]="isDeleting">
+          Annulla
+        </button>
+        <button type="button" class="services-button services-button--delete services-button--confirm-delete" (click)="confirmDeleteServizio()" [disabled]="isDeleting">
+          {{ isDeleting ? 'Eliminazione...' : 'Elimina servizio' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

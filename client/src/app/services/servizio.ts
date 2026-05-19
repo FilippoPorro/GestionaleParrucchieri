@@ -36,12 +36,29 @@ export class ServiziService {
     return value ? value : null;
   }
 
-  getServizi(): Observable<Servizio[]> {
-    return this.http.get<any[]>(this.apiUrl).pipe(
+  getServizi(all = false): Observable<Servizio[]> {
+    const url = all ? `${this.apiUrl}?all=true` : this.apiUrl;
+    return this.http.get<any[]>(url).pipe(
       map(servizi =>
         servizi.map(s => this.mapServizio(s))
       )
     );
+  }
+
+  createServizio(servizio: Partial<Servizio>): Observable<Servizio> {
+    return this.http.post<any>(this.apiUrl, servizio).pipe(
+      map(s => this.mapServizio(s))
+    );
+  }
+
+  updateServizio(idServizio: number, servizio: Partial<Servizio>): Observable<Servizio> {
+    return this.http.put<any>(`${this.apiUrl}/${idServizio}`, servizio).pipe(
+      map(s => this.mapServizio(s))
+    );
+  }
+
+  deleteServizio(idServizio: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${idServizio}`);
   }
 
   getServiziPrenotabiliByOperatore(idOperatore: number): Observable<Servizio[]> {
@@ -79,6 +96,7 @@ export class ServiziService {
   }
 
   private mapServizio(s: any): Servizio {
+    const vis = s['visualizzazione sito'] ?? s.visualizzazioneSito ?? s.visualizzazione_sito ?? s.visualizzazione;
     return {
       idServizio: s.idServizio ?? s.id,
       nome: s.nome,
@@ -93,7 +111,8 @@ export class ServiziService {
       ),
       tipoPrenotazione: this.normalizeBookingType(
         s['tipo prenotazione'] ?? s.tipoPrenotazione ?? s.tipo_prenotazione ?? s.prenotazione
-      )
+      ),
+      visualizzazioneSito: vis === undefined ? true : (vis === true || vis === 1 || vis === "true" || vis === "t")
     };
   }
 }

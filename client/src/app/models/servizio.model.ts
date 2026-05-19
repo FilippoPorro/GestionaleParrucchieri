@@ -7,4 +7,5 @@ export interface Servizio {
     categoria: string;
     sottocategoria: string;
     tipoPrenotazione: 'sito' | 'telefono' | 'consulenza';
+    visualizzazioneSito?: boolean;
 }
