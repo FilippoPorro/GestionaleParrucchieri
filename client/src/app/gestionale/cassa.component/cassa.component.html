@@ -31,13 +31,9 @@
       </div>
 
       <div class="management-hero__stats">
-        <div class="management-hero__badge">
-          <span>Sessione</span>
-          <strong>Aperta</strong>
-        </div>
         <div class="management-hero__badge management-hero__badge--soft">
           <span>Totale</span>
-          <strong>€ 0</strong>
+          <strong>€ {{ incassoOggi | number:'1.2-2' }}</strong>
         </div>
       </div>
     </section>
@@ -45,56 +41,160 @@
     <section class="cash-stats">
       <article class="cash-stat-card">
         <span>Incasso oggi</span>
-        <strong>€ 0,00</strong>
-        <small>In attesa di movimenti</small>
+        <strong>€ {{ incassoOggi | number:'1.2-2' }}</strong>
+        <small>Aggiornato in tempo reale</small>
       </article>
       <article class="cash-stat-card">
         <span>Scontrini</span>
-        <strong>0</strong>
-        <small>Vendite registrate</small>
+        <strong>{{ scontriniOggi }}</strong>
+        <small>Vendite registrate oggi</small>
       </article>
       <article class="cash-stat-card">
         <span>Pagamento</span>
-        <strong>Non selezionato</strong>
-        <small>Contanti, carta o misto</small>
+        <strong>{{ selectedMetodo === 'carta' ? 'Carta' : 'Contanti' }}</strong>
+        <small>Seleziona metodo a destra</small>
       </article>
     </section>
 
     <section class="cash-layout">
+      <!-- SCONTRINO / VENDITA CORRENTE -->
       <article class="cash-card cash-card--receipt">
         <div class="cash-card__head">
           <div>
             <p class="cash-card__eyebrow">Scontrino</p>
             <h2>Vendita corrente</h2>
           </div>
-          <button type="button" class="cash-icon-button" title="Nuova vendita">
+          <button type="button" class="cash-icon-button" title="Nuovo scontrino" (click)="nuovaVendita()">
             <i class="bi bi-plus-lg" aria-hidden="true"></i>
-            <span>Nuova</span>
+            <span>Nuovo</span>
           </button>
         </div>
 
-        <div class="cash-empty-receipt">
-          <i class="bi bi-receipt" aria-hidden="true"></i>
-          <strong>Nessun articolo inserito</strong>
-          <span>Aggiungi servizi o prodotti per comporre lo scontrino.</span>
+        <!-- AGGIUNGI ARTICOLO VELOCE -->
+        <div class="cash-add-article-grid">
+          <div class="cash-field">
+            <span>Aggiungi Servizio</span>
+            <div class="cash-add-row">
+              <div class="cash-search-select-container">
+                <input
+                  type="text"
+                  class="cash-select cash-search-input"
+                  [(ngModel)]="serviceSearchQuery"
+                  (ngModelChange)="onServiceSearchChange()"
+                  (focus)="showServiceDropdown = true"
+                  (blur)="toggleServiceDropdown(false)"
+                  placeholder="Selezione servizio..."
+                />
+                <i class="bi bi-chevron-down cash-search-arrow" (click)="showServiceDropdown = !showServiceDropdown"></i>
+                
+                <div class="cash-search-dropdown" *ngIf="showServiceDropdown">
+                  <div class="cash-search-dropdown-empty" *ngIf="filteredServizi.length === 0">
+                    Nessun servizio trovato
+                  </div>
+                  <div
+                    class="cash-search-dropdown-item"
+                    *ngFor="let s of filteredServizi"
+                    (mousedown)="selectServizio(s)"
+                    [title]="s.nome"
+                  >
+                    <span>{{ s.nome }}</span>
+                    <strong>€ {{ s.prezzo | number:'1.2-2' }}</strong>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="cash-icon-button" (click)="addServizioItem()" [disabled]="!selectedServizioId">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="cash-field">
+            <span>Aggiungi Prodotto</span>
+            <div class="cash-add-row">
+              <div class="cash-search-select-container">
+                <input
+                  type="text"
+                  class="cash-select cash-search-input"
+                  [(ngModel)]="productSearchQuery"
+                  (ngModelChange)="onProductSearchChange()"
+                  (focus)="showProductDropdown = true"
+                  (blur)="toggleProductDropdown(false)"
+                  placeholder="Selezione prodotto..."
+                />
+                <i class="bi bi-chevron-down cash-search-arrow" (click)="showProductDropdown = !showProductDropdown"></i>
+                
+                <div class="cash-search-dropdown" *ngIf="showProductDropdown">
+                  <div class="cash-search-dropdown-empty" *ngIf="filteredProdotti.length === 0">
+                    Nessun prodotto trovato
+                  </div>
+                  <div
+                    class="cash-search-dropdown-item"
+                    *ngFor="let p of filteredProdotti"
+                    [class.is-disabled]="p.qta <= 0"
+                    (mousedown)="p.qta > 0 && selectProdotto(p)"
+                    [title]="p.nome + (p.marca ? ' (' + p.marca + ')' : '')"
+                  >
+                    <div class="cash-search-dropdown-item__main">
+                      <span>{{ p.nome }} {{ p.marca ? '(' + p.marca + ')' : '' }}</span>
+                      <small *ngIf="p.qta <= 0" class="cash-out-of-stock">Esaurito</small>
+                      <small *ngIf="p.qta > 0">Disponibili: {{ p.qta }}</small>
+                    </div>
+                    <strong>€ {{ p.prezzoRivendita | number:'1.2-2' }}</strong>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="cash-icon-button" (click)="addProdottoItem()" [disabled]="!selectedProdottoId">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
         </div>
 
+        <!-- STATO VUOTO -->
+        <div class="cash-empty-receipt" *ngIf="receiptItems.length === 0">
+          <i class="bi bi-receipt" aria-hidden="true"></i>
+          <strong>Nessun articolo inserito</strong>
+          <span>Usa i selettori sopra per aggiungere servizi o prodotti allo scontrino.</span>
+        </div>
+
+        <!-- LISTA ARTICOLI INSERITI -->
+        <div class="cash-receipt-list" *ngIf="receiptItems.length > 0">
+          <div class="cash-receipt-item" *ngFor="let item of receiptItems; let i = index" [title]="item.nome">
+            <div class="cash-receipt-item__details">
+              <span class="cash-receipt-item__name">{{ item.nome }}</span>
+              <span class="cash-receipt-item__type">{{ item.tipo }}</span>
+            </div>
+            <div class="cash-receipt-item__actions">
+              <div class="cash-receipt-item__qty">
+                <button type="button" class="cash-receipt-item__qty-btn" (click)="decreaseItemQty(i)">-</button>
+                <span class="cash-receipt-item__qty-val">{{ item.quantita }}</span>
+                <button type="button" class="cash-receipt-item__qty-btn" (click)="increaseItemQty(i)">+</button>
+              </div>
+              <span class="cash-receipt-item__price">€ {{ (item.prezzoUnitario * item.quantita) | number:'1.2-2' }}</span>
+              <button type="button" class="cash-receipt-item__delete" (click)="removeReceiptItem(i)" title="Rimuovi">
+                <i class="bi bi-trash3" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTENITORE TOTALI -->
         <div class="cash-total-box">
           <div>
             <span>Subtotale</span>
-            <strong>€ 0,00</strong>
+            <strong>€ {{ subtotal | number:'1.2-2' }}</strong>
           </div>
           <div>
             <span>Sconto</span>
-            <strong>€ 0,00</strong>
+            <strong>€ {{ discount | number:'1.2-2' }}</strong>
           </div>
           <div class="cash-total-box__grand">
             <span>Totale</span>
-            <strong>€ 0,00</strong>
+            <strong>€ {{ total | number:'1.2-2' }}</strong>
           </div>
         </div>
       </article>
 
+      <!-- SEZIONE PAGAMENTO E CHIUSURA -->
       <article class="cash-card">
         <div class="cash-card__head">
           <div>
@@ -103,41 +203,121 @@
           </div>
         </div>
 
+        <!-- METODI DI PAGAMENTO -->
         <div class="cash-methods" aria-label="Metodi di pagamento">
-          <button type="button" class="cash-method is-active">
+          <button type="button" class="cash-method" [class.is-active]="selectedMetodo === 'carta'" (click)="selectedMetodo = 'carta'">
             <i class="bi bi-credit-card" aria-hidden="true"></i>
             Carta
           </button>
-          <button type="button" class="cash-method">
+          <button type="button" class="cash-method" [class.is-active]="selectedMetodo === 'contanti'" (click)="selectedMetodo = 'contanti'">
             <i class="bi bi-cash" aria-hidden="true"></i>
             Contanti
           </button>
-          <button type="button" class="cash-method">
-            <i class="bi bi-shuffle" aria-hidden="true"></i>
-            Misto
-          </button>
         </div>
 
+        <!-- DETTAGLI CARTA DI CREDITO -->
+        <div class="cash-card-details" *ngIf="selectedMetodo === 'carta'">
+          <div class="cash-card-details__title">
+            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+            <span>Dati Carta di Credito</span>
+          </div>
+          
+          <div class="cash-card-form">
+            <label class="cash-field">
+              <span>Intestatario Carta</span>
+              <div class="cash-input-icon-wrapper">
+                <i class="bi bi-person cash-input-icon"></i>
+                <input type="text" class="cash-input cash-input--icon" [(ngModel)]="cardHolder" placeholder="Nome e Cognome" (ngModelChange)="clearMessages()" />
+              </div>
+            </label>
+
+            <label class="cash-field">
+              <span>Numero Carta</span>
+              <div class="cash-input-icon-wrapper">
+                <i class="bi bi-credit-card-2-front cash-input-icon"></i>
+                <input type="text" class="cash-input cash-input--icon" [(ngModel)]="cardNumber" placeholder="0000 0000 0000 0000" (ngModelChange)="clearMessages()" />
+              </div>
+            </label>
+
+            <div class="cash-card-row">
+              <label class="cash-field">
+                <span>Scadenza</span>
+                <div class="cash-input-icon-wrapper">
+                  <i class="bi bi-calendar-event cash-input-icon"></i>
+                  <input type="text" class="cash-input cash-input--icon" [ngModel]="cardExpiry" (input)="onExpiryInput($event)" placeholder="MM/AA" maxlength="5" />
+                </div>
+              </label>
+
+              <label class="cash-field">
+                <span>CVC / CVV</span>
+                <div class="cash-input-icon-wrapper">
+                  <i class="bi bi-lock cash-input-icon"></i>
+                  <input type="text" class="cash-input cash-input--icon" [ngModel]="cardCvc" (input)="onCvcInput($event)" placeholder="123" maxlength="4" />
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- CAMPI CLIENTE, OPERATORE E SCONTO -->
         <div class="cash-field-grid">
           <label class="cash-field">
             <span>Cliente</span>
-            <input type="text" placeholder="Seleziona cliente" />
+            <select class="cash-select" [(ngModel)]="selectedClienteId" (change)="onClienteChange()">
+              <option [value]="null">Selezione cliente...</option>
+              <option *ngFor="let c of clienti" [value]="c.idUtente">
+                {{ c.cognome }} {{ c.nome }} ({{ c.email }})
+              </option>
+            </select>
           </label>
+          
           <label class="cash-field">
             <span>Operatore</span>
-            <input type="text" placeholder="Seleziona operatore" />
+            <select class="cash-select" [(ngModel)]="selectedOperatoreId">
+              <option [value]="null" disabled>Selezione operatore...</option>
+              <option *ngFor="let o of operatori" [value]="o.idUtente">
+                {{ o.cognome }} {{ o.nome }} ({{ o.ruolo }})
+              </option>
+            </select>
+          </label>
+
+          <label class="cash-field">
+            <span>Sconto immediato (€)</span>
+            <input type="number" class="cash-input" [(ngModel)]="discount" min="0" placeholder="0.00" (ngModelChange)="clearMessages()" />
           </label>
         </div>
 
+        <!-- MESSAGGI DI ERRORE O SUCCESSO -->
+        <div class="cash-message cash-message--error" *ngIf="errorMessage">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div class="cash-message cash-message--success" *ngIf="successMessage">
+          <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          <span>{{ successMessage }}</span>
+        </div>
+
+        <!-- AZIONI -->
         <div class="cash-actions">
-          <button type="button" class="cash-button cash-button--primary">
+          <button
+            type="button"
+            class="cash-button cash-button--primary"
+            (click)="registraPagamento()"
+            [disabled]="loading || receiptItems.length === 0 || !selectedOperatoreId"
+          >
             <i class="bi bi-check2" aria-hidden="true"></i>
-            Registra pagamento
+            {{ loading ? 'Registrazione in corso...' : 'Registra pagamento' }}
           </button>
-          <button type="button" class="cash-button cash-button--ghost">
+          <button type="button" class="cash-button cash-button--ghost" (click)="stampa()" [disabled]="receiptItems.length === 0 && !successMessage">
             <i class="bi bi-printer" aria-hidden="true"></i>
             Stampa
           </button>
+        </div>
+
+        <!-- ALERT DI ELABORAZIONE VERDE BELLO SOTTO IL BOTTONE -->
+        <div class="cash-message cash-message--processing" *ngIf="showProcessingAlert">
+          <div class="cash-processing-spinner"></div>
+          <span>{{ processingAlertMessage }}</span>
         </div>
       </article>
     </section>
