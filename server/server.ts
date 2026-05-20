@@ -403,6 +403,103 @@ app.get("/api/prodotti", async (req, res) => {
     res.status(500).json({ message: "Errore server" });
   }
 });
+app.post("/api/prodotti", async (req, res) => {
+  try {
+    const { foto, nome, marca, formato, descrizione, prezzoRivendita, prezzoAcquisto, qta, categoria } = req.body;
+
+    if (!nome || prezzoRivendita === undefined || prezzoAcquisto === undefined || qta === undefined) {
+      return res.status(400).json({ message: "Nome, prezzi e quantita sono obbligatori" });
+    }
+
+    const { data, error } = await db
+      .from("prodotti")
+      .insert({
+        foto: foto || null,
+        nome,
+        marca: marca || "",
+        formato: formato || "",
+        descrizione: descrizione || "",
+        prezzoRivendita: Number(prezzoRivendita),
+        prezzoAcquisto: Number(prezzoAcquisto),
+        quantitaMagazzino: Number(qta),
+        categoria: categoria || ""
+      })
+      .select('idProdotto, foto, nome, marca, formato, descrizione, prezzoRivendita, prezzoAcquisto, quantitaMagazzino, categoria')
+      .single();
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err: any) {
+    console.error("Errore POST /api/prodotti:", err);
+    res.status(500).json({ message: err.message || "Errore server" });
+  }
+});
+app.put("/api/prodotti/:id", async (req, res) => {
+  try {
+    const idProdotto = Number(req.params.id);
+    if (!Number.isFinite(idProdotto) || idProdotto <= 0) {
+      return res.status(400).json({ message: "idProdotto non valido" });
+    }
+
+    const { foto, nome, marca, formato, descrizione, prezzoRivendita, prezzoAcquisto, qta, categoria } = req.body;
+
+    if (!nome || prezzoRivendita === undefined || prezzoAcquisto === undefined || qta === undefined) {
+      return res.status(400).json({ message: "Nome, prezzi e quantita sono obbligatori" });
+    }
+
+    const { data, error } = await db
+      .from("prodotti")
+      .update({
+        foto: foto || null,
+        nome,
+        marca: marca || "",
+        formato: formato || "",
+        descrizione: descrizione || "",
+        prezzoRivendita: Number(prezzoRivendita),
+        prezzoAcquisto: Number(prezzoAcquisto),
+        quantitaMagazzino: Number(qta),
+        categoria: categoria || ""
+      })
+      .eq("idProdotto", idProdotto)
+      .select('idProdotto, foto, nome, marca, formato, descrizione, prezzoRivendita, prezzoAcquisto, quantitaMagazzino, categoria')
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ message: "Prodotto non trovato" });
+    }
+
+    res.json(data);
+  } catch (err: any) {
+    console.error("Errore PUT /api/prodotti/:id:", err);
+    res.status(500).json({ message: err.message || "Errore server" });
+  }
+});
+app.delete("/api/prodotti/:id", async (req, res) => {
+  try {
+    const idProdotto = Number(req.params.id);
+    if (!Number.isFinite(idProdotto) || idProdotto <= 0) {
+      return res.status(400).json({ message: "idProdotto non valido" });
+    }
+
+    const { data, error } = await db
+      .from("prodotti")
+      .delete()
+      .eq("idProdotto", idProdotto)
+      .select("idProdotto")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ message: "Prodotto non trovato" });
+    }
+
+    res.json({ message: "Prodotto eliminato con successo" });
+  } catch (err: any) {
+    console.error("Errore DELETE /api/prodotti/:id:", err);
+    res.status(500).json({ message: err.message || "Errore server" });
+  }
+});
 app.post("/api/register", async (req, res) => {
   try {
     const { nome, cognome, email, password, telefono, data_nascita, ruolo } =

@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 export interface Prodotto {
   idProdotto: number;
-  foto: string;
+  foto: string | null;
   nome: string;
   marca: string;
   formato: string;
@@ -56,23 +56,25 @@ export class ProdottoService {
   getProdotti(): Observable<Prodotto[]> {
     return this.http.get<any[]>(this.apiUrl).pipe(
       map(prodotti =>
-        prodotti.map(p => ({
-          idProdotto: p.idProdotto ?? p.id,
-          foto: this.buildImageUrl(p.foto),
-          nome: p.nome,
-          marca: p.marca ?? '',
-          formato: p.formato ?? '',
-          descrizione: p.descrizione,
-          prezzoRivendita: Number(p.prezzoRivendita ?? p.prezzo ?? 0),
-          prezzoAcquisto: Number(p.prezzoAcquisto ?? 0),
-          // `prezzo` resta disponibile per i componenti che usano ancora il nome precedente.
-          prezzo: Number(p.prezzoRivendita ?? p.prezzo ?? 0),
-          qta: Number(p.quantitaMagazzino),
-          categoria: p.categoria,
-          quantita: 0
-        }))
+        prodotti.map(p => this.mapProdotto(p))
       )
     );
+  }
+
+  createProdotto(prodotto: Partial<Prodotto>): Observable<Prodotto> {
+    return this.http.post<any>(this.apiUrl, prodotto).pipe(
+      map(p => this.mapProdotto(p))
+    );
+  }
+
+  updateProdotto(idProdotto: number, prodotto: Partial<Prodotto>): Observable<Prodotto> {
+    return this.http.put<any>(`${this.apiUrl}/${idProdotto}`, prodotto).pipe(
+      map(p => this.mapProdotto(p))
+    );
+  }
+
+  deleteProdotto(idProdotto: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${idProdotto}`);
   }
 
   private buildImageUrl(foto?: string | null): string {
@@ -172,6 +174,23 @@ export class ProdottoService {
     return this.getProdotti().pipe(
       map(prodotti => prodotti.find(p => p.idProdotto == id))
     );
+  }
+
+  private mapProdotto(p: any): Prodotto {
+    return {
+      idProdotto: p.idProdotto ?? p.id,
+      foto: this.buildImageUrl(p.foto),
+      nome: p.nome ?? '',
+      marca: p.marca ?? '',
+      formato: p.formato ?? '',
+      descrizione: p.descrizione ?? '',
+      prezzoRivendita: Number(p.prezzoRivendita ?? p.prezzo ?? 0),
+      prezzoAcquisto: Number(p.prezzoAcquisto ?? 0),
+      prezzo: Number(p.prezzoRivendita ?? p.prezzo ?? 0),
+      qta: Number(p.quantitaMagazzino ?? p.qta ?? 0),
+      categoria: p.categoria ?? '',
+      quantita: Number(p.quantita ?? 0)
+    };
   }
 
   addProductToCart(prod: Prodotto) {

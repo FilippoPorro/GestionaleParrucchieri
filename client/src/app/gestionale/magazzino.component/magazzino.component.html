@@ -1,0 +1,529 @@
+<div class="management-layout" [class.is-sidenav-collapsed]="isSidenavCollapsed">
+  <button
+    type="button"
+    class="management-layout__toggle"
+    (click)="toggleSidenav()"
+    [class.is-collapsed]="isSidenavCollapsed"
+    [attr.aria-label]="isSidenavCollapsed ? 'Apri navigazione gestionale' : 'Chiudi navigazione gestionale'"
+    [attr.aria-expanded]="!isSidenavCollapsed"
+  >
+    <span class="management-layout__toggle-shell" aria-hidden="true">
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--rail"></span>
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--body"></span>
+    </span>
+  </button>
+
+  <div class="management-layout__sidebar">
+    <app-sidenav
+      [isCollapsed]="isSidenavCollapsed"
+      (collapsedChange)="isSidenavCollapsed = $event"
+    ></app-sidenav>
+  </div>
+
+  <main class="management-layout__content">
+    <section class="management-hero">
+      <div>
+        <p class="management-hero__eyebrow">Gestionale</p>
+        <h1>Magazzino prodotti</h1>
+        <p class="management-hero__copy">
+          Catalogo, giacenze, prezzi e categorie dei prodotti in un pannello completo, ordinato e sincronizzato con il database.
+        </p>
+      </div>
+
+      <div class="management-hero__stats">
+        <div class="management-hero__badge">
+          <span>Prodotti</span>
+          <strong>{{ prodotti.length }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--soft">
+          <span>In Esaurimento</span>
+          <strong>{{ prodottiInEsaurimento }}</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--muted">
+          <span>Valore Stock</span>
+          <strong>{{ totaleValoreMagazzino | currency:'EUR':'symbol':'1.0-0':'it-IT' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="services-layout">
+      <article class="services-card services-card--table">
+        <div class="services-card__head">
+          <div>
+            <p class="services-card__eyebrow">Database</p>
+            <h2>Prodotti registrati</h2>
+          </div>
+          <div class="services-head-actions">
+            <button type="button" class="services-icon-button services-icon-button--primary" (click)="startCreateProdotto()" title="Nuovo prodotto">
+              <i class="bi bi-plus-circle" aria-hidden="true"></i>
+              <span>Nuovo prodotto</span>
+            </button>
+            <button type="button" class="services-icon-button" (click)="loadProdotti()" [disabled]="isLoading" title="Aggiorna prodotti">
+              <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+              <span>{{ isLoading ? 'Carico' : 'Aggiorna' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="services-toolbar services-toolbar--filters">
+          <label class="services-search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input
+              [ngModel]="searchTerm"
+              (ngModelChange)="onSearchTermChange($event)"
+              name="searchTerm"
+              type="search"
+              placeholder="Cerca per nome, marca, categoria o ID"
+            />
+          </label>
+
+          <label class="services-filter">
+            <span>Categoria</span>
+            <select [ngModel]="selectedCategoriaFilter" (ngModelChange)="onCategoriaFilterChange($event)" name="categoriaFilter">
+              <option value="">Tutte le categorie</option>
+              <option *ngFor="let categoria of categorieDisponibili" [value]="categoria">{{ categoria }}</option>
+            </select>
+          </label>
+
+          <label class="services-filter">
+            <span>Marca</span>
+            <select [ngModel]="selectedMarcaFilter" (ngModelChange)="onMarcaFilterChange($event)" name="marcaFilter">
+              <option value="">Tutte le marche</option>
+              <option *ngFor="let marca of marcheDisponibili" [value]="marca">{{ marca }}</option>
+            </select>
+          </label>
+
+          <button
+            type="button"
+            class="services-icon-button services-icon-button--ghost services-reset-filters"
+            (click)="resetFilters()"
+            [disabled]="!selectedCategoriaFilter && !selectedMarcaFilter"
+            title="Azzera filtri"
+          >
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+            <span>Azzera filtri</span>
+          </button>
+
+          <span class="services-count">{{ filteredProdotti.length }} risultati</span>
+        </div>
+
+        <div
+          *ngIf="feedbackMessage && feedbackPlacement === 'table'"
+          class="services-alert services-alert--inline services-alert--table"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="services-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+          <div class="services-alert__copy">
+            <strong class="services-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="services-alert__text">{{ feedbackMessage }}</div>
+          </div>
+          <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div *ngIf="isLoading" class="services-empty-state">
+          <span class="services-loader" aria-hidden="true"></span>
+          Sto caricando i prodotti dal database...
+        </div>
+
+        <div *ngIf="!isLoading && prodotti.length === 0" class="services-empty-state">
+          Nessun prodotto presente nel database.
+        </div>
+
+        <div *ngIf="!isLoading && prodotti.length > 0 && filteredProdotti.length === 0" class="services-empty-state">
+          Nessun prodotto corrisponde ai filtri selezionati.
+        </div>
+
+        <div *ngIf="!isLoading && filteredProdotti.length > 0" class="services-table-wrap">
+          <table class="services-table services-table--products">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Prodotto</th>
+                <th>Categoria</th>
+                <th>Prezzi</th>
+                <th>Giacenza</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let prodotto of paginatedProdotti"
+                [class.is-selected]="selectedProdotto?.idProdotto === prodotto.idProdotto"
+              >
+                <td class="services-cell-id" data-label="ID">#{{ prodotto.idProdotto }}</td>
+                <td class="services-cell-primary" data-label="Prodotto">
+                  <button type="button" class="services-person" (click)="selectProdotto(prodotto)">
+                    <span class="services-avatar">
+                      {{ getInitials(prodotto) }}
+                    </span>
+                    <span>
+                      <strong>{{ prodotto.nome }}</strong>
+                      <small>{{ prodotto.marca || prodotto.formato || 'Prodotto magazzino' }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td class="services-cell-contact" data-label="Categoria">
+                  <span class="services-cell-email">{{ prodotto.categoria || '-' }}</span>
+                  <span class="services-cell-phone">{{ prodotto.marca || 'Marca non specificata' }}</span>
+                </td>
+                <td class="services-cell-contact" data-label="Prezzi">
+                  <span class="services-cell-email">Vendita {{ prodotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
+                  <span class="services-cell-phone">Acquisto {{ prodotto.prezzoAcquisto | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
+                </td>
+                <td class="services-cell-date" data-label="Giacenza">
+                  {{ prodotto.qta }}
+                  <span class="services-cell-phone">{{ prodotto.formato || 'Formato non specificato' }}</span>
+                </td>
+                <td class="services-actions-cell" data-label="Azioni">
+                  <div class="services-actions" aria-label="Azioni prodotto">
+                    <button type="button" class="services-action-button" (click)="selectProdotto(prodotto, true)" title="Modifica prodotto" aria-label="Modifica prodotto">
+                      <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="services-action-button services-action-button--delete" (click)="requestDeleteProdotto(prodotto)" [disabled]="isDeleting" title="Elimina prodotto" aria-label="Elimina prodotto">
+                      <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!isLoading && filteredProdotti.length > 0" class="services-pagination" aria-label="Paginazione prodotti">
+          <button type="button" class="services-action-button" (click)="previousPage()" [disabled]="currentPage === 1" aria-label="Mostra i 10 prodotti precedenti" title="Precedenti">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          </button>
+          <span class="services-pagination__status">
+            {{ pageStart }}-{{ pageEnd }} di {{ filteredProdotti.length }}
+          </span>
+          <button type="button" class="services-action-button" (click)="nextPage()" [disabled]="currentPage === totalPages" aria-label="Mostra i 10 prodotti successivi" title="Successivi">
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </article>
+
+      <article class="services-card services-card--table">
+        <div class="services-card__head">
+          <div>
+            <p class="services-card__eyebrow">Riordino</p>
+            <h2>Prodotti da riordinare</h2>
+          </div>
+          <span class="services-count">{{ prodottiDaRiordinare.length }} prodotti sotto soglia</span>
+        </div>
+
+        <div *ngIf="!isLoading && prodottiDaRiordinare.length === 0" class="services-empty-state">
+          Nessun prodotto da riordinare al momento.
+        </div>
+
+        <div *ngIf="!isLoading && prodottiDaRiordinare.length > 0" class="services-table-wrap">
+          <table class="services-table services-table--products">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Prodotto</th>
+                <th>Categoria</th>
+                <th>Prezzi</th>
+                <th>Giacenza</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let prodotto of prodottiDaRiordinare"
+                [class.is-selected]="selectedProdotto?.idProdotto === prodotto.idProdotto"
+              >
+                <td class="services-cell-id" data-label="ID">#{{ prodotto.idProdotto }}</td>
+                <td class="services-cell-primary" data-label="Prodotto">
+                  <button type="button" class="services-person" (click)="selectProdotto(prodotto, true)">
+                    <span class="services-avatar">
+                      {{ getInitials(prodotto) }}
+                    </span>
+                    <span>
+                      <strong>{{ prodotto.nome }}</strong>
+                      <small>{{ prodotto.marca || prodotto.formato || 'Prodotto magazzino' }}</small>
+                    </span>
+                  </button>
+                </td>
+                <td class="services-cell-contact" data-label="Categoria">
+                  <span class="services-cell-email">{{ prodotto.categoria || '-' }}</span>
+                  <span class="services-cell-phone">{{ prodotto.marca || 'Marca non specificata' }}</span>
+                </td>
+                <td class="services-cell-contact" data-label="Prezzi">
+                  <span class="services-cell-email">Vendita {{ prodotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
+                  <span class="services-cell-phone">Acquisto {{ prodotto.prezzoAcquisto | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
+                </td>
+                <td class="services-cell-date" data-label="Giacenza">
+                  {{ prodotto.qta }}
+                  <span class="services-cell-phone">{{ prodotto.formato || 'Formato non specificato' }}</span>
+                </td>
+                <td class="services-actions-cell" data-label="Azioni">
+                  <div class="services-actions" aria-label="Azioni prodotto da riordinare">
+                    <button type="button" class="services-action-button" (click)="selectProdotto(prodotto, true)" title="Modifica prodotto" aria-label="Modifica prodotto">
+                      <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="services-action-button services-action-button--delete" (click)="requestDeleteProdotto(prodotto)" [disabled]="isDeleting" title="Elimina prodotto" aria-label="Elimina prodotto">
+                      <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="services-card services-card--editor" id="modifica-prodotto">
+        <div class="services-card__head">
+          <div>
+            <p class="services-card__eyebrow">{{ isCreateMode ? 'Inserimento' : 'Dettaglio' }}</p>
+            <h2>
+              {{
+                isCreateMode
+                  ? 'Inserisci nuovo prodotto'
+                  : selectedProdotto
+                    ? 'Modifica prodotto selezionato'
+                    : 'Seleziona un prodotto da modificare'
+              }}
+            </h2>
+          </div>
+          <button *ngIf="isCreateMode" type="button" class="services-icon-button services-icon-button--ghost" (click)="cancelCreateProdotto()" title="Chiudi inserimento">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Chiudi</span>
+          </button>
+          <button *ngIf="!isCreateMode && selectedProdotto" type="button" class="services-icon-button services-icon-button--ghost" (click)="clearSelection()" title="Chiudi dettaglio">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Chiudi</span>
+          </button>
+        </div>
+
+        <div
+          *ngIf="feedbackMessage && (feedbackPlacement === 'create' || feedbackPlacement === 'editor')"
+          class="services-alert services-alert--inline services-alert--editor"
+          [ngClass]="feedbackType"
+          role="status"
+        >
+          <div class="services-alert__icon">
+            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+            <span *ngIf="feedbackType === 'error'">!</span>
+          </div>
+          <div class="services-alert__copy">
+            <strong class="services-alert__title">
+              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+            </strong>
+            <div class="services-alert__text">{{ feedbackMessage }}</div>
+          </div>
+          <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <form *ngIf="isCreateMode" class="services-form services-form--create services-panel-form" [class.is-closing]="isCreateClosing" (ngSubmit)="saveNewProdotto()">
+          <div class="services-create-header services-create-header--new">
+            <span class="services-avatar services-avatar--large services-avatar--create">
+              {{ getInitials(newProdotto) }}
+            </span>
+            <div>
+              <strong>{{ newProdotto.nome || 'Nuovo prodotto' }}</strong>
+              <span>{{ newProdotto.categoria || 'Categoria da specificare' }}</span>
+              <div class="services-profile-tags">
+                <span class="services-profile-tag">
+                  <i class="bi bi-building" aria-hidden="true"></i>
+                  {{ newProdotto.marca || 'Marca da specificare' }}
+                </span>
+                <span class="services-profile-tag">
+                  <i class="bi bi-tag" aria-hidden="true"></i>
+                  Vendita: {{ newProdotto.prezzoRivendita ? (newProdotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT') : 'Da specificare' }}
+                </span>
+                <span class="services-profile-tag" [class.is-muted]="newProdotto.qta === null">
+                  <i class="bi bi-box-seam" aria-hidden="true"></i>
+                  Qta: {{ newProdotto.qta !== null ? newProdotto.qta : 'Da specificare' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="services-create-shell">
+            <div class="services-form__grid services-form__grid--create">
+              <label class="services-field services-create-field services-create-field--wide">
+                <span>Nome Prodotto</span>
+                <input [(ngModel)]="newProdotto.nome" name="newNome" type="text" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--wide">
+                <span>Descrizione</span>
+                <textarea [(ngModel)]="newProdotto.descrizione" name="newDescrizione" rows="3"></textarea>
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Marca</span>
+                <input [(ngModel)]="newProdotto.marca" name="newMarca" type="text" />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Categoria</span>
+                <input [(ngModel)]="newProdotto.categoria" name="newCategoria" type="text" />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Formato</span>
+                <input [(ngModel)]="newProdotto.formato" name="newFormato" type="text" />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Quantita</span>
+                <input [(ngModel)]="newProdotto.qta" name="newQta" type="number" step="1" min="0" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Prezzo Vendita (EUR)</span>
+                <input [(ngModel)]="newProdotto.prezzoRivendita" name="newPrezzoRivendita" type="number" step="0.01" min="0" required />
+              </label>
+
+              <label class="services-field services-create-field services-create-field--half">
+                <span>Prezzo Acquisto (EUR)</span>
+                <input [(ngModel)]="newProdotto.prezzoAcquisto" name="newPrezzoAcquisto" type="number" step="0.01" min="0" required />
+              </label>
+            </div>
+          </div>
+
+          <div class="services-editor-actions">
+            <button type="submit" class="services-button services-button--save" [disabled]="isCreating || !isNewProdottoValid">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              {{ isCreating ? 'Inserimento...' : 'Inserisci prodotto' }}
+            </button>
+            <button type="button" class="services-button services-button--ghost" (click)="cancelCreateProdotto()" [disabled]="isCreating">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+              Annulla
+            </button>
+          </div>
+        </form>
+
+        <div *ngIf="!isCreateMode && (!selectedProdotto || !draftProdotto)" class="services-empty-state services-empty-state--editor">
+          <i class="bi bi-box-seam" aria-hidden="true"></i>
+          Seleziona un prodotto dalla tabella per modificarlo oppure creane uno nuovo.
+        </div>
+
+        <form *ngIf="!isCreateMode && selectedProdotto && draftProdotto" class="services-form services-form--edit services-panel-form" [class.is-closing]="isEditClosing" (ngSubmit)="saveProdotto()">
+          <div class="services-create-header services-edit-header">
+            <span class="services-avatar services-avatar--large services-avatar--create">
+              {{ getInitials(draftProdotto) }}
+            </span>
+            <div>
+              <strong>{{ selectedProdotto.nome }}</strong>
+              <span>{{ selectedProdotto.categoria || 'Senza categoria' }}</span>
+              <div class="services-profile-tags">
+                <span class="services-profile-tag">
+                  <i class="bi bi-tag" aria-hidden="true"></i>
+                  ID {{ selectedProdotto.idProdotto }}
+                </span>
+                <span class="services-profile-tag">
+                  <i class="bi bi-building" aria-hidden="true"></i>
+                  {{ selectedProdotto.marca || 'Marca non specificata' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="services-create-shell">
+            <div class="services-form__grid services-form__grid--create">
+              <label class="services-field services-edit-field services-edit-field--wide">
+                <span>Nome Prodotto</span>
+                <input [(ngModel)]="draftProdotto.nome" name="nome" type="text" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--wide">
+                <span>Descrizione</span>
+                <textarea [(ngModel)]="draftProdotto.descrizione" name="descrizione" rows="3"></textarea>
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Marca</span>
+                <input [(ngModel)]="draftProdotto.marca" name="marca" type="text" />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Categoria</span>
+                <input [(ngModel)]="draftProdotto.categoria" name="categoria" type="text" />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Formato</span>
+                <input [(ngModel)]="draftProdotto.formato" name="formato" type="text" />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Quantita</span>
+                <input [(ngModel)]="draftProdotto.qta" name="qta" type="number" step="1" min="0" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Prezzo Vendita (EUR)</span>
+                <input [(ngModel)]="draftProdotto.prezzoRivendita" name="prezzoRivendita" type="number" step="0.01" min="0" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--half">
+                <span>Prezzo Acquisto (EUR)</span>
+                <input [(ngModel)]="draftProdotto.prezzoAcquisto" name="prezzoAcquisto" type="number" step="0.01" min="0" required />
+              </label>
+
+              <label class="services-field services-edit-field services-edit-field--wide">
+                <span>Foto (URL o path backend)</span>
+                <input [(ngModel)]="draftProdotto.foto" name="foto" type="text" />
+              </label>
+            </div>
+          </div>
+
+          <div class="services-editor-meta">
+            <div class="services-meta-chip">
+              <span>Giacenza</span>
+              <strong>{{ draftProdotto.qta }}</strong>
+            </div>
+            <div class="services-meta-chip">
+              <span>Prezzo vendita</span>
+              <strong>{{ draftProdotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</strong>
+            </div>
+          </div>
+
+          <div class="services-editor-actions">
+            <button type="submit" class="services-button services-button--save" [disabled]="isSaving || !hasDraftChanges">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              {{ isSaving ? 'Salvataggio...' : 'Salva modifiche' }}
+            </button>
+            <button type="button" class="services-button services-button--ghost" (click)="selectProdotto(selectedProdotto)">
+              <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+              Ripristina
+            </button>
+          </div>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <div *ngIf="pendingDeleteProdotto" class="services-modal" role="dialog" aria-modal="true" aria-labelledby="deleteProdottoTitle">
+    <div class="services-modal__panel">
+      <div class="services-modal__icon">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      </div>
+      <h2 id="deleteProdottoTitle">Eliminare questo prodotto?</h2>
+      <p>
+        Il prodotto <strong>{{ pendingDeleteProdotto.nome }}</strong> verra rimosso dal database. L'operazione non puo essere annullata.
+      </p>
+      <div class="services-modal__actions">
+        <button type="button" class="services-button services-button--ghost" (click)="cancelDeleteProdotto()" [disabled]="isDeleting">
+          Annulla
+        </button>
+        <button type="button" class="services-button services-button--delete services-button--confirm-delete" (click)="confirmDeleteProdotto()" [disabled]="isDeleting">
+          {{ isDeleting ? 'Eliminazione...' : 'Elimina prodotto' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

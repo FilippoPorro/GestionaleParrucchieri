@@ -22,7 +22,7 @@ export class HomeComponent implements OnInit {
   stats = [
     { label: 'Appuntamenti oggi', value: '-', trend: 'calcolo dal calendario' },
     { label: 'Incasso giornaliero', value: '-', trend: 'pagamenti di oggi' },
-    { label: 'Prodotti in riordino', value: '-', trend: 'attenzione stock' },
+    { label: 'Prodotti da riordinare', value: '-', trend: 'attenzione stock' },
     { label: 'Clienti in salone', value: '-', trend: 'fascia oraria corrente' }
   ];
 

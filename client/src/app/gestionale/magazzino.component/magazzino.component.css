@@ -1,0 +1,52 @@
+@import "../servizi.component/servizi.component.css";
+
+.services-toolbar--filters {
+  flex-wrap: wrap;
+}
+
+.services-filter {
+  min-width: 180px;
+  display: grid;
+  gap: 6px;
+  color: rgba(255, 226, 175, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.services-filter select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(10, 8, 6, 0.5);
+  color: #fff7e8;
+  font: inherit;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.services-filter select:focus {
+  border-color: rgba(242, 209, 139, 0.52);
+  box-shadow: 0 0 0 4px rgba(212, 176, 106, 0.08);
+}
+
+.services-reset-filters {
+  align-self: end;
+}
+
+.services-table--products th:nth-child(3),
+.services-table--products td:nth-child(3) {
+  width: 24%;
+}
+
+.services-table--products th:nth-child(4),
+.services-table--products td:nth-child(4) {
+  width: 24%;
+}
+
+.services-table--products th:nth-child(5),
+.services-table--products td:nth-child(5) {
+  width: 150px;
+}

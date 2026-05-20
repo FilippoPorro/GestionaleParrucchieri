@@ -25,6 +25,7 @@ import { ClientiComponent } from './gestionale/clienti.component/clienti.compone
 import { StaffComponent } from './gestionale/staff.component/staff.component';
 import { PrenotaAppuntamentoGestionaleComponent } from './gestionale/prenota-appuntamento-gestionale.component/prenota-appuntamento-gestionale.component';
 import { ServiziComponent } from './gestionale/servizi.component/servizi.component';
+import { MagazzinoComponent } from './gestionale/magazzino.component/magazzino.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -50,5 +51,6 @@ export const routes: Routes = [
     { path: 'gestionale/clienti', component: ClientiComponent, canActivate: [managementGuard]},
     { path: 'gestionale/staff', component: StaffComponent, canActivate: [managementGuard]},
     { path: 'gestionale/servizi', component: ServiziComponent, canActivate: [managementGuard]},
+    { path: 'gestionale/magazzino', component: MagazzinoComponent, canActivate: [managementGuard]},
     { path: '**', redirectTo: '/home' }
 ];
