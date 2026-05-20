@@ -38,7 +38,6 @@ export class SidenavComponent {
           label: 'Appuntamenti',
           href: '/gestionale/appuntamenti',
           description: 'Agenda, conferme e check-in',
-          badge: 'Oggi',
         },
         {
           label: 'Cassa',

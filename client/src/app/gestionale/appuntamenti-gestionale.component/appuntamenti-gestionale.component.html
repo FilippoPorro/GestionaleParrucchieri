@@ -16,7 +16,7 @@
   <div class="management-layout__sidebar">
     <app-sidenav
       [isCollapsed]="isSidenavCollapsed"
-      (collapsedChange)="isSidenavCollapsed = $event"
+      (collapsedChange)="setSidenavCollapsed($event)"
     ></app-sidenav>
   </div>
 
@@ -140,6 +140,33 @@
 </div>
 
 <div
+  *ngIf="isDeleteConfirmOpen && deleteConfirmAppointment"
+  class="appointment-confirm-modal"
+  (click)="onDeleteConfirmOverlayClick($event)"
+>
+  <div class="appointment-confirm-card" role="dialog" aria-modal="true" aria-label="Conferma eliminazione appuntamento">
+    <div class="appointment-confirm-head">
+      <span class="appointment-confirm-icon">!</span>
+      <p class="appointment-confirm-text">
+        Vuoi eliminare l'appuntamento del
+        <strong>{{ deleteConfirmAppointment.dataOraInizio | date: 'dd/MM/yyyy HH:mm' }}</strong>?
+      </p>
+      <div class="appointment-confirm-actions">
+        <button type="button" class="appointment-action secondary with-icon" [disabled]="isAppointmentActionLoading" (click)="cancelDeleteConfirmation()">
+          <i class="bi bi-x-circle"></i>
+          Annulla
+        </button>
+
+        <button type="button" class="appointment-action danger with-icon" [disabled]="isAppointmentActionLoading" (click)="confirmDeleteAppointment()">
+          <i class="bi bi-trash3"></i>
+          Elimina
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
   *ngIf="(isAppointmentDetailOpen || isAppointmentDetailClosing) && selectedAppointment"
   class="appointment-detail-modal"
   [class.is-closing]="isAppointmentDetailClosing"
@@ -167,7 +194,7 @@
       </button>
     </div>
 
-        <div class="appointment-detail-body appointment-detail-body--grid">
+    <div class="appointment-detail-body appointment-detail-body--grid" *ngIf="!isEditingAppointment">
       <div class="appointment-detail-row appointment-detail-row--wide">
         <span class="appointment-detail-label">Servizio</span>
         <strong class="appointment-detail-value">{{ getSelectedAppointmentServiceLabel() }}</strong>
@@ -207,6 +234,177 @@
         <span class="appointment-detail-label">Note</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota inserita' }}</strong>
       </div>
+    </div>
+
+    <div class="appointment-detail-body" *ngIf="isEditingAppointment" [class.is-loading]="isEditFormLoading">
+      <div class="appointment-edit-loading-overlay" *ngIf="isEditFormLoading">
+        <span class="appointment-edit-loading-pill">
+          <i class="bi bi-hourglass-split"></i>
+          Caricamento campi...
+        </span>
+      </div>
+
+      <div class="appointment-edit-mode">
+        <i class="bi bi-pencil-square"></i>
+        <span>Modalita modifica appuntamento</span>
+      </div>
+
+      <div class="appointment-edit-datetime-row">
+        <label class="appointment-detail-field">
+          <span>Data inizio</span>
+          <div class="appointment-edit-date-wrap">
+            <button
+              type="button"
+              class="appointment-field-control with-icon appointment-edit-date-control"
+              [class.is-open]="editDatePickerOpen && !editDatePickerClosing"
+              [disabled]="isEditFormLoading"
+              (click)="toggleEditDatePicker()"
+            >
+              <i class="bi bi-calendar-date"></i>
+              <span class="appointment-edit-date-label">{{ editDateLabel }}</span>
+            </button>
+
+            <div
+              *ngIf="editDatePickerOpen || editDatePickerClosing"
+              class="appointment-edit-date-picker-panel"
+              [class.is-closing]="editDatePickerClosing"
+              role="dialog"
+              aria-label="Seleziona data inizio appuntamento"
+            >
+              <div class="appointment-edit-date-picker-header">
+                <button type="button" class="appointment-edit-date-picker-nav" (click)="previousEditDatePickerMonth()">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <strong class="appointment-edit-date-picker-month">{{ editDatePickerMonthLabel }}</strong>
+
+                <button type="button" class="appointment-edit-date-picker-nav" (click)="nextEditDatePickerMonth()">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+
+              <div class="appointment-edit-date-picker-weekdays">
+                <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
+              </div>
+
+              <div class="appointment-edit-date-picker-grid">
+                <button
+                  *ngFor="let day of editDatePickerDays"
+                  type="button"
+                  class="appointment-edit-date-picker-day"
+                  [class.is-outside]="!day.currentMonth"
+                  [class.is-today]="day.isToday"
+                  [class.is-selected]="day.isSelected"
+                  (click)="selectEditDatePickerDay(day)"
+                >
+                  {{ day.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </label>
+
+        <label class="appointment-detail-field">
+          <span>Ora inizio</span>
+          <div class="appointment-field-control with-icon is-readonly">
+            <i class="bi bi-clock"></i>
+            <input type="text" [value]="editStartTime || '--:--'" readonly />
+          </div>
+        </label>
+      </div>
+
+      <label class="appointment-detail-field">
+        <span>Servizio</span>
+        <div class="appointment-services-picker-wrap">
+          <button
+            type="button"
+            class="appointment-field-control with-icon appointment-service-trigger"
+            [class.is-open]="editServicesOpen"
+            [disabled]="isEditFormLoading"
+            (click)="toggleEditServicesPicker()"
+          >
+            <i class="bi bi-list-task"></i>
+            <span class="appointment-service-trigger-label">{{ selectedEditServiceLabel }}</span>
+            <i class="bi bi-chevron-down appointment-select-arrow" [class.is-open]="editServicesOpen"></i>
+          </button>
+
+          <div class="appointment-services-picker" *ngIf="editServicesOpen">
+            <button
+              type="button"
+              *ngFor="let servizio of editableServices"
+              class="appointment-service-option"
+              [class.is-selected]="appointmentEditForm.idServizio === servizio.idServizio"
+              [class.is-disabled]="!canEditServiceInCurrentSlot(servizio)"
+              [disabled]="isEditFormLoading || !canEditServiceInCurrentSlot(servizio)"
+              (click)="selectEditService(servizio)"
+            >
+              <span class="appointment-service-option-main">
+                {{ servizio.nome }} | {{ servizio.prezzo }} EUR
+              </span>
+              <span class="appointment-service-option-meta">{{ servizio.durata || 0 }} min</span>
+            </button>
+          </div>
+        </div>
+      </label>
+
+      <label class="appointment-detail-field">
+        <span>Data e ora fine (calcolata)</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-calendar-date"></i>
+          <input type="datetime-local" [ngModel]="appointmentEditForm.dataOraFine" readonly />
+        </div>
+      </label>
+    </div>
+
+    <div *ngIf="appointmentActionError" class="appointment-detail-error" role="alert" aria-live="polite">
+      <span class="appointment-detail-error-icon">!</span>
+      <span class="appointment-detail-error-text">{{ appointmentActionError }}</span>
+    </div>
+
+    <div class="appointment-detail-actions" *ngIf="canManageSelectedAppointment">
+      <button
+        type="button"
+        class="appointment-action secondary with-icon"
+        *ngIf="!isEditingAppointment"
+        [disabled]="isAppointmentActionLoading || !canModifySelectedAppointment"
+        (click)="beginAppointmentEdit()"
+      >
+        <i class="bi bi-pencil-square"></i>
+        Modifica
+      </button>
+
+      <button
+        type="button"
+        class="appointment-action danger with-icon"
+        *ngIf="!isEditingAppointment"
+        [disabled]="isAppointmentActionLoading || !canDeleteSelectedAppointment"
+        (click)="deleteSelectedAppointment()"
+      >
+        <i class="bi bi-trash3"></i>
+        Elimina
+      </button>
+
+      <button
+        type="button"
+        class="appointment-action primary with-icon"
+        *ngIf="isEditingAppointment"
+        [disabled]="isAppointmentActionLoading || isEditFormLoading"
+        (click)="saveAppointmentEdit()"
+      >
+        <i class="bi bi-check2-circle"></i>
+        {{ isAppointmentActionLoading ? 'Salvataggio modifica...' : 'Salva modifiche' }}
+      </button>
+
+      <button
+        type="button"
+        class="appointment-action secondary with-icon"
+        *ngIf="isEditingAppointment"
+        [disabled]="isAppointmentActionLoading || isEditFormLoading"
+        (click)="cancelAppointmentEdit()"
+      >
+        <i class="bi bi-x-circle"></i>
+        Annulla
+      </button>
     </div>
   </div>
 </div>
