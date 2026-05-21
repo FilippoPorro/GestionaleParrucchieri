@@ -55,6 +55,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   private readonly mobileBreakpoint = 768;
   private readonly minimumAppointmentDurationMinutes = 30;
+  private readonly calendarViewStorageKey = 'gestionale_appointments_calendar_view';
+  private readonly calendarDateStorageKey = 'gestionale_appointments_calendar_date';
+  private readonly operatorDaySelectionStorageKey = 'gestionale_appointments_operator_day_selection';
+  private readonly operatorDayOrderStorageKey = 'gestionale_appointments_operator_day_order';
   private readonly openingSchedule: Record<number, DailySchedule> = {
     0: { name: 'Domenica', intervals: [] },
     1: { name: 'Lunedi', intervals: [] },
@@ -64,12 +68,19 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     5: { name: 'Venerdi', intervals: [{ start: '07:00', end: '19:30' }] },
     6: { name: 'Sabato', intervals: [{ start: '07:00', end: '18:00' }] }
   };
+  private readonly initialCalendarView = this.getInitialCalendarView();
+  private readonly initialCalendarDate = this.getSavedCalendarDate() ?? new Date();
 
   isSidenavCollapsed = false;
   operatori: Utente[] = [];
   clienti: Utente[] = [];
   selectedOperator: number | null = null;
+  selectedOperatorDayIds = new Set<number>();
+  operatorDayOrderIds: number[] = [];
+  draggedOperatorDayId: number | null = null;
+  suppressNextOperatorClick = false;
   isOperatorDropdownOpen = false;
+  isOperatorDayView = this.initialCalendarView === 'operatorDay';
   isLoading = true;
   calendarMessage = '';
   events: EventInput[] = [];
@@ -124,10 +135,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private serviceDescriptionByName = new Map<string, string>();
   private visibleRangeStart: Date | null = null;
   private visibleRangeEnd: Date | null = null;
+  private operatorDayDate = this.startOfDay(this.initialCalendarDate);
+  private operatorDayAnchorDate = this.startOfDay(this.initialCalendarDate);
 
   calendarOptions: CalendarOptions = {
     plugins: [timeGridPlugin, interactionPlugin],
-    initialView: this.getResponsiveCalendarView(),
+    initialView: this.initialCalendarView,
+    initialDate: this.formatDateForInput(this.initialCalendarDate),
+    views: this.getOperatorDayViewsOption(),
     locale: itLocale,
     firstDay: 1,
     allDaySlot: false,
@@ -155,6 +170,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     dateClick: this.handleDateClick.bind(this),
     eventClick: this.handleEventClick.bind(this),
     eventContent: this.renderAppointmentEvent.bind(this),
+    dayHeaderContent: this.renderDayHeader.bind(this),
     eventOverlap: false,
     slotEventOverlap: false,
     eventMinHeight: 0,
@@ -184,15 +200,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   ngOnInit(): void {
     this.syncCalendarResponsiveMode();
-    this.calendarDatePickerValue = this.formatDateForInput(new Date());
-    this.syncCalendarPickerMonth(new Date());
+    this.calendarDatePickerValue = this.formatDateForInput(this.initialCalendarDate);
+    this.syncCalendarPickerMonth(this.initialCalendarDate);
 
     forkJoin({
       operatori: this.utentiService.getOperatori(),
       clienti: this.utentiService.getClienti()
     }).subscribe({
       next: ({ operatori, clienti }) => {
-        this.operatori = operatori;
+        this.operatori = this.sortOperatorsById(operatori);
         this.clienti = clienti;
         const savedOperator = localStorage.getItem('gestionale_selected_operator');
         if (savedOperator && operatori.some(o => o.idUtente === Number(savedOperator))) {
@@ -200,6 +216,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         } else {
           this.selectedOperator = operatori[0]?.idUtente ?? null;
         }
+        this.syncOperatorDaySelectionWithOperators();
+        this.updateOperatorDayViewDuration();
         this.cdr.detectChanges();
         this.loadAppointments();
       },
@@ -343,15 +361,77 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.loadAppointments();
   }
 
+  onOperatorOptionClick(operatore: Utente): void {
+    if (this.suppressNextOperatorClick) {
+      this.suppressNextOperatorClick = false;
+      return;
+    }
+
+    if (this.isOperatorDayView) {
+      this.toggleOperatorDayVisibility(operatore.idUtente);
+      return;
+    }
+
+    this.selectOperator(operatore.idUtente);
+  }
+
+  toggleOperatorDayVisibility(operatorId: number): void {
+    if (!this.isOperatorDayView) {
+      return;
+    }
+
+    const nextSelection = new Set(this.selectedOperatorDayIds);
+
+    if (nextSelection.has(operatorId)) {
+      if (nextSelection.size <= 1) {
+        this.showCalendarMessage('Deve rimanere visibile almeno un operatore.');
+        return;
+      }
+
+      nextSelection.delete(operatorId);
+    } else {
+      nextSelection.add(operatorId);
+    }
+
+    this.selectedOperatorDayIds = nextSelection;
+    this.persistOperatorDaySelection();
+    this.updateOperatorDayViewDuration();
+
+    const calendarApi = this.calendarComponent?.getApi();
+    if (calendarApi) {
+      calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    }
+
+    this.loadAppointments();
+  }
+
   toggleOperatorDropdown(): void {
-    if (this.operatori.length === 0) {
+    if (this.isOperatorDropdownDisabled) {
       return;
     }
 
     this.isOperatorDropdownOpen = !this.isOperatorDropdownOpen;
   }
 
+  get isOperatorDropdownDisabled(): boolean {
+    return this.operatori.length === 0;
+  }
+
   get selectedOperatorLabel(): string {
+    if (this.isOperatorDayView) {
+      const visibleCount = this.getOperatorDayColumnOperators().length;
+
+      if (visibleCount === this.operatori.length) {
+        return 'Tutti';
+      }
+
+      if (visibleCount === 1) {
+        return this.getOperatorLabel(this.getOperatorDayColumnOperators()[0].idUtente);
+      }
+
+      return `${visibleCount} operatori`;
+    }
+
     const operatore = this.operatori.find((item) => item.idUtente === this.selectedOperator);
     return operatore ? `${operatore.nome} ${operatore.cognome}` : 'Seleziona operatore';
   }
@@ -360,7 +440,81 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return this.operatori.filter((operatore) => operatore.idUtente !== this.selectedOperator);
   }
 
+  isOperatorVisibleInDay(operatorId: number): boolean {
+    return this.selectedOperatorDayIds.has(operatorId);
+  }
+
+  get operatorDropdownItems(): Utente[] {
+    return this.isOperatorDayView ? this.getOrderedOperatorDayOperators() : this.operatori;
+  }
+
+  onOperatorDragStart(event: DragEvent, operatore: Utente): void {
+    if (!this.isOperatorDayView) {
+      return;
+    }
+
+    this.draggedOperatorDayId = operatore.idUtente;
+    event.dataTransfer?.setData('text/plain', String(operatore.idUtente));
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  onOperatorDragOver(event: DragEvent): void {
+    if (!this.isOperatorDayView || this.draggedOperatorDayId === null) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onOperatorDrop(event: DragEvent, targetOperator: Utente): void {
+    if (!this.isOperatorDayView || this.draggedOperatorDayId === null) {
+      return;
+    }
+
+    event.preventDefault();
+    const draggedId = this.draggedOperatorDayId;
+    this.draggedOperatorDayId = null;
+
+    if (draggedId === targetOperator.idUtente) {
+      this.suppressOperatorClickAfterDrag();
+      return;
+    }
+
+    const nextOrder = this.getOrderedOperatorDayOperators()
+      .map((operatore) => operatore.idUtente)
+      .filter((operatorId) => operatorId !== draggedId);
+    const targetIndex = nextOrder.indexOf(targetOperator.idUtente);
+    nextOrder.splice(targetIndex >= 0 ? targetIndex : nextOrder.length, 0, draggedId);
+    this.operatorDayOrderIds = nextOrder;
+    this.persistOperatorDayOrder();
+    this.updateOperatorDayViewDuration();
+
+    const calendarApi = this.calendarComponent?.getApi();
+    if (calendarApi) {
+      calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    }
+
+    this.rebuildCalendarEvents();
+    this.suppressOperatorClickAfterDrag();
+    this.forceViewRefresh(true);
+  }
+
+  onOperatorDragEnd(): void {
+    this.draggedOperatorDayId = null;
+    this.suppressOperatorClickAfterDrag();
+  }
+
   private loadAppointments(): void {
+    if (this.isOperatorDayView) {
+      this.loadAllOperatorAppointments();
+      return;
+    }
+
     if (!this.selectedOperator) {
       this.events = [];
       this.loadedAppointments = [];
@@ -420,9 +574,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   private handleDateClick(arg: any): void {
-    const clickedDate = arg.date instanceof Date ? arg.date : new Date(arg.date);
+    const syntheticClickedDate = arg.date instanceof Date ? arg.date : new Date(arg.date);
+    const targetOperator = this.isOperatorDayView
+      ? this.getOperatorFromSyntheticDate(syntheticClickedDate)?.idUtente ?? null
+      : this.selectedOperator;
+    const clickedDate = this.isOperatorDayView
+      ? this.mapSyntheticDateToOperatorDay(syntheticClickedDate)
+      : syntheticClickedDate;
 
-    if (!this.selectedOperator) {
+    if (!targetOperator) {
       this.showCalendarMessage('Seleziona un operatore prima di inserire un appuntamento.');
       this.cdr.detectChanges();
       return;
@@ -437,8 +597,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     this.router.navigate(['/gestionale/prenotazione'], {
       queryParams: {
-        data: arg.dateStr,
-        operatore: this.selectedOperator,
+        data: this.toLocalDateTimeInput(clickedDate.toISOString()),
+        operatore: targetOperator,
         gestionale: 1,
         ritorno: '/gestionale/appuntamenti'
       }
@@ -447,7 +607,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   private handleEventClick(arg: any): void {
     if (arg.event?.display === 'background') {
-      const startDate = arg.event.start instanceof Date ? arg.event.start : new Date(arg.event.start);
+      const eventStart = arg.event.start instanceof Date ? arg.event.start : new Date(arg.event.start);
+      const startDate = this.isOperatorDayView ? this.mapSyntheticDateToOperatorDay(eventStart) : eventStart;
       this.showCalendarMessage(this.getInvalidSlotMessage(startDate));
       this.cdr.detectChanges();
       return;
@@ -464,7 +625,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const isDeleteClick = Boolean(clickedElement?.closest('.appointment-icon-btn.delete'));
 
     if (isEditClick) {
-      if (this.canUserManageAppointment(appointment) && this.isUntilDayBefore(appointment.dataOraInizio)) {
+      if (this.canModifyAppointment(appointment)) {
         this.openAppointmentDetail(appointment, true);
       }
       return;
@@ -480,14 +641,31 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.openAppointmentDetail(appointment);
   }
 
-  private handleDatesSet(arg: { start: Date; end: Date }): void {
+  private handleDatesSet(arg: { start: Date; end: Date; view?: { type?: string; title?: string } }): void {
+    const nextIsOperatorDayView = arg.view?.type === 'operatorDay';
+    const changedOperatorMode = this.isOperatorDayView !== nextIsOperatorDayView;
+    this.isOperatorDayView = nextIsOperatorDayView;
+
+    if (this.isOperatorDayView) {
+      this.setOperatorDayDate(arg.start);
+    }
+
     this.visibleRangeStart = arg.start;
     this.visibleRangeEnd = arg.end;
     this.syncDatePickerValue(arg.start);
-    this.syncCalendarTitleState();
+    this.persistCalendarState(arg);
+    this.syncCalendarTitleState(arg.view?.title);
     this.updateCalendarPickerPosition();
-    this.refreshCalendarEvents();
-    this.scrollCalendarToCurrentTimeIfNeeded(arg.start, arg.end);
+
+    if (changedOperatorMode) {
+      this.loadAppointments();
+    } else {
+      this.refreshCalendarEvents();
+    }
+
+    const scrollRangeStart = this.isOperatorDayView ? this.operatorDayDate : arg.start;
+    const scrollRangeEnd = this.isOperatorDayView ? this.addDays(this.operatorDayDate, 1) : arg.end;
+    this.scrollCalendarToCurrentTimeIfNeeded(scrollRangeStart, scrollRangeEnd);
   }
 
   toggleCalendarPicker(): void {
@@ -547,9 +725,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     const calendarApi = this.calendarComponent.getApi();
     const value = this.calendarDatePickerValue;
-    calendarApi.gotoDate(value);
 
-    if (this.isMobileCalendar) {
+    if (this.isOperatorDayView) {
+      this.setOperatorDayDate(day.date);
+      calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    } else {
+      calendarApi.gotoDate(value);
+    }
+
+    if (this.isMobileCalendar && !this.isOperatorDayView) {
       calendarApi.changeView('timeGridDay', value);
     }
 
@@ -648,11 +832,37 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.closeEditDatePicker();
   }
 
-  private mapAppointmentToEvent(appointment: Appuntamento): EventInput {
+  private mapAppointmentToEvent(appointment: Appuntamento): EventInput | null {
     const isPermission = this.isPermissionAppointment(appointment);
     const normalizedStart = this.normalizeDateTimeForCalendar(appointment.dataOraInizio);
     const normalizedEnd = this.normalizeDateTimeForCalendar(appointment.dataOraFine);
-    const eventEnd = this.getCalendarEventEnd(normalizedStart, normalizedEnd);
+    const actualStart = new Date(normalizedStart);
+    const actualEnd = new Date(normalizedEnd);
+
+    if (Number.isNaN(actualStart.getTime()) || Number.isNaN(actualEnd.getTime())) {
+      return null;
+    }
+
+    let eventStart = normalizedStart;
+    let eventEnd = this.getCalendarEventEnd(normalizedStart, normalizedEnd);
+
+    if (this.isOperatorDayView) {
+      if (!this.isSameLocalDay(actualStart, this.operatorDayDate)) {
+        return null;
+      }
+
+      const operatorColumnDate = this.getOperatorDayDateForOperator(appointment.idOperatore);
+
+      if (!operatorColumnDate) {
+        return null;
+      }
+
+      const syntheticStart = this.moveDateKeepingTime(actualStart, operatorColumnDate);
+      const syntheticEnd = this.moveDateKeepingTime(actualEnd, operatorColumnDate);
+      eventStart = this.toLocalDateTimeInput(syntheticStart.toISOString());
+      eventEnd = this.getCalendarEventEnd(eventStart, this.toLocalDateTimeInput(syntheticEnd.toISOString()));
+    }
+
     const serviceName = isPermission ? '' : this.getAppointmentServiceLabel(appointment);
     const normalizedServiceName = serviceName.trim().toLowerCase();
     const displayTitle = isPermission ? 'Permesso' : (serviceName || 'Servizio prenotato');
@@ -668,7 +878,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return {
       id: String(appointment.idAppuntamento),
       title: displayTitle,
-      start: normalizedStart,
+      start: eventStart,
       end: eventEnd,
       classNames,
       extendedProps: {
@@ -677,19 +887,21 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         actualStart: normalizedStart,
         actualEnd: normalizedEnd,
         canManage: this.canUserManageAppointment(appointment),
-        canModify: this.isUntilDayBefore(appointment.dataOraInizio),
+        canModify: this.canModifyAppointment(appointment),
         canDelete: this.canUserManageAppointment(appointment),
         isVisible: true,
         displayTitle,
         serviceName,
         serviceDescription: this.serviceDescriptionByName.get(normalizedServiceName) || '',
-        operatorName: this.selectedOperatorLabel
+        operatorName: this.getOperatorLabel(appointment.idOperatore)
       }
     };
   }
 
   private rebuildCalendarEvents(): void {
-    this.events = this.loadedAppointments.map((appointment) => this.mapAppointmentToEvent(appointment));
+    this.events = this.loadedAppointments
+      .map((appointment) => this.mapAppointmentToEvent(appointment))
+      .filter((event): event is EventInput => Boolean(event));
     this.refreshCalendarEvents();
   }
 
@@ -742,7 +954,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     if (startInEditMode) {
       if (!this.canModifySelectedAppointment) {
-        this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+        this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       } else {
         this.isEditingAppointment = true;
       }
@@ -800,7 +1012,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       return;
     }
 
@@ -851,6 +1063,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.forceViewRefresh();
   }
 
+  onEditTimeChange(): void {
+    this.applyEditStartParts();
+  }
+
   selectEditService(service: Servizio): void {
     if (!this.canEditServiceInCurrentSlot(service)) {
       return;
@@ -894,7 +1110,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.closeEditServicesPicker();
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       return;
     }
 
@@ -902,6 +1118,11 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     if (!range) {
       this.appointmentActionError = 'Seleziona orario e servizio validi.';
+      return;
+    }
+
+    if (!this.isEditedRangeInFuture(range.start)) {
+      this.appointmentActionError = "Non puoi spostare un appuntamento in un orario gia passato.";
       return;
     }
 
@@ -948,6 +1169,62 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         this.isAppointmentActionLoading = false;
         this.appointmentActionError = err?.error?.message || 'Modifica non riuscita.';
         this.forceViewRefresh();
+      }
+    });
+  }
+
+  private loadServiceDetailsForOperators(operatorIds: number[]): void {
+    if (operatorIds.length === 0) {
+      this.serviceDescriptionByName.clear();
+      return;
+    }
+
+    forkJoin(operatorIds.map((operatorId) => this.serviziService.getServiziPrenotabiliByOperatore(operatorId))).subscribe({
+      next: (servicesByOperator) => {
+        this.serviceDescriptionByName = new Map(
+          servicesByOperator.flat().map((service) => [
+            (service.nome || '').trim().toLowerCase(),
+            (service.descrizione || '').trim()
+          ])
+        );
+        this.rebuildCalendarEvents();
+      },
+      error: () => {
+        this.serviceDescriptionByName.clear();
+      }
+    });
+  }
+
+  private loadAllOperatorAppointments(): void {
+    const visibleOperators = this.getOperatorDayColumnOperators();
+
+    if (visibleOperators.length === 0) {
+      this.events = [];
+      this.loadedAppointments = [];
+      this.refreshCalendarEvents();
+      this.isLoading = false;
+      this.showCalendarMessage('Nessun operatore disponibile.');
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isLoading = true;
+    this.clearCalendarMessage();
+    this.cdr.detectChanges();
+
+    forkJoin(visibleOperators.map((operatore) => this.appuntamentoService.getAppuntamenti(operatore.idUtente))).subscribe({
+      next: (appointmentsByOperator) => {
+        this.loadedAppointments = appointmentsByOperator.flat();
+        this.loadServiceDetailsForOperators(visibleOperators.map((operatore) => operatore.idUtente));
+        this.rebuildCalendarEvents();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Errore caricamento appuntamenti di tutti gli operatori:', error);
+        this.isLoading = false;
+        this.showCalendarMessage('Non riesco a caricare gli appuntamenti degli operatori.');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -1017,7 +1294,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   get canModifySelectedAppointment(): boolean {
-    return Boolean(this.selectedAppointment && this.isUntilDayBefore(this.selectedAppointment.dataOraInizio));
+    return Boolean(this.selectedAppointment && this.canModifyAppointment(this.selectedAppointment));
   }
 
   get canDeleteSelectedAppointment(): boolean {
@@ -1260,7 +1537,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return false;
     }
 
-    return this.isWithinOpeningHoursRange(range.start, range.end) &&
+    return this.isEditedRangeInFuture(range.start) &&
+      this.isWithinOpeningHoursRange(range.start, range.end) &&
       !this.hasOverlapForEditedRange(range.start, range.calendarHoldEnd);
   }
 
@@ -1357,8 +1635,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return false;
     }
 
+    const selectedAppointment = this.selectedAppointment;
+
     return this.loadedAppointments.some((appointment) => {
-      if (appointment.idAppuntamento === this.selectedAppointment?.idAppuntamento) {
+      if (appointment.idAppuntamento === selectedAppointment.idAppuntamento) {
+        return false;
+      }
+
+      if (appointment.idOperatore !== selectedAppointment.idOperatore) {
         return false;
       }
 
@@ -1377,6 +1661,23 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const minimumEnd = new Date(start);
     minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
     return end < minimumEnd ? minimumEnd : end;
+  }
+
+  private isEditedRangeInFuture(start: Date): boolean {
+    return !Number.isNaN(start.getTime()) && start.getTime() > Date.now();
+  }
+
+  private canModifyAppointment(appointment: Appuntamento): boolean {
+    if (!this.canUserManageAppointment(appointment)) {
+      return false;
+    }
+
+    if (appointment.stato === 'completato') {
+      return false;
+    }
+
+    const appointmentEnd = new Date(appointment.dataOraFine);
+    return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() > Date.now();
   }
 
   private isUntilDayBefore(dateString: string): boolean {
@@ -1462,6 +1763,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   private buildAvailabilityMaskEvents(): EventInput[] {
+    if (this.isOperatorDayView) {
+      return this.buildOperatorDayAvailabilityMaskEvents();
+    }
+
     if (!this.visibleRangeStart || !this.visibleRangeEnd) {
       return [];
     }
@@ -1516,6 +1821,56 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return maskEvents;
   }
 
+  private buildOperatorDayAvailabilityMaskEvents(): EventInput[] {
+    const maskEvents: EventInput[] = [];
+    const now = new Date();
+    const realDay = new Date(this.operatorDayDate);
+    const daySchedule = this.openingSchedule[realDay.getDay()];
+
+    this.getOperatorDayColumnOperators().forEach((_, index) => {
+      const syntheticDay = this.getOperatorDayDateByIndex(index);
+      const slotStart = this.withTime(syntheticDay, '07:00');
+      const slotEnd = this.withTime(syntheticDay, '22:00');
+
+      if (this.startOfDay(realDay) < this.startOfDay(now)) {
+        maskEvents.push(this.createMaskEvent(slotStart, slotEnd, ['invalid-slot-background', 'is-past-slot']));
+        return;
+      }
+
+      if (!daySchedule || daySchedule.intervals.length === 0) {
+        maskEvents.push(this.createMaskEvent(slotStart, slotEnd, ['invalid-slot-background']));
+        return;
+      }
+
+      let cursor = new Date(slotStart);
+
+      for (const interval of daySchedule.intervals) {
+        const intervalStart = this.withTime(syntheticDay, interval.start);
+        const intervalEnd = this.withTime(syntheticDay, interval.end);
+
+        if (cursor < intervalStart) {
+          maskEvents.push(this.createMaskEvent(cursor, intervalStart, ['invalid-slot-background']));
+        }
+
+        cursor = new Date(intervalEnd);
+      }
+
+      if (cursor < slotEnd) {
+        maskEvents.push(this.createMaskEvent(cursor, slotEnd, ['invalid-slot-background']));
+      }
+
+      if (this.isSameLocalDay(realDay, now)) {
+        const pastEnd = this.moveDateKeepingTime(now, syntheticDay);
+
+        if (pastEnd > slotStart) {
+          maskEvents.push(this.createMaskEvent(slotStart, pastEnd, ['invalid-slot-background', 'is-past-slot']));
+        }
+      }
+    });
+
+    return maskEvents;
+  }
+
   private createMaskEvent(start: Date, end: Date, classNames: string[]): EventInput {
     return {
       start,
@@ -1537,6 +1892,208 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const day = new Date(date);
     day.setHours(0, 0, 0, 0);
     return day;
+  }
+
+  private addDays(date: Date, days: number): Date {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  }
+
+  private isSameLocalDay(first: Date, second: Date): boolean {
+    return this.formatDateForInput(first) === this.formatDateForInput(second);
+  }
+
+  private sortOperatorsById(operators: Utente[]): Utente[] {
+    return [...operators].sort((first, second) => first.idUtente - second.idUtente);
+  }
+
+  private syncOperatorDaySelectionWithOperators(): void {
+    const operatorIds = new Set(this.operatori.map((operatore) => operatore.idUtente));
+    const savedSelection = this.getSavedOperatorDaySelection();
+    const nextSelection = new Set<number>();
+
+    if (savedSelection.length > 0) {
+      savedSelection.forEach((operatorId) => {
+        if (operatorIds.has(operatorId)) {
+          nextSelection.add(operatorId);
+        }
+      });
+    }
+
+    if (nextSelection.size === 0) {
+      this.operatori.forEach((operatore) => nextSelection.add(operatore.idUtente));
+    }
+
+    this.selectedOperatorDayIds = nextSelection;
+    this.syncOperatorDayOrderWithOperators();
+  }
+
+  private syncOperatorDayOrderWithOperators(): void {
+    const operatorIds = new Set(this.operatori.map((operatore) => operatore.idUtente));
+    const savedOrder = this.getSavedOperatorDayOrder();
+    const orderedIds = savedOrder.filter((operatorId) => operatorIds.has(operatorId));
+    const missingIds = this.operatori
+      .map((operatore) => operatore.idUtente)
+      .filter((operatorId) => !orderedIds.includes(operatorId))
+      .sort((first, second) => first - second);
+
+    this.operatorDayOrderIds = [...orderedIds, ...missingIds];
+  }
+
+  private getSavedOperatorDaySelection(): number[] {
+    if (typeof localStorage === 'undefined') {
+      return [];
+    }
+
+    const rawSelection = localStorage.getItem(this.operatorDaySelectionStorageKey);
+
+    if (!rawSelection) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawSelection);
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+    } catch {
+      return [];
+    }
+  }
+
+  private persistOperatorDaySelection(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    if (this.selectedOperatorDayIds.size === this.operatori.length) {
+      localStorage.removeItem(this.operatorDaySelectionStorageKey);
+      return;
+    }
+
+    localStorage.setItem(
+      this.operatorDaySelectionStorageKey,
+      JSON.stringify([...this.selectedOperatorDayIds])
+    );
+  }
+
+  private getSavedOperatorDayOrder(): number[] {
+    if (typeof localStorage === 'undefined') {
+      return [];
+    }
+
+    const rawOrder = localStorage.getItem(this.operatorDayOrderStorageKey);
+
+    if (!rawOrder) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawOrder);
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+    } catch {
+      return [];
+    }
+  }
+
+  private persistOperatorDayOrder(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    const defaultOrder = this.sortOperatorsById(this.operatori).map((operatore) => operatore.idUtente);
+    const isDefaultOrder =
+      this.operatorDayOrderIds.length === defaultOrder.length &&
+      this.operatorDayOrderIds.every((operatorId, index) => operatorId === defaultOrder[index]);
+
+    if (isDefaultOrder) {
+      localStorage.removeItem(this.operatorDayOrderStorageKey);
+      return;
+    }
+
+    localStorage.setItem(this.operatorDayOrderStorageKey, JSON.stringify(this.operatorDayOrderIds));
+  }
+
+  private setOperatorDayDate(date: Date): void {
+    const day = this.startOfDay(date);
+    this.operatorDayDate = day;
+    this.operatorDayAnchorDate = new Date(day);
+  }
+
+  private getOperatorDayColumnOperators(): Utente[] {
+    const visibleOperators = this.getOrderedOperatorDayOperators()
+      .filter((operatore) => this.selectedOperatorDayIds.has(operatore.idUtente));
+    return visibleOperators.length > 0 ? visibleOperators : this.getOrderedOperatorDayOperators();
+  }
+
+  private getOrderedOperatorDayOperators(): Utente[] {
+    const operatorsById = new Map(this.operatori.map((operatore) => [operatore.idUtente, operatore]));
+    const orderedOperators = this.operatorDayOrderIds
+      .map((operatorId) => operatorsById.get(operatorId))
+      .filter((operatore): operatore is Utente => Boolean(operatore));
+    const orderedIds = new Set(orderedOperators.map((operatore) => operatore.idUtente));
+    const missingOperators = this.sortOperatorsById(
+      this.operatori.filter((operatore) => !orderedIds.has(operatore.idUtente))
+    );
+
+    return [...orderedOperators, ...missingOperators];
+  }
+
+  private getOperatorDayDateByIndex(index: number): Date {
+    return this.addDays(this.operatorDayAnchorDate, index);
+  }
+
+  private getOperatorDayDateForOperator(operatorId: number): Date | null {
+    const index = this.getOperatorDayColumnOperators().findIndex((operatore) => operatore.idUtente === operatorId);
+    return index >= 0 ? this.getOperatorDayDateByIndex(index) : null;
+  }
+
+  private getOperatorFromSyntheticDate(date: Date): Utente | null {
+    const columnIndex = Math.round(
+      (this.startOfDay(date).getTime() - this.operatorDayAnchorDate.getTime()) / 86400000
+    );
+    return this.getOperatorDayColumnOperators()[columnIndex] ?? null;
+  }
+
+  private mapSyntheticDateToOperatorDay(date: Date): Date {
+    return this.moveDateKeepingTime(date, this.operatorDayDate);
+  }
+
+  private moveDateKeepingTime(source: Date, targetDay: Date): Date {
+    const moved = new Date(targetDay);
+    moved.setHours(source.getHours(), source.getMinutes(), source.getSeconds(), source.getMilliseconds());
+    return moved;
+  }
+
+  private getOperatorLabel(operatorId: number): string {
+    const operatore = this.operatori.find((item) => item.idUtente === operatorId);
+    return operatore ? `${operatore.nome} ${operatore.cognome}` : `Operatore #${operatorId}`;
+  }
+
+  private suppressOperatorClickAfterDrag(): void {
+    this.suppressNextOperatorClick = true;
+    if (typeof window === 'undefined') {
+      this.suppressNextOperatorClick = false;
+      return;
+    }
+
+    window.setTimeout(() => {
+      this.suppressNextOperatorClick = false;
+      this.cdr.detectChanges();
+    }, 120);
   }
 
   private refreshCalendarEvents(): void {
@@ -1604,7 +2161,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }
 
     this.isMobileCalendar = nextIsMobile;
-    const nextView = this.getResponsiveCalendarView();
+    const nextView = this.isOperatorDayView ? 'operatorDay' : this.getResponsiveCalendarView();
     const nextToolbarRight = this.getResponsiveToolbarRight();
 
     this.calendarOptions = {
@@ -1631,16 +2188,96 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.cdr.detectChanges();
   }
 
+  private getInitialCalendarView(): 'timeGridWeek' | 'timeGridDay' | 'operatorDay' {
+    const savedView = this.getSavedCalendarView();
+    return savedView ?? this.getResponsiveCalendarView();
+  }
+
+  private getSavedCalendarView(): 'timeGridWeek' | 'timeGridDay' | 'operatorDay' | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    const savedView = localStorage.getItem(this.calendarViewStorageKey);
+
+    if (savedView === 'operatorDay' || savedView === 'timeGridWeek' || savedView === 'timeGridDay') {
+      return savedView;
+    }
+
+    return null;
+  }
+
+  private getSavedCalendarDate(): Date | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    const savedDate = localStorage.getItem(this.calendarDateStorageKey);
+
+    if (!savedDate) {
+      return null;
+    }
+
+    const date = this.parseInputDate(savedDate);
+    return date && !Number.isNaN(date.getTime()) ? date : null;
+  }
+
+  private persistCalendarState(arg: { start: Date; view?: { type?: string } }): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    const viewType = arg.view?.type;
+    if (viewType === 'operatorDay' || viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+      localStorage.setItem(this.calendarViewStorageKey, viewType);
+    }
+
+    const activeDate = this.isOperatorDayView
+      ? this.operatorDayDate
+      : (this.calendarComponent?.getApi().getDate() ?? arg.start);
+    localStorage.setItem(this.calendarDateStorageKey, this.formatDateForInput(activeDate));
+  }
+
   private getResponsiveCalendarView(): 'timeGridWeek' | 'timeGridDay' {
     return this.isMobileCalendar ? 'timeGridDay' : 'timeGridWeek';
   }
 
   private getResponsiveToolbarRight(): string {
-    return this.isMobileCalendar ? '' : 'timeGridWeek,timeGridDay';
+    return this.isMobileCalendar ? 'operatorDay' : 'timeGridWeek,operatorDay';
+  }
+
+  private getOperatorDayViewsOption(): CalendarOptions['views'] {
+    return {
+      operatorDay: {
+        type: 'timeGrid',
+        visibleRange: () => ({
+          start: this.operatorDayAnchorDate,
+          end: this.addDays(this.operatorDayAnchorDate, Math.max(1, this.getOperatorDayColumnOperators().length))
+        }),
+        dateIncrement: { days: 1 },
+        buttonText: 'Giorno',
+        titleFormat: { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }
+      }
+    };
+  }
+
+  private updateOperatorDayViewDuration(): void {
+    const views = this.getOperatorDayViewsOption();
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      views
+    };
+
+    const calendarApi = this.calendarComponent?.getApi();
+    if (calendarApi) {
+      calendarApi.setOption('views', views);
+    }
   }
 
   private syncDatePickerValue(fallbackDate: Date): void {
-    const activeDate = this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate;
+    const activeDate = this.isOperatorDayView
+      ? this.operatorDayDate
+      : (this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate);
     this.calendarDatePickerValue = this.formatDateForInput(activeDate);
     this.syncCalendarPickerMonth(activeDate);
   }
@@ -1764,7 +2401,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return days;
   }
 
-  private syncCalendarTitleState(): void {
+  private syncCalendarTitleState(fullCalendarTitle?: string): void {
     if (typeof document === 'undefined') {
       return;
     }
@@ -1775,7 +2412,24 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return;
     }
 
+    if (this.isOperatorDayView) {
+      title.textContent = this.formatOperatorDayTitle(this.operatorDayDate);
+    } else if (fullCalendarTitle) {
+      title.textContent = fullCalendarTitle;
+    }
+
     title.classList.toggle('is-picker-open', this.calendarPickerOpen && !this.calendarPickerClosing);
+  }
+
+  private formatOperatorDayTitle(date: Date): string {
+    const label = new Intl.DateTimeFormat('it-IT', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   private updateCalendarPickerPosition(): void {
@@ -1804,6 +2458,19 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       top: `${top}px`,
       left: `${left}px`,
       width: `${panelWidth}px`
+    };
+  }
+
+  private renderDayHeader(arg: { date: Date; text: string; view?: { type?: string } }): { html: string } | string {
+    if (arg.view?.type !== 'operatorDay') {
+      return arg.text;
+    }
+
+    const operatore = this.getOperatorFromSyntheticDate(arg.date);
+    const label = operatore ? `${operatore.nome} ${operatore.cognome}` : '';
+
+    return {
+      html: `<span class="operator-day-header">${this.escapeHtml(label)}</span>`
     };
   }
 

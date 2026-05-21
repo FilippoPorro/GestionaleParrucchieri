@@ -304,10 +304,56 @@
   cursor: pointer;
 }
 
+.management-appointments-section .booking-dropdown-list li.multi-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.management-appointments-section .booking-dropdown-list li.multi-choice.is-dragging {
+  opacity: 0.58;
+}
+
 .management-appointments-section .booking-dropdown-list li:hover,
 .management-appointments-section .booking-dropdown-list li.active {
   border-color: rgba(212, 176, 106, 0.32);
   background: rgba(212, 176, 106, 0.12);
+}
+
+.management-appointments-section .booking-dropdown-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  border: 1px solid rgba(212, 176, 106, 0.34);
+  background: rgba(0, 0, 0, 0.35);
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  font-size: 13px;
+}
+
+.management-appointments-section .booking-dropdown-drag {
+  width: 18px;
+  height: 22px;
+  color: rgba(242, 209, 139, 0.62);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+  cursor: grab;
+  font-size: 16px;
+}
+
+.management-appointments-section .booking-dropdown-drag:active {
+  cursor: grabbing;
+}
+
+.management-appointments-section .booking-dropdown-check.checked {
+  border-color: rgba(242, 209, 139, 0.66);
+  background: rgba(212, 176, 106, 0.22);
+  color: #f2d18b;
 }
 
 .management-appointments-section .booking-dropdown-empty {
@@ -512,6 +558,16 @@
   font-weight: 700;
 }
 
+:host ::ng-deep .operator-day-header {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 :host ::ng-deep .fc-timegrid-col:not(.fc-timegrid-axis),
 :host ::ng-deep .fc-timegrid-slot-label,
 :host ::ng-deep .fc-timegrid-axis {
@@ -641,7 +697,7 @@
 
 .appointment-detail-modal {
   z-index: 80;
-  background: rgba(5, 4, 3, 0.62) !important;
+  background: rgba(0, 0, 0, 0.66) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -650,15 +706,38 @@
 .appointment-detail-modal.is-closing .appointment-detail-card,
 .appointment-detail-card.tone-my,
 .appointment-detail-card.tone-past {
-  border-radius: 8px !important;
+  width: min(860px, calc(100% - 32px)) !important;
+  max-height: min(680px, calc(100vh - 40px)) !important;
+  border-radius: 26px !important;
   border-color: rgba(212, 176, 106, 0.2) !important;
-  background: #18120d !important;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.44) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.9) !important;
+  box-shadow: 0 34px 86px rgba(0, 0, 0, 0.56) !important;
+}
+
+.appointment-detail-body--grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.appointment-detail-row {
+  min-height: 74px;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.34) !important;
+}
+
+.appointment-detail-row--wide {
+  grid-column: 1 / -1;
+  min-height: 68px;
 }
 
 .appointment-detail-close,
 .appointment-detail-row {
-  border-radius: 8px !important;
+  border-radius: 18px !important;
 }
 
 .appointment-confirm-modal {

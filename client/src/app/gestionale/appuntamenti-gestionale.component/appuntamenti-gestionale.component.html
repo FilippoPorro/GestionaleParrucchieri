@@ -41,11 +41,11 @@
               [class.open]="isOperatorDropdownOpen"
               [attr.aria-expanded]="isOperatorDropdownOpen"
               aria-haspopup="listbox"
-              [disabled]="operatori.length === 0"
+              [disabled]="isOperatorDropdownDisabled"
               (click)="toggleOperatorDropdown()"
             >
               <span class="booking-dropdown-trigger-text">
-                <span class="booking-trigger-kicker">Selezionato</span>
+                <span class="booking-trigger-kicker">{{ isOperatorDayView ? 'Vista giorno' : 'Selezionato' }}</span>
                 <span class="booking-trigger-value">{{ selectedOperatorLabel }}</span>
               </span>
               <span class="booking-dropdown-chevron" aria-hidden="true"></span>
@@ -55,11 +55,24 @@
               <div class="booking-dropdown-panel-inner">
                 <ul class="booking-dropdown-list" role="listbox" aria-label="Seleziona operatore">
                   <li
-                    *ngFor="let operatore of operatori"
+                    *ngFor="let operatore of operatorDropdownItems"
                     role="option"
-                    [class.active]="selectedOperator === operatore.idUtente"
-                    (click)="selectOperator(operatore.idUtente)"
+                    [class.active]="isOperatorDayView ? isOperatorVisibleInDay(operatore.idUtente) : selectedOperator === operatore.idUtente"
+                    [class.multi-choice]="isOperatorDayView"
+                    [class.is-dragging]="draggedOperatorDayId === operatore.idUtente"
+                    [attr.draggable]="isOperatorDayView ? 'true' : null"
+                    (dragstart)="onOperatorDragStart($event, operatore)"
+                    (dragover)="onOperatorDragOver($event)"
+                    (drop)="onOperatorDrop($event, operatore)"
+                    (dragend)="onOperatorDragEnd()"
+                    (click)="onOperatorOptionClick(operatore)"
                   >
+                    <span *ngIf="isOperatorDayView" class="booking-dropdown-drag" title="Trascina per ordinare">
+                      <i class="bi bi-grip-vertical"></i>
+                    </span>
+                    <span *ngIf="isOperatorDayView" class="booking-dropdown-check" [class.checked]="isOperatorVisibleInDay(operatore.idUtente)">
+                      <i class="bi bi-check-lg"></i>
+                    </span>
                     {{ operatore.nome }} {{ operatore.cognome }}
                   </li>
                   <li *ngIf="operatori.length === 0" class="booking-dropdown-empty">
@@ -195,7 +208,7 @@
     </div>
 
     <div class="appointment-detail-body appointment-detail-body--grid" *ngIf="!isEditingAppointment">
-      <div class="appointment-detail-row appointment-detail-row--wide">
+      <div class="appointment-detail-row">
         <span class="appointment-detail-label">Servizio</span>
         <strong class="appointment-detail-value">{{ getSelectedAppointmentServiceLabel() }}</strong>
       </div>
@@ -230,7 +243,7 @@
         <strong class="appointment-detail-value">{{ selectedAppointment.stato || 'prenotato' }}</strong>
       </div>
 
-      <div class="appointment-detail-row appointment-detail-row--wide">
+      <div class="appointment-detail-row">
         <span class="appointment-detail-label">Note</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota inserita' }}</strong>
       </div>
@@ -306,9 +319,14 @@
 
         <label class="appointment-detail-field">
           <span>Ora inizio</span>
-          <div class="appointment-field-control with-icon is-readonly">
+          <div class="appointment-field-control with-icon">
             <i class="bi bi-clock"></i>
-            <input type="text" [value]="editStartTime || '--:--'" readonly />
+            <input
+              type="time"
+              [(ngModel)]="editStartTime"
+              [disabled]="isEditFormLoading"
+              (ngModelChange)="onEditTimeChange()"
+            />
           </div>
         </label>
       </div>
