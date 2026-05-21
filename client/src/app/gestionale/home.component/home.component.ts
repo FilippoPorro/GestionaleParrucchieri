@@ -21,7 +21,8 @@ export class HomeComponent implements OnInit {
   }
   stats = [
     { label: 'Appuntamenti oggi', value: '-', trend: 'calcolo dal calendario' },
-    { label: 'Incasso giornaliero', value: '-', trend: 'pagamenti di oggi' },
+    { label: 'Incasso registrato', value: '-', trend: 'pagamenti di oggi' },
+    { label: 'Incasso previsto', value: '-', trend: 'servizi prenotati oggi' },
     { label: 'Prodotti da riordinare', value: '-', trend: 'attenzione stock' },
     { label: 'Clienti in salone', value: '-', trend: 'fascia oraria corrente' }
   ];
@@ -39,9 +40,14 @@ export class HomeComponent implements OnInit {
             trend: dashboardStats.data
           },
           {
-            label: 'Incasso giornaliero',
+            label: 'Incasso registrato',
             value: this.formatCurrency(dashboardStats.incassoGiornaliero),
             trend: 'somma pagamenti di oggi'
+          },
+          {
+            label: 'Incasso previsto',
+            value: this.formatCurrency(dashboardStats.incassoPrevistoAppuntamenti),
+            trend: 'servizi negli appuntamenti'
           },
           {
             label: 'Prodotti in riordino',

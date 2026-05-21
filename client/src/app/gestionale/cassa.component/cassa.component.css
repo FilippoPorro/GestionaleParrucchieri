@@ -191,7 +191,7 @@
 
 .cash-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 18px;
 }
 
@@ -230,6 +230,75 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
   gap: 18px;
   margin-top: 18px;
+}
+
+.cash-appointments {
+  margin-top: 18px;
+}
+
+.cash-appointments-empty {
+  padding: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(248, 241, 231, 0.64);
+  text-align: center;
+}
+
+.cash-appointments-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cash-appointment-row {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(212, 176, 106, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.cash-appointment-row.is-selected {
+  border-color: rgba(242, 209, 139, 0.58);
+  background: rgba(242, 209, 139, 0.08);
+}
+
+.cash-appointment-row__time,
+.cash-appointment-row__main {
+  display: grid;
+  gap: 4px;
+}
+
+.cash-appointment-row__time strong,
+.cash-appointment-row__main strong,
+.cash-appointment-row__total strong {
+  color: #fff7e8;
+}
+
+.cash-appointment-row__time span,
+.cash-appointment-row__main span,
+.cash-appointment-row__main small {
+  color: rgba(248, 241, 231, 0.62);
+}
+
+.cash-appointment-row__main {
+  min-width: 0;
+}
+
+.cash-appointment-row__main strong,
+.cash-appointment-row__main span,
+.cash-appointment-row__main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-appointment-row__total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .cash-card {
@@ -459,8 +528,14 @@
 @media (max-width: 640px) {
   .management-hero,
   .management-hero__stats,
-  .cash-actions {
+  .cash-actions,
+  .cash-appointment-row__total {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cash-appointment-row {
+    grid-template-columns: 1fr;
   }
 
   .management-hero,

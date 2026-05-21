@@ -749,12 +749,12 @@
 .booking-page.is-management-booking {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(16, 12, 9, 0.3), rgba(16, 12, 9, 0.55)),
+    linear-gradient(180deg, rgba(16, 12, 9, 0.0), rgba(16, 12, 9, 0.05)),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
 }
 
 .booking-page.is-management-booking::before {
-  background: rgba(0, 0, 0, 0.25) !important;
+  background: transparent !important;
 }
 
 .booking-page.is-management-booking .appointments-section {
@@ -767,9 +767,9 @@
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
-    rgba(16, 12, 9, 0.54) !important;
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.05), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    rgba(16, 12, 9, 0.08) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 28px 56px rgba(0, 0, 0, 0.38) !important;
@@ -1159,4 +1159,155 @@
 }
 .booking-form-card .form-grid > .form-group:nth-child(-n+2) label {
   margin-top: 0 !important;
+}
+
+/* Prenotazione gestionale: stile allineato ad Appuntamenti gestionale */
+.booking-page.is-management-booking {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7), rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78)),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
+}
+
+.booking-page.is-management-booking::before,
+.booking-page.is-management-booking .appointments-overlay {
+  background: transparent !important;
+}
+
+.booking-page.is-management-booking .booking-form-card,
+.booking-page.is-management-booking .appointments-select-wrapper,
+.booking-page.is-management-booking .booking-summary-inline,
+.booking-page.is-management-booking .booking-summary-item,
+.booking-page.is-management-booking .booking-form-grid--management,
+.booking-page.is-management-booking .booking-dropdown-trigger,
+.booking-page.is-management-booking .booking-dropdown-panel,
+.booking-page.is-management-booking .booking-dropdown-list li,
+.booking-page.is-management-booking .booking-readonly-control,
+.booking-page.is-management-booking .form-group input,
+.booking-page.is-management-booking .booking-custom-datepicker-trigger,
+.booking-page.is-management-booking .booking-custom-datepicker-panel,
+.booking-page.is-management-booking .custom-datepicker-nav-btn,
+.booking-page.is-management-booking .custom-datepicker-day,
+.booking-page.is-management-booking .booking-primary-action,
+.booking-page.is-management-booking .booking-secondary-action,
+.booking-page.is-management-booking .booking-loading-card,
+.booking-page.is-management-booking .appointments-alert {
+  border-radius: 8px !important;
+}
+
+.booking-page.is-management-booking .booking-form-card {
+  border-color: rgba(212, 176, 106, 0.14) !important;
+  background: rgba(5, 5, 5, 0.5) !important;
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.22) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.booking-page.is-management-booking .booking-form-card::before,
+.booking-page.is-management-booking .appointments-select-wrapper::before {
+  display: none !important;
+}
+
+.booking-page.is-management-booking .appointments-select-wrapper,
+.booking-page.is-management-booking .booking-summary-inline,
+.booking-page.is-management-booking .booking-form-grid--management {
+  border-color: rgba(212, 176, 106, 0.14) !important;
+  background: rgba(5, 5, 5, 0.34) !important;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.16) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.booking-page.is-management-booking .booking-summary-inline {
+  border-left: 1px solid rgba(212, 176, 106, 0.14) !important;
+}
+
+.booking-page.is-management-booking .booking-form-grid--management {
+  border-top: 1px solid rgba(212, 176, 106, 0.14) !important;
+}
+
+.booking-page.is-management-booking .booking-summary-item,
+.booking-page.is-management-booking .booking-dropdown-trigger,
+.booking-page.is-management-booking .booking-readonly-control,
+.booking-page.is-management-booking .form-group input,
+.booking-page.is-management-booking .booking-custom-datepicker-trigger {
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.booking-page.is-management-booking .booking-summary-item {
+  background: rgba(0, 0, 0, 0.28) !important;
+}
+
+.booking-page.is-management-booking .booking-dropdown-trigger:hover,
+.booking-page.is-management-booking .booking-dropdown-trigger.open,
+.booking-page.is-management-booking .booking-custom-datepicker-trigger:hover,
+.booking-page.is-management-booking .booking-custom-datepicker-trigger.open {
+  border-color: rgba(242, 209, 139, 0.5) !important;
+  background: rgba(0, 0, 0, 0.48) !important;
+}
+
+.booking-page.is-management-booking .booking-dropdown-panel,
+.booking-page.is-management-booking .booking-custom-datepicker-panel {
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(0, 0, 0, 0.86) !important;
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.booking-page.is-management-booking .booking-dropdown-list li,
+.booking-page.is-management-booking .custom-datepicker-day,
+.booking-page.is-management-booking .custom-datepicker-nav-btn,
+.booking-page.is-management-booking .time-selectors select {
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(0, 0, 0, 0.72) !important;
+  box-shadow: none !important;
+}
+
+.booking-page.is-management-booking .booking-dropdown-list li:hover,
+.booking-page.is-management-booking .booking-dropdown-list li.active,
+.booking-page.is-management-booking .custom-datepicker-day:hover:not(:disabled),
+.booking-page.is-management-booking .custom-datepicker-day.is-selected,
+.booking-page.is-management-booking .custom-datepicker-nav-btn:hover {
+  transform: none !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+}
+
+.booking-page.is-management-booking .booking-primary-action {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, #f2d18b, #be8640) !important;
+  color: #2b1c0f !important;
+}
+
+.booking-page.is-management-booking .booking-secondary-action {
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.booking-page.is-management-booking .booking-form-head {
+  border-bottom-color: rgba(212, 176, 106, 0.2) !important;
+}
+
+.booking-page.is-management-booking .booking-form-title,
+.booking-page.is-management-booking .booking-summary-value,
+.booking-page.is-management-booking .booking-trigger-value,
+.booking-page.is-management-booking .booking-readonly-value {
+  color: #fff8ec !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.booking-page.is-management-booking .appointments-hours-kicker,
+.booking-page.is-management-booking .booking-summary-label,
+.booking-page.is-management-booking .booking-trigger-kicker,
+.booking-page.is-management-booking .form-group label {
+  color: rgba(242, 209, 139, 0.88) !important;
+}
+
+.booking-page.is-management-booking .booking-form-subtitle,
+.booking-page.is-management-booking .booking-summary-meta {
+  color: rgba(248, 241, 231, 0.72) !important;
 }

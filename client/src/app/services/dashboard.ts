@@ -10,6 +10,7 @@ export interface DashboardStats {
   };
   appuntamentiOggi: number;
   incassoGiornaliero: number;
+  incassoPrevistoAppuntamenti: number;
   prodottiInRiordino: number;
   clientiInSalone: number;
   sogliaRiordino: number;

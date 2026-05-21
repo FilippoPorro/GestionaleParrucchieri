@@ -5,7 +5,7 @@ import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { UtentiService } from '../../services/utentiService';
 import { ServiziService } from '../../services/servizio';
 import { ProdottoService, Prodotto } from '../../services/prodotto';
-import { CassaService } from '../../services/cassaService';
+import { AppuntamentoDaIncassare, CassaService } from '../../services/cassaService';
 import { Utente } from '../../models/utente.model';
 import { Servizio } from '../../models/servizio.model';
 
@@ -32,6 +32,7 @@ export class CassaComponent implements OnInit {
   operatori: Utente[] = [];
   servizi: Servizio[] = [];
   prodotti: Prodotto[] = [];
+  appuntamentiDaIncassare: AppuntamentoDaIncassare[] = [];
 
   // Selected values for adding items
   selectedServizioId: string | null = null;
@@ -46,6 +47,7 @@ export class CassaComponent implements OnInit {
   // Checkout inputs
   selectedClienteId: number | null = null;
   selectedOperatoreId: number | null = null;
+  selectedAppuntamentoId: number | null = null;
   selectedMetodo: 'carta' | 'contanti' = 'carta';
   discount: number = 0;
 
@@ -80,6 +82,7 @@ export class CassaComponent implements OnInit {
   ngOnInit(): void {
     this.loadAllData();
     this.loadDailyStats();
+    this.loadAppuntamentiDaIncassare();
   }
 
   toggleSidenav(): void {
@@ -124,6 +127,16 @@ export class CassaComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => console.error("Errore caricamento statistiche cassa:", err)
+    });
+  }
+
+  loadAppuntamentiDaIncassare(): void {
+    this.cassaService.getAppuntamentiDaIncassare().subscribe({
+      next: (res) => {
+        this.appuntamentiDaIncassare = res.appuntamenti || [];
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error("Errore caricamento appuntamenti da incassare:", err)
     });
   }
 
@@ -255,6 +268,9 @@ export class CassaComponent implements OnInit {
 
   removeReceiptItem(index: number): void {
     this.receiptItems.splice(index, 1);
+    if (!this.receiptItems.some(item => item.tipo === 'servizio')) {
+      this.selectedAppuntamentoId = null;
+    }
     this.clearMessages();
   }
 
@@ -301,6 +317,7 @@ export class CassaComponent implements OnInit {
     this.receiptItems = [];
     this.selectedClienteId = null;
     this.selectedOperatoreId = null;
+    this.selectedAppuntamentoId = null;
     this.selectedMetodo = 'carta';
     this.discount = 0;
     this.cardHolder = '';
@@ -310,6 +327,36 @@ export class CassaComponent implements OnInit {
     this.serviceSearchQuery = '';
     this.productSearchQuery = '';
     this.clearMessages();
+  }
+
+  caricaAppuntamentoInCassa(appuntamento: AppuntamentoDaIncassare): void {
+    if (!appuntamento.servizi.length) {
+      this.errorMessage = 'Questo appuntamento non ha servizi associati da mettere in cassa.';
+      return;
+    }
+
+    this.receiptItems = appuntamento.servizi.map(servizio => ({
+      id: servizio.idServizio,
+      nome: servizio.nome,
+      tipo: 'servizio',
+      prezzoUnitario: servizio.prezzo,
+      quantita: 1
+    }));
+    this.selectedClienteId = appuntamento.idCliente;
+    this.selectedOperatoreId = appuntamento.idOperatore;
+    this.selectedAppuntamentoId = appuntamento.idAppuntamento;
+    this.discount = 0;
+    this.serviceSearchQuery = '';
+    this.productSearchQuery = '';
+    this.clearMessages();
+  }
+
+  getAppointmentServicesLabel(appuntamento: AppuntamentoDaIncassare): string {
+    if (appuntamento.servizi.length === 0) {
+      return appuntamento.note || 'Servizio prenotato';
+    }
+
+    return appuntamento.servizi.map(servizio => servizio.nome).join(', ');
   }
 
   registraPagamento(): void {
@@ -356,6 +403,7 @@ export class CassaComponent implements OnInit {
       const payload = {
         idCliente: this.selectedClienteId ? Number(this.selectedClienteId) : null,
         idOperatore: Number(this.selectedOperatoreId),
+        idAppuntamento: this.selectedAppuntamentoId,
         totale: this.total,
         metodo: this.selectedMetodo,
         prodotti: prodottiPayload
@@ -367,11 +415,13 @@ export class CassaComponent implements OnInit {
           this.showProcessingAlert = false;
           this.successMessage = `Pagamento registrato con successo! (Vendita #${res.idVendita})`;
           this.loadDailyStats();
+          this.loadAppuntamentiDaIncassare();
 
           // Clear receipt and all states immediately (pulisci tutto)
           this.receiptItems = [];
           this.selectedClienteId = null;
           this.selectedOperatoreId = null;
+          this.selectedAppuntamentoId = null;
           this.discount = 0;
           this.cardHolder = '';
           this.cardNumber = '';

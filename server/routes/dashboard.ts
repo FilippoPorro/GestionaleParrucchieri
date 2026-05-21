@@ -46,7 +46,7 @@ router.get("/stats", async (_req: Request, res: Response) => {
     ] = await Promise.all([
       db
         .from("appuntamenti")
-        .select("idAppuntamento", { count: "exact", head: true })
+        .select("idAppuntamento, stato", { count: "exact" })
         .gte("dataOraInizio", startOfDay)
         .lte("dataOraInizio", endOfDay),
       db
@@ -86,6 +86,49 @@ router.get("/stats", async (_req: Request, res: Response) => {
       0
     );
 
+    const appointmentIds = (appuntamentiResult.data || [])
+      .filter((appuntamento: any) => String(appuntamento.stato || "prenotato").toLowerCase() !== "completato")
+      .map((appuntamento: any) => Number(appuntamento.idAppuntamento))
+      .filter(Number.isFinite);
+
+    let incassoPrevistoAppuntamenti = 0;
+
+    if (appointmentIds.length > 0) {
+      const { data: relations, error: relationsError } = await db
+        .from("appuntamentiservizi")
+        .select("idAppuntamento, idServizio")
+        .in("idAppuntamento", appointmentIds);
+
+      if (relationsError) {
+        throw relationsError;
+      }
+
+      const serviceIds = Array.from(
+        new Set((relations || []).map((relation: any) => Number(relation.idServizio)).filter(Number.isFinite))
+      );
+
+      if (serviceIds.length > 0) {
+        const { data: services, error: servicesError } = await db
+          .from("servizi")
+          .select("idServizio, prezzo")
+          .in("idServizio", serviceIds);
+
+        if (servicesError) {
+          throw servicesError;
+        }
+
+        const pricesByServiceId = new Map<number, number>();
+        (services || []).forEach((service: any) => {
+          pricesByServiceId.set(Number(service.idServizio), Number(service.prezzo || 0));
+        });
+
+        incassoPrevistoAppuntamenti = (relations || []).reduce(
+          (totale: number, relation: any) => totale + (pricesByServiceId.get(Number(relation.idServizio)) || 0),
+          0
+        );
+      }
+    }
+
     const clientiInSalone = new Set(
       (clientiInSaloneResult.data || [])
         .map((appuntamento) => appuntamento.idCliente)
@@ -100,6 +143,7 @@ router.get("/stats", async (_req: Request, res: Response) => {
       },
       appuntamentiOggi: appuntamentiResult.count ?? 0,
       incassoGiornaliero,
+      incassoPrevistoAppuntamenti,
       prodottiInRiordino: prodottiResult.count ?? 0,
       clientiInSalone,
       sogliaRiordino: REORDER_STOCK_THRESHOLD

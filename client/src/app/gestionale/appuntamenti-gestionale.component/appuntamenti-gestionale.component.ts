@@ -176,9 +176,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     eventMinHeight: 0,
     eventShortHeight: 0,
     headerToolbar: {
-      left: 'prev,next today',
+      left: 'prev,next managementToday',
       center: 'title',
       right: this.getResponsiveToolbarRight()
+    },
+    customButtons: {
+      managementToday: {
+        text: 'Oggi',
+        click: this.goToToday.bind(this)
+      }
     },
     buttonText: {
       today: 'Oggi',
@@ -865,6 +871,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     const serviceName = isPermission ? '' : this.getAppointmentServiceLabel(appointment);
     const normalizedServiceName = serviceName.trim().toLowerCase();
+    const clientDetails = isPermission ? null : this.getAppointmentClientDetails(appointment);
+    const clientName = clientDetails?.name ?? '';
     const displayTitle = isPermission ? 'Permesso' : (serviceName || 'Servizio prenotato');
     const appointmentEnd = new Date(normalizedEnd);
     const isPastAppointment =
@@ -893,6 +901,9 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         displayTitle,
         serviceName,
         serviceDescription: this.serviceDescriptionByName.get(normalizedServiceName) || '',
+        clientName,
+        clientPhone: clientDetails?.phone ?? '',
+        clientEmail: clientDetails?.email ?? '',
         operatorName: this.getOperatorLabel(appointment.idOperatore)
       }
     };
@@ -1407,6 +1418,27 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       || 'Servizio non indicato';
   }
 
+  private getAppointmentClientLabel(appointment: Appuntamento): string {
+    return this.getAppointmentClientDetails(appointment)?.name ?? '';
+  }
+
+  private getAppointmentClientDetails(appointment: Appuntamento): { name: string; phone: string; email: string } | null {
+    if (!appointment.idCliente) {
+      return {
+        name: this.isPermissionAppointment(appointment) ? 'Permesso' : 'Slot riservato',
+        phone: '',
+        email: ''
+      };
+    }
+
+    const cliente = this.clienti.find((item) => item.idUtente === appointment.idCliente);
+    return {
+      name: cliente ? `${cliente.nome} ${cliente.cognome}` : `Cliente #${appointment.idCliente}`,
+      phone: cliente?.telefono?.trim() ?? '',
+      email: cliente?.email?.trim() ?? ''
+    };
+  }
+
   private getAppointmentToneClass(appointment: Appuntamento): string {
     if (this.isPastAppointment(appointment) || appointment.stato === 'completato') {
       return 'tone-past';
@@ -1420,17 +1452,23 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return '';
     }
 
-    if (!this.selectedAppointment.idCliente) {
-      return this.isPermissionAppointment(this.selectedAppointment) ? 'Permesso' : 'Slot riservato';
+    return this.getAppointmentClientLabel(this.selectedAppointment);
+  }
+
+  getSelectedAppointmentClientPhoneLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
     }
 
-    const cliente = this.clienti.find(
-      (item) => item.idUtente === this.selectedAppointment?.idCliente
-    );
+    return this.getAppointmentClientDetails(this.selectedAppointment)?.phone || 'Non indicato';
+  }
 
-    return cliente
-      ? `${cliente.nome} ${cliente.cognome}`
-      : `Cliente #${this.selectedAppointment.idCliente}`;
+  getSelectedAppointmentClientEmailLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    return this.getAppointmentClientDetails(this.selectedAppointment)?.email || 'Non indicata';
   }
 
   getSelectedAppointmentOperatorLabel(): string {
@@ -2169,7 +2207,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       initialView: nextView,
       headerToolbar: {
         ...this.calendarOptions.headerToolbar,
-        left: 'prev,next today',
+        left: 'prev,next managementToday',
         center: 'title',
         right: nextToolbarRight
       }
@@ -2178,7 +2216,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     if (this.calendarComponent) {
       const calendarApi = this.calendarComponent.getApi();
       calendarApi.setOption('headerToolbar', {
-        left: 'prev,next today',
+        left: 'prev,next managementToday',
         center: 'title',
         right: nextToolbarRight
       });
@@ -2191,6 +2229,23 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private getInitialCalendarView(): 'timeGridWeek' | 'timeGridDay' | 'operatorDay' {
     const savedView = this.getSavedCalendarView();
     return savedView ?? this.getResponsiveCalendarView();
+  }
+
+  private goToToday(): void {
+    const calendarApi = this.calendarComponent?.getApi();
+
+    if (!calendarApi) {
+      return;
+    }
+
+    if (!this.isOperatorDayView) {
+      calendarApi.today();
+      return;
+    }
+
+    const today = this.startOfDay(new Date());
+    this.setOperatorDayDate(today);
+    calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
   }
 
   private getSavedCalendarView(): 'timeGridWeek' | 'timeGridDay' | 'operatorDay' | null {
@@ -2250,10 +2305,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return {
       operatorDay: {
         type: 'timeGrid',
-        visibleRange: () => ({
-          start: this.operatorDayAnchorDate,
-          end: this.addDays(this.operatorDayAnchorDate, Math.max(1, this.getOperatorDayColumnOperators().length))
-        }),
+        visibleRange: (currentDate: Date) => {
+          const start = this.startOfDay(currentDate);
+
+          return {
+            start,
+            end: this.addDays(start, Math.max(1, this.getOperatorDayColumnOperators().length))
+          };
+        },
         dateIncrement: { days: 1 },
         buttonText: 'Giorno',
         titleFormat: { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }
@@ -2485,6 +2544,9 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const title = this.escapeHtml(String(arg.event.extendedProps['displayTitle'] ?? arg.event.title ?? '').trim());
     const serviceName = this.escapeHtml(String(arg.event.extendedProps['serviceName'] ?? '').trim());
     const serviceDescription = this.escapeHtml(String(arg.event.extendedProps['serviceDescription'] ?? '').trim());
+    const clientName = this.escapeHtml(String(arg.event.extendedProps['clientName'] ?? '').trim());
+    const clientPhone = this.escapeHtml(String(arg.event.extendedProps['clientPhone'] ?? '').trim());
+    const clientEmail = this.escapeHtml(String(arg.event.extendedProps['clientEmail'] ?? '').trim());
     const operatorName = this.escapeHtml(String(arg.event.extendedProps['operatorName'] ?? '').trim());
     const timeText = this.escapeHtml(this.buildEventTimeText(arg));
     const canManage = Boolean(arg.event.extendedProps['canManage']);
@@ -2492,6 +2554,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const canDelete = Boolean(arg.event.extendedProps['canDelete']);
     const editStateClass = !canManage ? 'is-hidden' : (canModify ? '' : 'is-disabled');
     const deleteStateClass = !canManage ? 'is-hidden' : (canDelete ? '' : 'is-disabled');
+    const contactParts = [clientPhone, clientEmail].filter(Boolean);
+    const contactText = contactParts.join(' | ');
     const icons = `
       <div class="appointment-event-actions">
         <button type="button" class="appointment-icon-btn edit ${editStateClass}" title="Modifica">
@@ -2514,9 +2578,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         <div class="appointment-event-shell${isCompactEvent ? ' is-compact' : ''}${isTinyEvent ? ' is-tiny' : ''}">
           <div class="appointment-event-head">
             <span class="appointment-event-title">${title || 'Appuntamento'}</span>
+            ${clientName ? `<span class="appointment-event-client">${clientName}</span>` : ''}
+            ${contactText ? `<span class="appointment-event-contact">${contactText}</span>` : ''}
           </div>
           <div class="appointment-event-expand">
             <span class="appointment-event-time">${timeText}</span>
+            ${clientName ? `<span class="appointment-event-info"><strong>Cliente:</strong> ${clientName}</span>` : ''}
+            ${clientPhone ? `<span class="appointment-event-info"><strong>Telefono:</strong> ${clientPhone}</span>` : ''}
+            ${clientEmail ? `<span class="appointment-event-info"><strong>Email:</strong> ${clientEmail}</span>` : ''}
             ${isCompactEvent ? compactRow : (serviceName ? `<span class="appointment-event-info"><strong>Servizio:</strong> ${serviceName}</span>` : '')}
             ${serviceDescription ? `<span class="appointment-event-info"><strong>Descrizione:</strong> ${serviceDescription}</span>` : ''}
             ${operatorName ? `<span class="appointment-event-info"><strong>Operatore:</strong> ${operatorName}</span>` : ''}

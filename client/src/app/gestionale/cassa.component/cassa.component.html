@@ -52,8 +52,55 @@
       <article class="cash-stat-card">
         <span>Pagamento</span>
         <strong>{{ selectedMetodo === 'carta' ? 'Carta' : 'Contanti' }}</strong>
-        <small>Seleziona metodo a destra</small>
+        <small>Metodo selezionato</small>
       </article>
+      <article class="cash-stat-card">
+        <span>Da incassare</span>
+        <strong>{{ appuntamentiDaIncassare.length }}</strong>
+        <small>Appuntamenti in scadenza</small>
+      </article>
+    </section>
+
+    <section class="cash-card cash-appointments">
+      <div class="cash-card__head">
+        <div>
+          <p class="cash-card__eyebrow">Appuntamenti</p>
+          <h2>Da incassare</h2>
+        </div>
+        <button type="button" class="cash-icon-button" title="Aggiorna appuntamenti" (click)="loadAppuntamentiDaIncassare()">
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          <span>Aggiorna</span>
+        </button>
+      </div>
+
+      <div class="cash-appointments-empty" *ngIf="appuntamentiDaIncassare.length === 0">
+        Nessun appuntamento da incassare in questo momento.
+      </div>
+
+      <div class="cash-appointments-list" *ngIf="appuntamentiDaIncassare.length > 0">
+        <article
+          class="cash-appointment-row"
+          *ngFor="let appointment of appuntamentiDaIncassare"
+          [class.is-selected]="selectedAppuntamentoId === appointment.idAppuntamento"
+        >
+          <div class="cash-appointment-row__time">
+            <strong>{{ appointment.dataOraInizio | date:'HH:mm' }}</strong>
+            <span>{{ appointment.dataOraFine | date:'HH:mm' }}</span>
+          </div>
+          <div class="cash-appointment-row__main">
+            <strong>{{ appointment.clienteNome }}</strong>
+            <span>{{ getAppointmentServicesLabel(appointment) }}</span>
+            <small>{{ appointment.operatoreNome }}</small>
+          </div>
+          <div class="cash-appointment-row__total">
+            <strong>&euro; {{ appointment.totalePrevisto | number:'1.2-2' }}</strong>
+            <button type="button" class="cash-button cash-button--primary" (click)="caricaAppuntamentoInCassa(appointment)">
+              <i class="bi bi-cash-coin" aria-hidden="true"></i>
+              Incassa
+            </button>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="cash-layout">

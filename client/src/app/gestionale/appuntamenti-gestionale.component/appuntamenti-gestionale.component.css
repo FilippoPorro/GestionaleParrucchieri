@@ -116,31 +116,35 @@
 
 .management-appointments-section .appointments-top-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   align-items: stretch;
-  gap: 26px;
-  margin-bottom: 38px;
+  gap: 18px;
+  margin-bottom: 22px;
   overflow: visible;
 }
 
 .management-appointments-section .appointments-hero,
 .management-appointments-section .appointments-select-wrapper {
-  border-radius: 8px;
-  border: 1px solid rgba(212, 176, 106, 0.14);
-  background: rgba(23, 18, 13, 0.78);
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.38)),
+    rgba(0, 0, 0, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 18px 36px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(20px) saturate(145%);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
 }
 
 .management-appointments-section .appointments-hero {
-  padding: 34px 36px;
+  padding: 26px 30px;
 }
 
 .management-appointments-section .appointments-eyebrow,
 .management-appointments-section .appointments-select-wrapper label {
   margin: 0 0 10px;
-  color: #d4b06a;
+  color: rgba(242, 209, 139, 0.82);
   text-transform: uppercase;
   letter-spacing: 1.8px;
   font-size: 12px;
@@ -150,17 +154,17 @@
 .management-appointments-section .appointments-title {
   margin: 0;
   color: #fff;
-  font-size: clamp(30px, 3.2vw, 44px);
+  font-size: clamp(28px, 2.6vw, 38px);
   line-height: 1.05;
   letter-spacing: 0;
 }
 
 .management-appointments-section .appointments-subtitle {
   max-width: 760px;
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: rgba(255, 249, 239, 0.92);
-  font-size: 15px;
-  line-height: 1.78;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .management-appointments-section .appointments-select-wrapper {
@@ -169,7 +173,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 34px 36px;
+  padding: 26px 30px;
   overflow: visible;
 }
 
@@ -182,14 +186,16 @@
 }
 
 .management-appointments-section .booking-dropdown-trigger {
-  min-height: 72px;
+  min-height: 58px;
   width: 100%;
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(212, 176, 106, 0.24);
-  background: rgba(18, 14, 11, 0.76);
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(0, 0, 0, 0.24);
   color: #fff7e8;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -200,8 +206,10 @@
 
 .management-appointments-section .booking-dropdown-trigger:hover,
 .management-appointments-section .booking-dropdown-trigger.open {
-  border-color: rgba(242, 209, 139, 0.5);
-  background: rgba(34, 27, 21, 0.86);
+  border-color: rgba(242, 209, 139, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.34);
 }
 
 .management-appointments-section .booking-dropdown-trigger:disabled {
@@ -213,11 +221,11 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .management-appointments-section .booking-trigger-kicker {
-  color: rgba(255, 226, 175, 0.72);
+  color: rgba(242, 209, 139, 0.72);
   text-transform: uppercase;
   font-size: 11px;
   font-weight: 700;
@@ -225,7 +233,7 @@
 }
 
 .management-appointments-section .booking-trigger-value {
-  color: #fff7e8;
+  color: #fff;
   font-size: 1rem;
   font-weight: 800;
   line-height: 1.15;
@@ -264,10 +272,12 @@
   overflow: hidden;
   pointer-events: none;
   transform: translateY(-6px);
-  border-radius: 8px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #17120d;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.72);
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.32);
   transition: grid-template-rows 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -295,9 +305,9 @@
 
 .management-appointments-section .booking-dropdown-list li {
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.18);
   color: #f4e9d4;
   font-size: 13px;
   font-weight: 600;
@@ -316,8 +326,10 @@
 
 .management-appointments-section .booking-dropdown-list li:hover,
 .management-appointments-section .booking-dropdown-list li.active {
-  border-color: rgba(212, 176, 106, 0.32);
-  background: rgba(212, 176, 106, 0.12);
+  border-color: rgba(242, 209, 139, 0.34);
+  background:
+    linear-gradient(180deg, rgba(242, 209, 139, 0.12), rgba(242, 209, 139, 0.04)),
+    rgba(0, 0, 0, 0.3);
 }
 
 .management-appointments-section .booking-dropdown-check {
@@ -351,9 +363,9 @@
 }
 
 .management-appointments-section .booking-dropdown-check.checked {
-  border-color: rgba(242, 209, 139, 0.66);
-  background: rgba(212, 176, 106, 0.22);
-  color: #f2d18b;
+  border-color: #f2d18b;
+  background: #f2d18b;
+  color: #15110b;
 }
 
 .management-appointments-section .booking-dropdown-empty {
@@ -370,8 +382,8 @@
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0.48)),
-    rgba(0, 0, 0, 0.32);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.38)),
+    rgba(0, 0, 0, 0.24);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     0 18px 36px rgba(0, 0, 0, 0.16);
@@ -410,7 +422,7 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
-  padding: 0 2px 12px;
+  padding: 0 2px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -419,16 +431,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-    rgba(0, 0, 0, 0.26);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.03)),
+    rgba(0, 0, 0, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .management-appointments-section .appointments-calendar-operator-label {
-  color: rgba(217, 186, 122, 0.82);
+  color: rgba(242, 209, 139, 0.74);
   text-transform: uppercase;
   letter-spacing: 1.2px;
   font-size: 10px;
@@ -437,7 +450,7 @@
 }
 
 .management-appointments-section .appointments-calendar-operator-value {
-  color: #fff3d2;
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
@@ -695,6 +708,42 @@
   border-left-color: #55c878 !important;
 }
 
+:host ::ng-deep .appointment-event-head {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+:host ::ng-deep .appointment-event-client,
+:host ::ng-deep .appointment-event-contact {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  padding-left: 6px !important;
+  line-height: 1.15 !important;
+}
+
+:host ::ng-deep .appointment-event-client {
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+:host ::ng-deep .appointment-event-contact {
+  color: rgba(255, 242, 214, 0.82) !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+}
+
+:host ::ng-deep .appointment-event-shell.is-compact .appointment-event-client,
+:host ::ng-deep .appointment-event-shell.is-compact .appointment-event-contact {
+  padding-left: 2px !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+}
+
 .appointment-detail-modal {
   z-index: 80;
   background: rgba(0, 0, 0, 0.66) !important;
@@ -787,4 +836,166 @@
   .management-appointments-section .calendar-wrapper {
     padding: 18px;
   }
+}
+
+/* Gestionale: stile piu squadrato e coerente con dashboard/cassa */
+.management-appointments-section .appointments-hero,
+.management-appointments-section .appointments-select-wrapper,
+.management-appointments-section .calendar-wrapper,
+.management-appointments-section .booking-dropdown-trigger,
+.management-appointments-section .booking-dropdown-panel,
+.management-appointments-section .booking-dropdown-list li,
+.management-appointments-section .appointments-calendar-meta-item,
+.appointment-detail-card,
+.appointment-detail-row,
+.appointment-detail-close,
+.appointment-confirm-card,
+.appointment-action,
+.appointment-field-control,
+.appointment-services-picker,
+.appointment-service-option,
+.appointment-edit-date-picker-panel,
+.appointment-edit-date-picker-day,
+.appointment-edit-date-picker-nav,
+.appointments-date-picker-panel,
+.appointments-date-picker-day,
+.appointments-date-picker-nav,
+:host ::ng-deep .fc .fc-button,
+:host ::ng-deep .fc .fc-button-primary,
+:host ::ng-deep .fc-v-event {
+  border-radius: 8px !important;
+}
+
+.management-appointments-section .appointments-hero,
+.management-appointments-section .appointments-select-wrapper,
+.management-appointments-section .calendar-wrapper {
+  border-color: rgba(212, 176, 106, 0.14) !important;
+  background: rgba(5, 5, 5, 0.5) !important;
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.22) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.management-appointments-section .booking-dropdown-trigger,
+.management-appointments-section .appointments-calendar-meta-item {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.management-appointments-section .booking-dropdown-trigger:hover,
+.management-appointments-section .booking-dropdown-trigger.open {
+  background: rgba(0, 0, 0, 0.48) !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
+}
+
+.management-appointments-section .booking-dropdown-panel {
+  background: rgba(0, 0, 0, 0.86) !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34) !important;
+}
+
+.management-appointments-section .booking-dropdown-list li {
+  background: rgba(0, 0, 0, 0.72) !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.management-appointments-section .booking-dropdown-list li:hover,
+.management-appointments-section .booking-dropdown-list li.active {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
+}
+
+:host ::ng-deep .fc-theme-standard .fc-scrollgrid,
+:host ::ng-deep .fc-theme-standard td,
+:host ::ng-deep .fc-theme-standard th,
+:host ::ng-deep table.fc-scrollgrid.fc-scrollgrid-liquid,
+:host ::ng-deep .fc-timegrid-col:not(.fc-timegrid-axis),
+:host ::ng-deep .fc-timegrid-slot-label,
+:host ::ng-deep .fc-timegrid-axis {
+  background-color: rgba(0, 0, 0, 0.24) !important;
+}
+
+:host ::ng-deep .fc-col-header-cell {
+  background: rgba(0, 0, 0, 0.34) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:host ::ng-deep .fc .fc-button,
+:host ::ng-deep .fc .fc-button-primary {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(212, 176, 106, 0.24) !important;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .fc .fc-button:hover,
+:host ::ng-deep .fc .fc-button-primary:hover,
+:host ::ng-deep .fc .fc-button-active,
+:host ::ng-deep .fc .fc-button-primary.fc-button-active {
+  background: rgba(0, 0, 0, 0.48) !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
+}
+
+:host ::ng-deep .fc-event.my-appointment,
+:host ::ng-deep .fc-event.other-appointment,
+:host ::ng-deep .fc-event.past-appointment,
+:host ::ng-deep .fc-event.permission-appointment {
+  background: rgba(0, 0, 0, 0.72) !important;
+}
+
+.appointment-detail-card,
+.appointment-confirm-card {
+  background: rgba(0, 0, 0, 0.78) !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.42) !important;
+}
+
+.appointment-field-control {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(212, 176, 106, 0.16) !important;
+  box-shadow: none !important;
+}
+
+.appointment-services-picker,
+.appointment-edit-date-picker-panel,
+.appointments-date-picker-panel {
+  background: rgba(0, 0, 0, 0.86) !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34) !important;
+}
+
+.appointment-detail-row {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(212, 176, 106, 0.16) !important;
+}
+
+.appointment-service-option {
+  background: rgba(0, 0, 0, 0.72) !important;
+  border-color: rgba(212, 176, 106, 0.16) !important;
+}
+
+.appointment-service-option:hover,
+.appointment-service-option.is-selected {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
+}
+
+.appointment-edit-date-picker-day,
+.appointment-edit-date-picker-nav,
+.appointments-date-picker-day,
+.appointments-date-picker-nav {
+  background: rgba(0, 0, 0, 0.72) !important;
+  border-color: rgba(212, 176, 106, 0.16) !important;
+}
+
+.appointment-edit-date-picker-day:hover,
+.appointment-edit-date-picker-day.is-selected,
+.appointment-edit-date-picker-nav:hover,
+.appointments-date-picker-day:hover,
+.appointments-date-picker-day.is-selected,
+.appointments-date-picker-nav:hover {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(242, 209, 139, 0.5) !important;
 }
