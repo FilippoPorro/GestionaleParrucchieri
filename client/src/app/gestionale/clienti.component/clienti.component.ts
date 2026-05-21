@@ -440,7 +440,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
         if (this.selectedCliente?.idUtente === cliente.idUtente) {
           this.clearSelection();
         }
-        this.showFeedback('Cliente rimosso con successo.', 'success', 'Cliente eliminato', 'table');
+        this.showFeedback('Cliente eliminato correttamente.', 'success', 'Cliente eliminato', 'table');
         this.isDeleting = false;
         this.refreshView();
       },

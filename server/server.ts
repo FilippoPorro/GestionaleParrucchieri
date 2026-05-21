@@ -14,6 +14,7 @@ import appuntamentiRoute from "./routes/appuntamenti";
 import serviziRoute from "./routes/servizi";
 import dashboardRoute from "./routes/dashboard";
 import cassaRoute from "./routes/cassa";
+import fornitoriRoute from "./routes/fornitori";
 import { startAppointmentReminderJob } from "./services/appointment-reminders";
 import nodemailer from "nodemailer";
 
@@ -387,6 +388,7 @@ app.use("/api/appuntamenti", appuntamentiRoute);
 app.use("/api/servizi", serviziRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/cassa", cassaRoute);
+app.use("/api/fornitori", fornitoriRoute);
 app.get("/api/prodotti", async (req, res) => {
   try {
     const { data, error } = await db
