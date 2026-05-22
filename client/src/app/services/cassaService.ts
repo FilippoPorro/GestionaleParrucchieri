@@ -11,6 +11,7 @@ export interface AppuntamentoDaIncassare {
   stato: string | null;
   note: string | null;
   clienteNome: string;
+  clienteEmail: string;
   operatoreNome: string;
   totalePrevisto: number;
   servizi: Array<{

@@ -869,18 +869,18 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       eventEnd = this.getCalendarEventEnd(eventStart, this.toLocalDateTimeInput(syntheticEnd.toISOString()));
     }
 
+    const isFerie = isPermission && appointment.note === 'Ferie';
     const serviceName = isPermission ? '' : this.getAppointmentServiceLabel(appointment);
     const normalizedServiceName = serviceName.trim().toLowerCase();
     const clientDetails = isPermission ? null : this.getAppointmentClientDetails(appointment);
     const clientName = clientDetails?.name ?? '';
-    const displayTitle = isPermission ? 'Permesso' : (serviceName || 'Servizio prenotato');
+    const displayTitle = isFerie ? 'Ferie' : (isPermission ? (appointment.note || 'Permesso') : (serviceName || 'Servizio prenotato'));
     const appointmentEnd = new Date(normalizedEnd);
     const isPastAppointment =
       !Number.isNaN(appointmentEnd.getTime()) &&
       appointmentEnd.getTime() < Date.now();
     const classNames = [
-      isPastAppointment ? 'past-appointment' : 'my-appointment',
-      isPermission ? 'permission-appointment' : ''
+      isFerie ? 'ferie-appointment' : (isPermission ? 'permission-appointment' : (isPastAppointment ? 'past-appointment' : 'my-appointment'))
     ].filter(Boolean);
 
     return {
@@ -1410,7 +1410,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   private getAppointmentServiceLabel(appointment: Appuntamento): string {
     if (this.isPermissionAppointment(appointment)) {
-      return 'Permesso';
+      return appointment.note === 'Ferie' ? 'Ferie' : (appointment.note || 'Permesso');
     }
 
     return appointment.servizioNome?.trim()
@@ -1425,7 +1425,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private getAppointmentClientDetails(appointment: Appuntamento): { name: string; phone: string; email: string } | null {
     if (!appointment.idCliente) {
       return {
-        name: this.isPermissionAppointment(appointment) ? 'Permesso' : 'Slot riservato',
+        name: appointment.note === 'Ferie' ? 'Ferie' : (appointment.note || 'Permesso'),
         phone: '',
         email: ''
       };
@@ -1440,6 +1440,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   private getAppointmentToneClass(appointment: Appuntamento): string {
+    const isPermission = this.isPermissionAppointment(appointment);
+    const isFerie = isPermission && appointment.note === 'Ferie';
+
+    if (isFerie) {
+      return 'tone-ferie';
+    }
+    if (isPermission) {
+      return 'tone-permission';
+    }
     if (this.isPastAppointment(appointment) || appointment.stato === 'completato') {
       return 'tone-past';
     }

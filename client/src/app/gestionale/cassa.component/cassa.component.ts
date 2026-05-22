@@ -17,6 +17,15 @@ interface ScontrinoItem {
   quantita: number;
 }
 
+type MetodoPagamentoGestionale = 'pos' | 'contanti';
+type DiscountMode = 'euro' | 'percent';
+type PosSimulationStep = 'idle' | 'waiting' | 'reading' | 'authorizing' | 'approved';
+
+interface PosSimulationStatus {
+  step: Exclude<PosSimulationStep, 'idle'>;
+  label: string;
+}
+
 @Component({
   selector: 'app-cassa.component',
   standalone: true,
@@ -46,16 +55,13 @@ export class CassaComponent implements OnInit {
 
   // Checkout inputs
   selectedClienteId: number | null = null;
+  selectedClienteLabel = '';
   selectedOperatoreId: number | null = null;
+  selectedOperatoreLabel = '';
   selectedAppuntamentoId: number | null = null;
-  selectedMetodo: 'carta' | 'contanti' = 'carta';
+  selectedMetodo: MetodoPagamentoGestionale = 'pos';
   discount: number = 0;
-
-  // Card details state
-  cardHolder: string = '';
-  cardNumber: string = '';
-  cardExpiry: string = '';
-  cardCvc: string = '';
+  discountMode: DiscountMode = 'euro';
 
   // Receipt items state
   receiptItems: ScontrinoItem[] = [];
@@ -70,6 +76,15 @@ export class CassaComponent implements OnInit {
   errorMessage = '';
   showProcessingAlert = false;
   processingAlertMessage = '';
+  activePaymentAction: 'standard' | 'receipt' | null = null;
+  posSimulationStep: PosSimulationStep = 'idle';
+  readonly posSimulationStatuses: PosSimulationStatus[] = [
+    { step: 'waiting', label: 'Carta' },
+    { step: 'reading', label: 'Lettura' },
+    { step: 'authorizing', label: 'Autorizzazione' },
+    { step: 'approved', label: 'Approvato' }
+  ];
+  private posSimulationTimeoutIds: ReturnType<typeof setTimeout>[] = [];
 
   constructor(
     private utentiService: UtentiService,
@@ -228,11 +243,31 @@ export class CassaComponent implements OnInit {
   onServiceSearchChange(): void {
     this.selectedServizioId = null;
     this.showServiceDropdown = true;
+    this.showProductDropdown = false;
   }
 
   onProductSearchChange(): void {
     this.selectedProdottoId = null;
     this.showProductDropdown = true;
+    this.showServiceDropdown = false;
+  }
+
+  toggleServiceDropdownFromClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showServiceDropdown = !this.showServiceDropdown;
+
+    if (this.showServiceDropdown) {
+      this.showProductDropdown = false;
+    }
+  }
+
+  toggleProductDropdownFromClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showProductDropdown = !this.showProductDropdown;
+
+    if (this.showProductDropdown) {
+      this.showServiceDropdown = false;
+    }
   }
 
   toggleServiceDropdown(show: boolean): void {
@@ -247,29 +282,14 @@ export class CassaComponent implements OnInit {
     }, 200);
   }
 
-  onExpiryInput(event: any): void {
-    let val = event.target.value;
-    val = val.replace(/\D/g, '');
-    if (val.length > 2) {
-      val = val.substring(0, 2) + '/' + val.substring(2, 4);
-    }
-    this.cardExpiry = val;
-    event.target.value = val;
-    this.clearMessages();
-  }
-
-  onCvcInput(event: any): void {
-    let val = event.target.value;
-    val = val.replace(/\D/g, '').substring(0, 4);
-    this.cardCvc = val;
-    event.target.value = val;
-    this.clearMessages();
-  }
-
   removeReceiptItem(index: number): void {
     this.receiptItems.splice(index, 1);
-    if (!this.receiptItems.some(item => item.tipo === 'servizio')) {
+    if (this.selectedAppuntamentoId && !this.receiptItems.some(item => item.tipo === 'servizio')) {
       this.selectedAppuntamentoId = null;
+      this.selectedClienteId = null;
+      this.selectedClienteLabel = '';
+      this.selectedOperatoreId = null;
+      this.selectedOperatoreLabel = '';
     }
     this.clearMessages();
   }
@@ -300,12 +320,85 @@ export class CassaComponent implements OnInit {
     return this.receiptItems.reduce((sum, item) => sum + (item.prezzoUnitario * item.quantita), 0);
   }
 
-  get total(): number {
-    return Math.max(0, this.subtotal - this.discount);
+  get normalizedDiscountValue(): number {
+    const value = Number(this.discount || 0);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
   }
 
-  onClienteChange(): void {
-    this.clearMessages();
+  get discountAmount(): number {
+    if (this.subtotal <= 0) {
+      return 0;
+    }
+
+    if (this.discountMode === 'percent') {
+      const percent = Math.min(this.normalizedDiscountValue, 100);
+      return Math.min(this.subtotal, (this.subtotal * percent) / 100);
+    }
+
+    return Math.min(this.subtotal, this.normalizedDiscountValue);
+  }
+
+  get total(): number {
+    return Math.max(0, this.subtotal - this.discountAmount);
+  }
+
+  get selectedClienteDisplay(): string {
+    return this.selectedClienteLabel || 'Carica una prenotazione per associare il cliente';
+  }
+
+  get selectedOperatoreDisplay(): string {
+    return this.selectedOperatoreLabel || 'Carica una prenotazione per associare l\'operatore';
+  }
+
+  get hasServizi(): boolean {
+    return this.receiptItems.some(item => item.tipo === 'servizio');
+  }
+
+  get selectedMetodoLabel(): string {
+    return this.selectedMetodo === 'pos' ? 'Carta' : 'Contanti';
+  }
+
+  get posSimulationTitle(): string {
+    switch (this.posSimulationStep) {
+      case 'waiting':
+        return 'In attesa carta';
+      case 'reading':
+        return 'Lettura carta';
+      case 'authorizing':
+        return 'Autorizzazione';
+      case 'approved':
+        return 'Pagamento approvato';
+      default:
+        return 'Terminale pronto';
+    }
+  }
+
+  get posSimulationCopy(): string {
+    switch (this.posSimulationStep) {
+      case 'waiting':
+        return 'Carta attesa sul terminale.';
+      case 'reading':
+        return 'Lettura del chip o del contactless in corso.';
+      case 'authorizing':
+        return 'Richiesta autorizzazione alla banca.';
+      case 'approved':
+        return 'Transazione autorizzata, sto registrando la vendita.';
+      default:
+        return 'Terminale in standby per pagamento carta.';
+    }
+  }
+
+  get posSimulationIcon(): string {
+    switch (this.posSimulationStep) {
+      case 'reading':
+        return 'bi bi-broadcast-pin';
+      case 'authorizing':
+        return 'bi bi-shield-check';
+      case 'approved':
+        return 'bi bi-check2-circle';
+      default:
+        return 'bi bi-credit-card-2-front';
+    }
   }
 
   clearMessages(): void {
@@ -313,19 +406,68 @@ export class CassaComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  private formatClienteLabel(cliente: { nome?: string | null; cognome?: string | null; email?: string | null }): string {
+    const fullName = `${cliente.cognome || ''} ${cliente.nome || ''}`.trim() || 'Cliente';
+    const email = String(cliente.email || '').trim();
+
+    return email ? `${fullName} (${email})` : fullName;
+  }
+
+  selectMetodo(metodo: MetodoPagamentoGestionale): void {
+    this.selectedMetodo = metodo;
+    this.posSimulationStep = 'idle';
+    this.onPaymentFormInteraction();
+  }
+
+  isPosStepActive(step: Exclude<PosSimulationStep, 'idle'>): boolean {
+    return this.posSimulationStep === step;
+  }
+
+  isPosStepComplete(step: Exclude<PosSimulationStep, 'idle'>): boolean {
+    const order: PosSimulationStep[] = ['waiting', 'reading', 'authorizing', 'approved'];
+    return order.indexOf(this.posSimulationStep) > order.indexOf(step);
+  }
+
+  selectDiscountMode(mode: DiscountMode): void {
+    this.discountMode = mode;
+
+    if (mode === 'percent' && this.normalizedDiscountValue > 100) {
+      this.discount = 100;
+    }
+
+    this.clearMessages();
+  }
+
+  onDiscountChange(value: number | string): void {
+    const numericValue = Number(value);
+    const normalizedValue = Number.isFinite(numericValue) ? Math.max(0, numericValue) : 0;
+
+    this.discount = this.discountMode === 'percent'
+      ? Math.min(normalizedValue, 100)
+      : normalizedValue;
+
+    this.clearMessages();
+  }
+
+  onPaymentFormInteraction(): void {
+    this.clearMessages();
+  }
+
   nuovaVendita(): void {
+    this.clearPosSimulationTimeouts();
     this.receiptItems = [];
     this.selectedClienteId = null;
+    this.selectedClienteLabel = '';
     this.selectedOperatoreId = null;
+    this.selectedOperatoreLabel = '';
     this.selectedAppuntamentoId = null;
-    this.selectedMetodo = 'carta';
+    this.selectedMetodo = 'pos';
     this.discount = 0;
-    this.cardHolder = '';
-    this.cardNumber = '';
-    this.cardExpiry = '';
-    this.cardCvc = '';
+    this.discountMode = 'euro';
     this.serviceSearchQuery = '';
     this.productSearchQuery = '';
+    this.activePaymentAction = null;
+    this.posSimulationStep = 'idle';
     this.clearMessages();
   }
 
@@ -343,9 +485,15 @@ export class CassaComponent implements OnInit {
       quantita: 1
     }));
     this.selectedClienteId = appuntamento.idCliente;
+    this.selectedClienteLabel = this.formatClienteLabel({
+      nome: appuntamento.clienteNome,
+      email: appuntamento.clienteEmail
+    });
     this.selectedOperatoreId = appuntamento.idOperatore;
+    this.selectedOperatoreLabel = appuntamento.operatoreNome;
     this.selectedAppuntamentoId = appuntamento.idAppuntamento;
     this.discount = 0;
+    this.discountMode = 'euro';
     this.serviceSearchQuery = '';
     this.productSearchQuery = '';
     this.clearMessages();
@@ -360,139 +508,176 @@ export class CassaComponent implements OnInit {
   }
 
   registraPagamento(): void {
+    this.completaPagamento(false);
+  }
+
+  registraPagamentoConRicevuta(): void {
+    this.completaPagamento(true);
+  }
+
+  private completaPagamento(generaRicevuta: boolean): void {
     if (this.receiptItems.length === 0) {
       this.errorMessage = 'Inserisci almeno un articolo nello scontrino per registrare il pagamento.';
       return;
     }
 
-    if (!this.selectedOperatoreId) {
-      this.errorMessage = 'Seleziona l\'operatore che ha effettuato il servizio o la vendita.';
+    if (this.hasServizi && !this.selectedOperatoreId) {
+      this.errorMessage = 'Seleziona l\'operatore che ha effettuato il servizio.';
       return;
     }
 
-    if (this.selectedMetodo === 'carta') {
-      if (!this.cardHolder.trim() || !this.cardNumber.trim() || !this.cardExpiry.trim() || !this.cardCvc.trim()) {
-        this.errorMessage = 'Inserisci tutti i dettagli della carta per registrare il pagamento.';
-        return;
-      }
-    }
-
     this.loading = true;
+    this.activePaymentAction = generaRicevuta ? 'receipt' : 'standard';
     this.errorMessage = '';
     this.successMessage = '';
     this.showProcessingAlert = true;
-    this.processingAlertMessage = 'Elaborazione pagamento in corso... Generazione ricevuta in corso.';
+    this.clearPosSimulationTimeouts();
 
-    setTimeout(() => {
-      // 1. Download Word document (.doc) containing receipt data
-      try {
-        this.generateWordDocument();
-      } catch (err) {
-        console.error("Errore durante la generazione del file Word:", err);
-      }
+    if (this.selectedMetodo === 'pos') {
+      this.runPosSimulation(generaRicevuta);
+      return;
+    }
 
-      // 2. Perform backend payment registration
-      const prodottiPayload = this.receiptItems
-        .filter(item => item.tipo === 'prodotto')
-        .map(item => ({
-          idProdotto: item.id,
-          quantita: item.quantita,
-          prezzoUnitario: item.prezzoUnitario
-        }));
+    this.posSimulationStep = 'idle';
+    this.processingAlertMessage = generaRicevuta
+      ? 'Registrazione contanti in corso... Generazione ricevuta in corso.'
+      : 'Registrazione contanti in corso...';
 
-      const payload = {
-        idCliente: this.selectedClienteId ? Number(this.selectedClienteId) : null,
-        idOperatore: Number(this.selectedOperatoreId),
-        idAppuntamento: this.selectedAppuntamentoId,
-        totale: this.total,
-        metodo: this.selectedMetodo,
-        prodotti: prodottiPayload
-      };
-
-      this.cassaService.registraPagamento(payload).subscribe({
-        next: (res) => {
-          this.loading = false;
-          this.showProcessingAlert = false;
-          this.successMessage = `Pagamento registrato con successo! (Vendita #${res.idVendita})`;
-          this.loadDailyStats();
-          this.loadAppuntamentiDaIncassare();
-
-          // Clear receipt and all states immediately (pulisci tutto)
-          this.receiptItems = [];
-          this.selectedClienteId = null;
-          this.selectedOperatoreId = null;
-          this.selectedAppuntamentoId = null;
-          this.discount = 0;
-          this.cardHolder = '';
-          this.cardNumber = '';
-          this.cardExpiry = '';
-          this.cardCvc = '';
-          this.serviceSearchQuery = '';
-          this.productSearchQuery = '';
-
-          // Refresh products list in case of stock updates
-          this.prodottoService.getProdotti().subscribe(res => this.prodotti = res);
-
-          this.cdr.detectChanges();
-
-          // Auto-clear success message after 4 seconds
-          setTimeout(() => {
-            if (this.successMessage.includes('Pagamento registrato con successo')) {
-              this.successMessage = '';
-              this.cdr.detectChanges();
-            }
-          }, 4000);
-        },
-        error: (err) => {
-          this.loading = false;
-          this.showProcessingAlert = false;
-          this.errorMessage = err.error?.message || 'Errore durante la registrazione del pagamento.';
-          console.error(err);
-          this.cdr.detectChanges();
-        }
-      });
-    }, 1500); // Wait 1.5 seconds
+    const timeoutId = setTimeout(() => {
+      this.registraPagamentoBackend(generaRicevuta);
+    }, 700);
+    this.posSimulationTimeoutIds.push(timeoutId);
   }
 
-  stampa(): void {
-    if (this.receiptItems.length === 0) {
-      this.errorMessage = 'Inserisci almeno un articolo nello scontrino per generare la stampa.';
-      return;
-    }
-
-    if (!this.selectedOperatoreId) {
-      this.errorMessage = 'Seleziona l\'operatore prima di stampare.';
-      return;
-    }
-
-    this.loading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.showProcessingAlert = true;
-    this.processingAlertMessage = 'Generazione ricevuta di stampa... Download del documento in corso.';
-
-    setTimeout(() => {
-      // 1. Download Word document without making a backend payment registration
-      try {
-        this.generateWordDocument();
-      } catch (err) {
-        console.error("Errore durante la stampa/generazione del file Word:", err);
+  private runPosSimulation(generaRicevuta: boolean): void {
+    const steps: Array<{ step: PosSimulationStep; message: string; delay: number }> = [
+      {
+        step: 'waiting',
+        message: 'POS pronto: appoggia, inserisci o striscia la carta.',
+        delay: 0
+      },
+      {
+        step: 'reading',
+        message: 'Lettura carta in corso...',
+        delay: 850
+      },
+      {
+        step: 'authorizing',
+        message: 'Autorizzazione pagamento carta in corso...',
+        delay: 950
+      },
+      {
+        step: 'approved',
+        message: generaRicevuta
+          ? 'Carta approvata. Registro il pagamento e preparo la ricevuta...'
+          : 'Carta approvata. Registro il pagamento...',
+        delay: 900
       }
+    ];
 
-      this.loading = false;
-      this.showProcessingAlert = false;
-      this.successMessage = 'Ricevuta stampata con successo!';
-      this.loadDailyStats();
-      this.cdr.detectChanges();
+    let elapsed = 0;
 
-      // Auto-clear success message after 4 seconds
-      setTimeout(() => {
-        if (this.successMessage === 'Ricevuta stampata con successo!') {
-          this.successMessage = '';
-          this.cdr.detectChanges();
+    steps.forEach((item, index) => {
+      elapsed += item.delay;
+      const timeoutId = setTimeout(() => {
+        this.posSimulationStep = item.step;
+        this.processingAlertMessage = item.message;
+        this.cdr.detectChanges();
+
+        if (index === steps.length - 1) {
+          const submitTimeoutId = setTimeout(() => {
+            this.registraPagamentoBackend(generaRicevuta);
+          }, 500);
+          this.posSimulationTimeoutIds.push(submitTimeoutId);
         }
-      }, 4000);
-    }, 1500); // Wait 1.5 seconds
+      }, elapsed);
+      this.posSimulationTimeoutIds.push(timeoutId);
+    });
+  }
+
+  private clearPosSimulationTimeouts(): void {
+    this.posSimulationTimeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
+    this.posSimulationTimeoutIds = [];
+  }
+
+  private registraPagamentoBackend(generaRicevuta: boolean): void {
+    const prodottiPayload = this.receiptItems
+      .filter(item => item.tipo === 'prodotto')
+      .map(item => ({
+        idProdotto: item.id,
+        quantita: item.quantita,
+        prezzoUnitario: item.prezzoUnitario
+      }));
+
+    const metodoPagamentoBackend: 'carta' | 'contanti' =
+      this.selectedMetodo === 'pos' ? 'carta' : 'contanti';
+
+    const payload = {
+      idCliente: this.selectedClienteId ? Number(this.selectedClienteId) : null,
+      idOperatore: this.selectedOperatoreId ? Number(this.selectedOperatoreId) : null,
+      idAppuntamento: this.selectedAppuntamentoId,
+      totale: this.total,
+      metodo: metodoPagamentoBackend,
+      prodotti: prodottiPayload
+    };
+
+    this.cassaService.registraPagamento(payload).subscribe({
+      next: (res) => {
+        if (generaRicevuta) {
+          try {
+            this.generateWordDocument();
+          } catch (err) {
+            console.error("Errore durante la generazione del file Word:", err);
+          }
+        }
+
+        this.loading = false;
+        this.activePaymentAction = null;
+        this.showProcessingAlert = false;
+        this.successMessage = generaRicevuta
+          ? `Pagamento registrato con ricevuta! (Vendita #${res.idVendita})`
+          : `Pagamento registrato con successo! (Vendita #${res.idVendita})`;
+        this.loadDailyStats();
+        this.loadAppuntamentiDaIncassare();
+
+        // Clear receipt and all states immediately (pulisci tutto)
+        this.receiptItems = [];
+        this.selectedClienteId = null;
+        this.selectedClienteLabel = '';
+        this.selectedOperatoreId = null;
+        this.selectedOperatoreLabel = '';
+        this.selectedAppuntamentoId = null;
+        this.discount = 0;
+        this.discountMode = 'euro';
+        this.serviceSearchQuery = '';
+        this.productSearchQuery = '';
+        this.posSimulationStep = 'idle';
+
+        // Refresh products list in case of stock updates
+        this.prodottoService.getProdotti().subscribe(res => this.prodotti = res);
+
+        this.cdr.detectChanges();
+
+        // Auto-clear success message after 4 seconds
+        setTimeout(() => {
+          if (this.successMessage.startsWith('Pagamento registrato')) {
+            this.successMessage = '';
+            this.cdr.detectChanges();
+          }
+        }, 4000);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.activePaymentAction = null;
+        this.showProcessingAlert = false;
+        this.posSimulationStep = 'idle';
+        this.errorMessage = err?.status === 409
+          ? 'Alcuni prodotti non sono piu disponibili nella quantita richiesta.'
+          : 'Pagamento non riuscito. Riprova tra qualche istante.';
+        console.error(err);
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   generateWordDocument(): void {
@@ -512,24 +697,24 @@ export class CassaComponent implements OnInit {
       ? this.clienti.find(c => c.idUtente === Number(this.selectedClienteId))
       : null;
 
-    const clienteName = cliente
-      ? `${cliente.cognome} ${cliente.nome}`
-      : 'Non selezionato';
+    const clienteName = this.selectedClienteLabel || (cliente ? this.formatClienteLabel(cliente) : 'Non selezionato');
 
     const operatore = this.operatori.find(
       o => o.idUtente === Number(this.selectedOperatoreId)
     );
 
-    const operatoreName = operatore
+    const operatoreName = this.selectedOperatoreLabel || (operatore
       ? `${operatore.cognome} ${operatore.nome}`
-      : 'Non specificato';
+      : 'Non specificato');
 
     const currentDate = new Date().toLocaleString('it-IT');
 
     const metodoPagamento =
-      this.selectedMetodo === 'carta'
-        ? 'Carta di Credito / Debito'
-        : 'Contanti';
+      this.selectedMetodoLabel;
+
+    const discountLabel = this.discountMode === 'percent'
+      ? `Sconto Applicato (${this.normalizedDiscountValue.toLocaleString('it-IT', { maximumFractionDigits: 2 })}%)`
+      : 'Sconto Applicato';
 
     // =========================================
     // TABELLA ARTICOLI
@@ -921,11 +1106,11 @@ export class CassaComponent implements OnInit {
             <tr>
 
               <td class="totals-label">
-                Sconto Applicato
+                ${discountLabel}
               </td>
 
               <td class="discount" style="text-align:right;">
-                - € ${this.discount.toFixed(2)}
+                - € ${this.discountAmount.toFixed(2)}
               </td>
 
             </tr>

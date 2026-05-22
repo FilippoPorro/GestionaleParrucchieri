@@ -708,6 +708,14 @@
   border-left-color: #55c878 !important;
 }
 
+:host ::ng-deep .fc-event.ferie-appointment {
+  background:
+    linear-gradient(145deg, rgba(41, 128, 185, 0.38), rgba(21, 67, 96, 0.3)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
+    rgba(0, 0, 0, 0.34) !important;
+  border-left-color: #3498db !important;
+}
+
 :host ::ng-deep .appointment-event-head {
   display: grid !important;
   gap: 2px !important;
@@ -754,7 +762,9 @@
 .appointment-detail-card,
 .appointment-detail-modal.is-closing .appointment-detail-card,
 .appointment-detail-card.tone-my,
-.appointment-detail-card.tone-past {
+.appointment-detail-card.tone-past,
+.appointment-detail-card.tone-ferie,
+.appointment-detail-card.tone-permission {
   width: min(860px, calc(100% - 32px)) !important;
   max-height: min(680px, calc(100vh - 40px)) !important;
   border-radius: 26px !important;
@@ -763,6 +773,22 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
     rgba(0, 0, 0, 0.9) !important;
   box-shadow: 0 34px 86px rgba(0, 0, 0, 0.56) !important;
+}
+
+.appointment-detail-card.tone-ferie {
+  border-color: rgba(52, 152, 219, 0.38) !important;
+  background:
+    linear-gradient(180deg, rgba(52, 152, 219, 0.16), rgba(255, 255, 255, 0.05)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
+    rgba(16, 14, 11, 0.92) !important;
+}
+
+.appointment-detail-card.tone-permission {
+  border-color: rgba(46, 204, 113, 0.38) !important;
+  background:
+    linear-gradient(180deg, rgba(46, 204, 113, 0.16), rgba(255, 255, 255, 0.05)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
+    rgba(16, 14, 11, 0.92) !important;
 }
 
 .appointment-detail-body--grid {
@@ -938,12 +964,7 @@
   border-color: rgba(242, 209, 139, 0.5) !important;
 }
 
-:host ::ng-deep .fc-event.my-appointment,
-:host ::ng-deep .fc-event.other-appointment,
-:host ::ng-deep .fc-event.past-appointment,
-:host ::ng-deep .fc-event.permission-appointment {
-  background: rgba(0, 0, 0, 0.72) !important;
-}
+
 
 .appointment-detail-card,
 .appointment-confirm-card {

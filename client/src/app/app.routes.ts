@@ -27,6 +27,7 @@ import { PrenotaAppuntamentoGestionaleComponent } from './gestionale/prenota-app
 import { ServiziComponent } from './gestionale/servizi.component/servizi.component';
 import { MagazzinoComponent } from './gestionale/magazzino.component/magazzino.component';
 import { FornitoriComponent } from './gestionale/fornitori.component/fornitori.component';
+import { GestionalePlaceholderComponent } from './gestionale/gestionale-placeholder.component/gestionale-placeholder.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -54,5 +55,74 @@ export const routes: Routes = [
     { path: 'gestionale/servizi', component: ServiziComponent, canActivate: [managementGuard]},
     { path: 'gestionale/magazzino', component: MagazzinoComponent, canActivate: [managementGuard]},
     { path: 'gestionale/fornitori', component: FornitoriComponent, canActivate: [managementGuard]},
+    {
+        path: 'gestionale/report',
+        component: GestionalePlaceholderComponent,
+        canActivate: [managementGuard],
+        data: {
+            title: 'Report',
+            description: 'Analisi di vendite, appuntamenti e andamento operativo del salone.',
+            cards: [
+                {
+                    title: 'Vendite',
+                    text: 'Riepiloghi per periodo, metodo di pagamento e servizi piu richiesti.'
+                },
+                {
+                    title: 'Performance staff',
+                    text: 'Confronto tra appuntamenti gestiti, incassi e occupazione agenda.'
+                },
+                {
+                    title: 'KPI salone',
+                    text: 'Indicatori su clienti, incasso medio e prodotti da monitorare.'
+                }
+            ]
+        }
+    },
+    {
+        path: 'gestionale/promozioni',
+        component: GestionalePlaceholderComponent,
+        canActivate: [managementGuard],
+        data: {
+            title: 'Promozioni',
+            description: 'Gestione di coupon, pacchetti e offerte dedicate ai clienti.',
+            cards: [
+                {
+                    title: 'Coupon',
+                    text: 'Codici sconto e campagne a tempo per servizi selezionati.'
+                },
+                {
+                    title: 'Pacchetti',
+                    text: 'Combinazioni di trattamenti, prodotti e percorsi ricorrenti.'
+                },
+                {
+                    title: 'Offerte',
+                    text: 'Promozioni stagionali per aumentare prenotazioni e retail.'
+                }
+            ]
+        }
+    },
+    {
+        path: 'gestionale/impostazioni',
+        component: GestionalePlaceholderComponent,
+        canActivate: [managementGuard],
+        data: {
+            title: 'Impostazioni',
+            description: 'Parametri del salone, preferenze operative e configurazioni generali.',
+            cards: [
+                {
+                    title: 'Salone',
+                    text: 'Dati anagrafici, recapiti e informazioni operative principali.'
+                },
+                {
+                    title: 'Agenda',
+                    text: 'Regole di disponibilita, orari e gestione delle prenotazioni.'
+                },
+                {
+                    title: 'Preferenze',
+                    text: 'Configurazioni per notifiche, accessi e flussi di lavoro.'
+                }
+            ]
+        }
+    },
     { path: '**', redirectTo: '/home' }
 ];

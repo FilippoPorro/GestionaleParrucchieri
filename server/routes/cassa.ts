@@ -3,6 +3,66 @@ import { db } from "../db_parrucchieri";
 
 const router = Router();
 
+type NormalizedCassaProduct = {
+  productId: number;
+  qty: number;
+  prezzoUnitario: number;
+};
+
+function normalizeCassaProducts(prodotti: any[]): NormalizedCassaProduct[] {
+  const byProduct = new Map<number, NormalizedCassaProduct>();
+
+  for (const item of prodotti) {
+    const productId = Number(item.idProdotto ?? item.id);
+    const qty = Number(item.quantita || 1);
+    const prezzoUnitario = Number(item.prezzoUnitario ?? item.prezzoRivendita ?? item.prezzo ?? 0);
+
+    if (!Number.isFinite(productId) || !Number.isFinite(qty) || qty <= 0) {
+      throw new Error("Prodotto o quantita non validi");
+    }
+
+    const existing = byProduct.get(productId);
+
+    if (existing) {
+      existing.qty += qty;
+      continue;
+    }
+
+    byProduct.set(productId, {
+      productId,
+      qty,
+      prezzoUnitario: Number.isFinite(prezzoUnitario) ? prezzoUnitario : 0
+    });
+  }
+
+  return [...byProduct.values()];
+}
+
+function isStockError(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return /stock[_ ]insufficiente/i.test(message);
+}
+
+function normalizeMetodoPagamento(metodo: unknown): "contanti" | "carta" | null {
+  const value = String(metodo || "").trim().toLowerCase();
+
+  if (value === "contanti") {
+    return "contanti";
+  }
+
+  if (value === "pos" || value === "carta") {
+    return "carta";
+  }
+
+  return null;
+}
+
 function formatLocalDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -69,14 +129,12 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
     const now = new Date();
     const today = formatLocalDate(now);
     const startOfDay = `${today}T00:00:00`;
-    const paymentWindowEnd = new Date(now);
-    paymentWindowEnd.setMinutes(paymentWindowEnd.getMinutes() + 30);
 
     const { data: appointmentsData, error: appointmentsError } = await db
       .from("appuntamenti")
       .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, stato, note")
       .gte("dataOraInizio", startOfDay)
-      .lte("dataOraInizio", formatLocalDateTime(paymentWindowEnd))
+      .lte("dataOraInizio", formatLocalDateTime(now))
       .not("idCliente", "is", null)
       .order("dataOraInizio", { ascending: true });
 
@@ -111,7 +169,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
         .in("idAppuntamento", appointmentIds),
       db
         .from("utenti")
-        .select("idUtente, nome, cognome")
+        .select("idUtente, nome, cognome, email")
         .in("idUtente", clienteIds),
       db
         .from("utenti")
@@ -187,6 +245,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
       return {
         ...appointment,
         clienteNome: cliente ? `${cliente.cognome || ""} ${cliente.nome || ""}`.trim() : "Cliente",
+        clienteEmail: cliente ? String(cliente.email || "") : "",
         operatoreNome: operatore ? `${operatore.cognome || ""} ${operatore.nome || ""}`.trim() : "Operatore",
         servizi,
         totalePrevisto: servizi.reduce((totale, servizio) => totale + Number(servizio.prezzo || 0), 0)
@@ -209,33 +268,55 @@ router.post("/registra", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Totale non valido" });
     }
 
-    if (!metodo || !["contanti", "carta"].includes(metodo)) {
-      return res.status(400).json({ message: "Metodo di pagamento non valido. Scegli 'carta' o 'contanti'." });
+    const metodoPagamento = normalizeMetodoPagamento(metodo);
+
+    if (!metodoPagamento) {
+      return res.status(400).json({ message: "Metodo di pagamento non valido. Scegli 'pos' o 'contanti'." });
     }
 
-    // 1. Inserimento della vendita
-    const { data: venditaData, error: venditaError } = await db
-      .from("vendite")
-      .insert({
-        idCliente: idCliente ? Number(idCliente) : null,
-        totale: Number(totale),
-        data: new Date().toISOString()
-      })
-      .select("idVendita")
-      .single();
+    const prodottiVenduti = normalizeCassaProducts(Array.isArray(prodotti) ? prodotti : []);
 
-    if (venditaError) {
-      throw venditaError;
+    let idVendita: number;
+
+    if (prodottiVenduti.length > 0) {
+      const { data: checkoutData, error: checkoutError } = await db
+        .rpc("complete_checkout_sicuro", {
+          p_id_cliente: idCliente ? Number(idCliente) : null,
+          p_total: Number(totale),
+          p_items: prodottiVenduti
+        })
+        .single();
+
+      if (checkoutError) {
+        throw checkoutError;
+      }
+
+      idVendita = Number((checkoutData as any)?.idVendita);
+    } else {
+      // 1. Inserimento della vendita
+      const { data: venditaData, error: venditaError } = await db
+        .from("vendite")
+        .insert({
+          idCliente: idCliente ? Number(idCliente) : null,
+          totale: Number(totale),
+          data: new Date().toISOString()
+        })
+        .select("idVendita")
+        .single();
+
+      if (venditaError) {
+        throw venditaError;
+      }
+
+      idVendita = Number((venditaData as any).idVendita);
     }
-
-    const idVendita = (venditaData as any).idVendita;
 
     // 2. Inserimento del pagamento associato alla vendita
     const { error: pagamentoError } = await db
       .from("pagamenti")
       .insert({
         idVendita: idVendita,
-        metodo: metodo,
+        metodo: metodoPagamento,
         importo: Number(totale),
         data: new Date().toISOString()
       });
@@ -255,55 +336,16 @@ router.post("/registra", async (req: Request, res: Response) => {
       }
     }
 
-    // 3. Gestione prodotti venduti (dettagliovendita e decremento magazzino)
-    if (Array.isArray(prodotti) && prodotti.length > 0) {
-      for (const item of prodotti) {
-        const idProdotto = Number(item.idProdotto ?? item.id);
-        const quantita = Number(item.quantita ?? 1);
-        const prezzoUnitario = Number(item.prezzoUnitario ?? item.prezzoRivendita ?? item.prezzo ?? 0);
-
-        if (!Number.isNaN(idProdotto) && idProdotto > 0 && quantita > 0) {
-          // Inserimento riga di dettaglio
-          const { error: dettaglioError } = await db
-            .from("dettagliovendita")
-            .insert({
-              idVendita,
-              idProdotto,
-              quantita,
-              prezzoUnitario
-            });
-
-          if (dettaglioError) {
-            throw dettaglioError;
-          }
-
-          // Decremento dello stock in prodotti
-          const { data: prodData, error: prodError } = await db
-            .from("prodotti")
-            .select("quantitaMagazzino")
-            .eq("idProdotto", idProdotto)
-            .single();
-
-          if (!prodError && prodData) {
-            const currentStock = Number((prodData as any).quantitaMagazzino ?? 0);
-            const newStock = Math.max(0, currentStock - quantita);
-
-            await db
-              .from("prodotti")
-              .update({ quantitaMagazzino: newStock })
-              .eq("idProdotto", idProdotto);
-          }
-        }
-      }
-    }
-
     return res.status(201).json({
       message: "Pagamento registrato con successo",
       idVendita
     });
   } catch (err: any) {
     console.error("Errore POST /api/cassa/registra:", err);
-    return res.status(500).json({ message: err.message });
+    return res.status(isStockError(err) ? 409 : 500).json({
+      message: "Errore durante il salvataggio della vendita",
+      error: err.message
+    });
   }
 });
 

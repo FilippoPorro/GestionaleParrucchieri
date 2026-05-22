@@ -17,17 +17,23 @@
     </div>
   </div>
 
-  <nav class="management-sidenav__nav" aria-label="Navigazione gestionale">
+  <nav
+    #navScroll
+    class="management-sidenav__nav"
+    aria-label="Navigazione gestionale"
+    (scroll)="onNavScroll()"
+  >
     <section class="management-sidenav__section" *ngFor="let section of sections">
       <p class="management-sidenav__section-title">{{ section.title }}</p>
 
       <a
         *ngFor="let item of section.items"
         class="management-sidenav__link"
-        [routerLink]="item.href"
-        routerLinkActive="is-active"
-        [routerLinkActiveOptions]="{ exact: item.href === '/gestionale' }"
+        [href]="item.href"
+        [class.is-active]="isItemActive(item.href)"
         [attr.title]="isCollapsed ? item.label : null"
+        (pointerdown)="rememberNavPosition()"
+        (click)="navigateTo($event, item.href)"
       >
         <div class="management-sidenav__link-copy">
           <span class="management-sidenav__link-monogram">{{ item.label.slice(0, 2) }}</span>

@@ -20,45 +20,31 @@
     ></app-sidenav>
   </div>
 
-  <main #contentScroll class="management-layout__content" (scroll)="onContentScroll()">
+  <main class="management-layout__content">
     <section class="management-hero">
       <div>
         <p class="management-hero__eyebrow">Gestionale</p>
-        <h1>Dashboard salone</h1>
-        <p class="management-hero__copy">
-          Una vista rapida su agenda, incassi, clienti presenti e scorte da tenere sotto controllo.
-        </p>
+        <h1>{{ title }}</h1>
+        <p class="management-hero__copy">{{ description }}</p>
       </div>
 
       <div class="management-hero__stats">
         <div class="management-hero__badge">
-          <span>Oggi</span>
-          <strong>Live</strong>
-        </div>
-        <div class="management-hero__badge management-hero__badge--soft">
-          <span>Area</span>
-          <strong>Staff</strong>
+          <span>Stato</span>
+          <strong>Prep</strong>
         </div>
       </div>
-    </section>
-
-    <section class="management-stats">
-      <article class="management-stat-card" *ngFor="let stat of stats">
-        <p>{{ stat.label }}</p>
-        <strong>{{ stat.value }}</strong>
-        <span>{{ stat.trend }}</span>
-      </article>
     </section>
 
     <section class="management-panels">
       <div class="management-panel management-panel--primary">
         <div class="management-panel__head">
-          <span>Operativita</span>
-          <h2>Priorita della giornata</h2>
+          <span>Modulo</span>
+          <h2>Preparazione operativa</h2>
         </div>
 
         <div class="management-focus-grid">
-          <article class="management-focus-card" *ngFor="let card of focusCards">
+          <article class="management-focus-card" *ngFor="let card of cards">
             <h3>{{ card.title }}</h3>
             <p>{{ card.text }}</p>
           </article>
@@ -67,15 +53,14 @@
 
       <div class="management-panel management-panel--secondary">
         <div class="management-panel__head">
-          <span>Controlli</span>
-          <h2>Promemoria rapidi</h2>
+          <span>Gestionale</span>
+          <h2>Accesso mantenuto</h2>
         </div>
 
         <ul class="management-checklist">
-          <li>Verifica appuntamenti in arrivo e clienti in ritardo</li>
-          <li>Controlla incassi e pagamenti ancora aperti</li>
-          <li>Rivedi prodotti sotto soglia prima della chiusura</li>
-          <li>Aggiorna schede cliente dopo servizi tecnici</li>
+          <li>Definizione dei dati prioritari da mostrare al team.</li>
+          <li>Collegamento con agenda, cassa e magazzino del salone.</li>
+          <li>Revisione permessi staff e pubblicazione controllata.</li>
         </ul>
       </div>
     </section>
