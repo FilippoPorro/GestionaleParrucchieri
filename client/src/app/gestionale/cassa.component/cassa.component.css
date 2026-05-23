@@ -1336,11 +1336,56 @@
 }
 
 .cash-search-input {
-  cursor: pointer !important;
+  padding-right: 14px;
+  background-image: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text !important;
   transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 
+.cash-search-input:focus {
+  padding-right: 14px;
+}
+
 .cash-search-select-container.is-open .cash-search-input {
+  border-color: rgba(242, 209, 139, 0.54);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.028)),
+    rgba(18, 14, 11, 0.86);
+  box-shadow:
+    0 0 0 3px rgba(242, 209, 139, 0.09),
+    0 12px 24px rgba(0, 0, 0, 0.16);
+}
+
+.cash-choice-trigger {
+  min-height: 44px;
+  padding: 9px 38px 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  background-image: none;
+}
+
+.cash-choice-trigger span {
+  min-width: 0;
+  color: #fff8ec;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cash-choice-trigger.is-placeholder span {
+  color: rgba(255, 248, 236, 0.64);
+  font-weight: 500;
+}
+
+.cash-choice-select.is-open .cash-choice-trigger {
   border-color: rgba(242, 209, 139, 0.54);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.028)),
@@ -1374,6 +1419,7 @@
   width: 100%;
   max-height: 270px;
   overflow-y: auto;
+  overflow-x: hidden;
   z-index: 50;
   border: 1px solid rgba(242, 209, 139, 0.28);
   border-radius: 8px;
@@ -1391,6 +1437,10 @@
   animation: cashDropdownIn 0.22s cubic-bezier(.22, 1, .36, 1);
 }
 
+.cash-choice-dropdown {
+  max-height: 220px;
+}
+
 .cash-search-dropdown::-webkit-scrollbar {
   width: 6px;
 }
@@ -1401,9 +1451,10 @@
 }
 
 .cash-search-dropdown-item {
-  display: flex;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
   cursor: pointer;
@@ -1412,12 +1463,42 @@
   transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
 
+.cash-search-dropdown-item:hover {
+  align-items: flex-start;
+}
+
+.cash-choice-option {
+  min-height: 42px;
+  padding: 9px 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-top: 0;
+  border-right: 0;
+  border-left-width: 3px;
+  border-radius: 0;
+  background-color: transparent;
+  font-family: inherit;
+  text-align: left;
+}
+
+.cash-choice-option span,
+.cash-choice-option small {
+  letter-spacing: 0;
+}
+
+.cash-choice-option.is-selected {
+  border-left-color: rgba(242, 209, 139, 0.78);
+  background:
+    linear-gradient(90deg, rgba(242, 209, 139, 0.18), rgba(242, 209, 139, 0.055)),
+    rgba(255, 255, 255, 0.035);
+}
+
 .cash-search-dropdown-item:last-child {
   border-bottom: none;
 }
 
 .cash-search-dropdown-item:hover {
-  transform: translateX(2px);
+  transform: none;
   border-left-color: rgba(242, 209, 139, 0.74);
   background:
     linear-gradient(90deg, rgba(242, 209, 139, 0.14), rgba(242, 209, 139, 0.045)),
@@ -1431,14 +1512,22 @@
 }
 
 .cash-search-dropdown-item > span {
+  min-width: 0;
   font-weight: 600;
   color: #fff8ec;
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
-  min-width: 0;
+}
+
+.cash-search-dropdown-item:hover > span {
+  overflow: hidden;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.32;
 }
 
 .cash-search-dropdown-item strong {
@@ -1462,8 +1551,13 @@
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
-  flex: 1;
   min-width: 0;
+}
+
+.cash-search-dropdown-item:hover strong {
+  min-width: 64px;
+  padding: 4px 7px;
+  font-size: 12px;
 }
 
 .cash-search-dropdown-item__main span {
@@ -1476,6 +1570,15 @@
   width: 100%;
   display: block;
   text-align: left;
+}
+
+.cash-search-dropdown-item:hover .cash-search-dropdown-item__main span {
+  overflow: hidden;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.32;
 }
 
 .cash-search-dropdown-item__main small {

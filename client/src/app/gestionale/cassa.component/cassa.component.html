@@ -132,12 +132,6 @@
                   (blur)="toggleServiceDropdown(false)"
                   placeholder="Selezione servizio..."
                 />
-                <i
-                  class="bi bi-chevron-down cash-search-arrow"
-                  (mousedown)="$event.preventDefault()"
-                  (click)="toggleServiceDropdownFromClick($event)"
-                ></i>
-                
                 <div class="cash-search-dropdown" *ngIf="showServiceDropdown">
                   <div class="cash-search-dropdown-empty" *ngIf="filteredServizi.length === 0">
                     Nessun servizio trovato
@@ -146,7 +140,6 @@
                     class="cash-search-dropdown-item"
                     *ngFor="let s of filteredServizi"
                     (mousedown)="selectServizio(s)"
-                    [title]="s.nome"
                   >
                     <span>{{ s.nome }}</span>
                     <strong>€ {{ s.prezzo | number:'1.2-2' }}</strong>
@@ -171,12 +164,6 @@
                   (blur)="toggleProductDropdown(false)"
                   placeholder="Selezione prodotto..."
                 />
-                <i
-                  class="bi bi-chevron-down cash-search-arrow"
-                  (mousedown)="$event.preventDefault()"
-                  (click)="toggleProductDropdownFromClick($event)"
-                ></i>
-                
                 <div class="cash-search-dropdown" *ngIf="showProductDropdown">
                   <div class="cash-search-dropdown-empty" *ngIf="filteredProdotti.length === 0">
                     Nessun prodotto trovato
@@ -186,7 +173,6 @@
                     *ngFor="let p of filteredProdotti"
                     [class.is-disabled]="p.qta <= 0"
                     (mousedown)="p.qta > 0 && selectProdotto(p)"
-                    [title]="p.nome + (p.marca ? ' (' + p.marca + ')' : '')"
                   >
                     <div class="cash-search-dropdown-item__main">
                       <span>{{ p.nome }} {{ p.marca ? '(' + p.marca + ')' : '' }}</span>
@@ -317,7 +303,7 @@
 
         <!-- CAMPI CLIENTE, OPERATORE E SCONTO -->
         <div class="cash-field-grid">
-          <label class="cash-field">
+          <div class="cash-field">
             <span>Cliente</span>
             <input
               *ngIf="selectedAppuntamentoId"
@@ -326,19 +312,52 @@
               [value]="selectedClienteDisplay"
               readonly
             />
-            <select
+            <div
               *ngIf="!selectedAppuntamentoId"
-              class="cash-select"
-              [(ngModel)]="selectedClienteId"
+              class="cash-search-select-container cash-choice-select"
+              [class.is-open]="showCustomerDropdown"
+              (blur)="toggleCustomerDropdownBlur(false)"
             >
-              <option [ngValue]="null">Cliente Generico (Occasionale)</option>
-              <option *ngFor="let c of clienti" [ngValue]="c.idUtente">
-                {{ c.cognome }} {{ c.nome }} {{ c.email ? '(' + c.email + ')' : '' }}
-              </option>
-            </select>
-          </label>
+              <button
+                type="button"
+                class="cash-select cash-choice-trigger"
+                [class.is-placeholder]="!selectedClienteId"
+                (click)="toggleCustomerDropdown($event)"
+              >
+                <span>{{ selectedClienteChoiceLabel }}</span>
+              </button>
+              <i
+                class="bi bi-chevron-down cash-search-arrow"
+                aria-hidden="true"
+                (click)="toggleCustomerDropdown($event)"
+              ></i>
+
+              <div class="cash-search-dropdown cash-choice-dropdown" *ngIf="showCustomerDropdown">
+                <button
+                  type="button"
+                  class="cash-search-dropdown-item cash-choice-option"
+                  [class.is-selected]="!selectedClienteId"
+                  (mousedown)="selectCliente(null)"
+                >
+                  <span>Cliente Generico (Occasionale)</span>
+                </button>
+                <button
+                  type="button"
+                  class="cash-search-dropdown-item cash-choice-option"
+                  *ngFor="let c of clienti"
+                  [class.is-selected]="selectedClienteId === c.idUtente"
+                  (mousedown)="selectCliente(c.idUtente)"
+                >
+                  <div class="cash-search-dropdown-item__main">
+                    <span>{{ c.cognome }} {{ c.nome }}</span>
+                    <small *ngIf="c.email">{{ c.email }}</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
           
-          <label class="cash-field" *ngIf="hasServizi">
+          <div class="cash-field" *ngIf="hasServizi">
             <span>Operatore</span>
             <input
               *ngIf="selectedAppuntamentoId"
@@ -347,17 +366,47 @@
               [value]="selectedOperatoreDisplay"
               readonly
             />
-            <select
+            <div
               *ngIf="!selectedAppuntamentoId"
-              class="cash-select"
-              [(ngModel)]="selectedOperatoreId"
+              class="cash-search-select-container cash-choice-select"
+              [class.is-open]="showOperatorDropdown"
+              (blur)="toggleOperatorDropdownBlur(false)"
             >
-              <option [ngValue]="null">Seleziona operatore...</option>
-              <option *ngFor="let o of operatori" [ngValue]="o.idUtente">
-                {{ o.cognome }} {{ o.nome }}
-              </option>
-            </select>
-          </label>
+              <button
+                type="button"
+                class="cash-select cash-choice-trigger"
+                [class.is-placeholder]="!selectedOperatoreId"
+                (click)="toggleOperatorDropdown($event)"
+              >
+                <span>{{ selectedOperatoreChoiceLabel }}</span>
+              </button>
+              <i
+                class="bi bi-chevron-down cash-search-arrow"
+                aria-hidden="true"
+                (click)="toggleOperatorDropdown($event)"
+              ></i>
+
+              <div class="cash-search-dropdown cash-choice-dropdown" *ngIf="showOperatorDropdown">
+                <button
+                  type="button"
+                  class="cash-search-dropdown-item cash-choice-option"
+                  [class.is-selected]="!selectedOperatoreId"
+                  (mousedown)="selectOperatore(null)"
+                >
+                  <span>Seleziona operatore...</span>
+                </button>
+                <button
+                  type="button"
+                  class="cash-search-dropdown-item cash-choice-option"
+                  *ngFor="let o of operatori"
+                  [class.is-selected]="selectedOperatoreId === o.idUtente"
+                  (mousedown)="selectOperatore(o.idUtente)"
+                >
+                  <span>{{ o.cognome }} {{ o.nome }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div class="cash-field cash-field--discount">
             <span>Sconto immediato</span>

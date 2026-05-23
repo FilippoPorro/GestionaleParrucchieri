@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { UtentiService } from '../../services/utentiService';
@@ -15,6 +15,18 @@ interface ScontrinoItem {
   tipo: 'servizio' | 'prodotto';
   prezzoUnitario: number;
   quantita: number;
+}
+
+interface CassaDraft {
+  receiptItems: ScontrinoItem[];
+  selectedClienteId: number | null;
+  selectedClienteLabel: string;
+  selectedOperatoreId: number | null;
+  selectedOperatoreLabel: string;
+  selectedAppuntamentoId: number | null;
+  selectedMetodo: MetodoPagamentoGestionale;
+  discount: number;
+  discountMode: DiscountMode;
 }
 
 type MetodoPagamentoGestionale = 'pos' | 'contanti';
@@ -52,6 +64,8 @@ export class CassaComponent implements OnInit {
   showServiceDropdown: boolean = false;
   productSearchQuery: string = '';
   showProductDropdown: boolean = false;
+  showCustomerDropdown: boolean = false;
+  showOperatorDropdown: boolean = false;
 
   // Checkout inputs
   selectedClienteId: number | null = null;
@@ -84,6 +98,7 @@ export class CassaComponent implements OnInit {
     { step: 'authorizing', label: 'Autorizzazione' },
     { step: 'approved', label: 'Approvato' }
   ];
+  private readonly draftStorageKey = 'gestionale-cassa-draft-v1';
   private posSimulationTimeoutIds: ReturnType<typeof setTimeout>[] = [];
 
   constructor(
@@ -95,9 +110,18 @@ export class CassaComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.restoreReceiptDraft();
     this.loadAllData();
     this.loadDailyStats();
     this.loadAppuntamentiDaIncassare();
+  }
+
+  @HostListener('document:click')
+  closeOpenDropdowns(): void {
+    this.showServiceDropdown = false;
+    this.showProductDropdown = false;
+    this.showCustomerDropdown = false;
+    this.showOperatorDropdown = false;
   }
 
   toggleSidenav(): void {
@@ -175,6 +199,7 @@ export class CassaComponent implements OnInit {
     }
     this.selectedServizioId = null;
     this.serviceSearchQuery = '';
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -207,6 +232,7 @@ export class CassaComponent implements OnInit {
     }
     this.selectedProdottoId = null;
     this.productSearchQuery = '';
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -258,6 +284,8 @@ export class CassaComponent implements OnInit {
 
     if (this.showServiceDropdown) {
       this.showProductDropdown = false;
+      this.showCustomerDropdown = false;
+      this.showOperatorDropdown = false;
     }
   }
 
@@ -267,6 +295,30 @@ export class CassaComponent implements OnInit {
 
     if (this.showProductDropdown) {
       this.showServiceDropdown = false;
+      this.showCustomerDropdown = false;
+      this.showOperatorDropdown = false;
+    }
+  }
+
+  toggleCustomerDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showCustomerDropdown = !this.showCustomerDropdown;
+
+    if (this.showCustomerDropdown) {
+      this.showServiceDropdown = false;
+      this.showProductDropdown = false;
+      this.showOperatorDropdown = false;
+    }
+  }
+
+  toggleOperatorDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showOperatorDropdown = !this.showOperatorDropdown;
+
+    if (this.showOperatorDropdown) {
+      this.showServiceDropdown = false;
+      this.showProductDropdown = false;
+      this.showCustomerDropdown = false;
     }
   }
 
@@ -282,6 +334,18 @@ export class CassaComponent implements OnInit {
     }, 200);
   }
 
+  toggleCustomerDropdownBlur(show: boolean): void {
+    setTimeout(() => {
+      this.showCustomerDropdown = show;
+    }, 200);
+  }
+
+  toggleOperatorDropdownBlur(show: boolean): void {
+    setTimeout(() => {
+      this.showOperatorDropdown = show;
+    }, 200);
+  }
+
   removeReceiptItem(index: number): void {
     this.receiptItems.splice(index, 1);
     if (this.selectedAppuntamentoId && !this.receiptItems.some(item => item.tipo === 'servizio')) {
@@ -291,6 +355,7 @@ export class CassaComponent implements OnInit {
       this.selectedOperatoreId = null;
       this.selectedOperatoreLabel = '';
     }
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -304,6 +369,7 @@ export class CassaComponent implements OnInit {
       }
     }
     item.quantita++;
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -313,6 +379,7 @@ export class CassaComponent implements OnInit {
     } else {
       this.removeReceiptItem(index);
     }
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -348,6 +415,24 @@ export class CassaComponent implements OnInit {
 
   get selectedOperatoreDisplay(): string {
     return this.selectedOperatoreLabel || 'Carica una prenotazione per associare l\'operatore';
+  }
+
+  get selectedClienteChoiceLabel(): string {
+    if (!this.selectedClienteId) {
+      return 'Cliente Generico (Occasionale)';
+    }
+
+    const cliente = this.clienti.find(c => c.idUtente === Number(this.selectedClienteId));
+    return cliente ? this.formatClienteLabel(cliente) : 'Cliente selezionato';
+  }
+
+  get selectedOperatoreChoiceLabel(): string {
+    if (!this.selectedOperatoreId) {
+      return 'Seleziona operatore...';
+    }
+
+    const operatore = this.operatori.find(o => o.idUtente === Number(this.selectedOperatoreId));
+    return operatore ? `${operatore.cognome} ${operatore.nome}` : 'Operatore selezionato';
   }
 
   get hasServizi(): boolean {
@@ -406,6 +491,81 @@ export class CassaComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  private restoreReceiptDraft(): void {
+    try {
+      const rawDraft = localStorage.getItem(this.draftStorageKey);
+      if (!rawDraft) {
+        return;
+      }
+
+      const draft = JSON.parse(rawDraft) as Partial<CassaDraft>;
+      const receiptItems = Array.isArray(draft.receiptItems)
+        ? draft.receiptItems.filter((item): item is ScontrinoItem =>
+          typeof item?.id === 'number' &&
+          (item.tipo === 'servizio' || item.tipo === 'prodotto') &&
+          typeof item.nome === 'string' &&
+          typeof item.prezzoUnitario === 'number' &&
+          typeof item.quantita === 'number'
+        )
+        : [];
+
+      if (receiptItems.length === 0) {
+        return;
+      }
+
+      this.receiptItems = receiptItems;
+      this.selectedClienteId = this.parseNullableNumber(draft.selectedClienteId);
+      this.selectedClienteLabel = typeof draft.selectedClienteLabel === 'string' ? draft.selectedClienteLabel : '';
+      this.selectedOperatoreId = this.parseNullableNumber(draft.selectedOperatoreId);
+      this.selectedOperatoreLabel = typeof draft.selectedOperatoreLabel === 'string' ? draft.selectedOperatoreLabel : '';
+      this.selectedAppuntamentoId = this.parseNullableNumber(draft.selectedAppuntamentoId);
+      this.selectedMetodo = draft.selectedMetodo === 'contanti' ? 'contanti' : 'pos';
+      this.discountMode = draft.discountMode === 'percent' ? 'percent' : 'euro';
+      this.discount = Number.isFinite(Number(draft.discount)) ? Math.max(0, Number(draft.discount)) : 0;
+    } catch (err) {
+      console.error('Errore ripristino scontrino in corso:', err);
+      this.clearReceiptDraft();
+    }
+  }
+
+  private saveReceiptDraft(): void {
+    try {
+      if (this.receiptItems.length === 0) {
+        this.clearReceiptDraft();
+        return;
+      }
+
+      const draft: CassaDraft = {
+        receiptItems: this.receiptItems,
+        selectedClienteId: this.selectedClienteId,
+        selectedClienteLabel: this.selectedClienteLabel,
+        selectedOperatoreId: this.selectedOperatoreId,
+        selectedOperatoreLabel: this.selectedOperatoreLabel,
+        selectedAppuntamentoId: this.selectedAppuntamentoId,
+        selectedMetodo: this.selectedMetodo,
+        discount: this.discount,
+        discountMode: this.discountMode
+      };
+
+      localStorage.setItem(this.draftStorageKey, JSON.stringify(draft));
+    } catch (err) {
+      console.error('Errore salvataggio scontrino in corso:', err);
+    }
+  }
+
+  private clearReceiptDraft(): void {
+    try {
+      localStorage.removeItem(this.draftStorageKey);
+    } catch (err) {
+      console.error('Errore pulizia scontrino in corso:', err);
+    }
+  }
+
+  private parseNullableNumber(value: unknown): number | null {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+  }
+
   private formatClienteLabel(cliente: { nome?: string | null; cognome?: string | null; email?: string | null }): string {
     const fullName = `${cliente.cognome || ''} ${cliente.nome || ''}`.trim() || 'Cliente';
     const email = String(cliente.email || '').trim();
@@ -416,6 +576,23 @@ export class CassaComponent implements OnInit {
   selectMetodo(metodo: MetodoPagamentoGestionale): void {
     this.selectedMetodo = metodo;
     this.posSimulationStep = 'idle';
+    this.saveReceiptDraft();
+    this.onPaymentFormInteraction();
+  }
+
+  selectCliente(clienteId: number | null): void {
+    this.selectedClienteId = clienteId;
+    this.selectedClienteLabel = '';
+    this.showCustomerDropdown = false;
+    this.saveReceiptDraft();
+    this.onPaymentFormInteraction();
+  }
+
+  selectOperatore(operatoreId: number | null): void {
+    this.selectedOperatoreId = operatoreId;
+    this.selectedOperatoreLabel = '';
+    this.showOperatorDropdown = false;
+    this.saveReceiptDraft();
     this.onPaymentFormInteraction();
   }
 
@@ -435,6 +612,7 @@ export class CassaComponent implements OnInit {
       this.discount = 100;
     }
 
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -446,6 +624,7 @@ export class CassaComponent implements OnInit {
       ? Math.min(normalizedValue, 100)
       : normalizedValue;
 
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -468,6 +647,7 @@ export class CassaComponent implements OnInit {
     this.productSearchQuery = '';
     this.activePaymentAction = null;
     this.posSimulationStep = 'idle';
+    this.clearReceiptDraft();
     this.clearMessages();
   }
 
@@ -496,6 +676,7 @@ export class CassaComponent implements OnInit {
     this.discountMode = 'euro';
     this.serviceSearchQuery = '';
     this.productSearchQuery = '';
+    this.saveReceiptDraft();
     this.clearMessages();
   }
 
@@ -652,6 +833,7 @@ export class CassaComponent implements OnInit {
         this.serviceSearchQuery = '';
         this.productSearchQuery = '';
         this.posSimulationStep = 'idle';
+        this.clearReceiptDraft();
 
         // Refresh products list in case of stock updates
         this.prodottoService.getProdotti().subscribe(res => this.prodotti = res);
