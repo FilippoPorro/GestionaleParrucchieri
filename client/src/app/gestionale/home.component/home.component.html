@@ -61,6 +61,9 @@
           <article class="management-focus-card" *ngFor="let card of focusCards">
             <h3>{{ card.title }}</h3>
             <p>{{ card.text }}</p>
+            <a class="management-card-action" [routerLink]="card.route">
+              {{ card.ctaLabel }}
+            </a>
           </article>
         </div>
       </div>
@@ -71,12 +74,17 @@
           <h2>Promemoria rapidi</h2>
         </div>
 
-        <ul class="management-checklist">
-          <li>Verifica appuntamenti in arrivo e clienti in ritardo</li>
-          <li>Controlla incassi e pagamenti ancora aperti</li>
-          <li>Rivedi prodotti sotto soglia prima della chiusura</li>
-          <li>Aggiorna schede cliente dopo servizi tecnici</li>
-        </ul>
+        <div class="management-checklist">
+          <article class="management-checklist-card" *ngFor="let reminder of reminderCards">
+            <div>
+              <h3>{{ reminder.title }}</h3>
+              <p>{{ reminder.text }}</p>
+            </div>
+            <a class="management-card-action management-card-action--secondary" [routerLink]="reminder.route">
+              {{ reminder.ctaLabel }}
+            </a>
+          </article>
+        </div>
       </div>
     </section>
   </main>

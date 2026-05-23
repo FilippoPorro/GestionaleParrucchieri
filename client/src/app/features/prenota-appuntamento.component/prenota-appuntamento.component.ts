@@ -42,7 +42,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   availabilityMessage = '';
   bookingAlertTitle = '';
   bookingAlertMessage = '';
-  bookingAlertType: 'success' | 'error' | null = null;
+  bookingAlertType: 'success' | 'error' | 'warning' | null = null;
   isLoadingData = true;
   isSubmitting = false;
   serviceSearchTerm = '';
@@ -102,7 +102,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       this.showBookingAlert(
         'Effettua il login prima di prenotare un appuntamento.',
-        'error',
+        'warning',
         'Login richiesto'
       );
     }
@@ -567,7 +567,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
     if (!this.authService.isLoggedIn()) {
       this.showBookingAlert(
         'Effettua il login prima di prenotare un appuntamento.',
-        'error',
+        'warning',
         'Login richiesto'
       );
       this.scrollToBookingAlert();
@@ -1023,11 +1023,17 @@ export class PrenotaAppuntamentoComponent implements OnInit {
 
   private showBookingAlert(
     message: string,
-    type: 'success' | 'error',
+    type: 'success' | 'error' | 'warning',
     title?: string
   ): void {
     this.bookingAlertType = type;
-    this.bookingAlertTitle = title ?? (type === 'success' ? 'Prenotazione completata' : 'Prenotazione non riuscita');
+    this.bookingAlertTitle = title ?? (
+      type === 'success'
+        ? 'Prenotazione completata'
+        : type === 'warning'
+          ? 'Login richiesto'
+          : 'Prenotazione non riuscita'
+    );
     this.bookingAlertMessage = message;
   }
 

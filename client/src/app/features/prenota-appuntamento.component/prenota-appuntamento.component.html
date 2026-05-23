@@ -235,6 +235,8 @@
         <div class="appointments-alert-icon">
           @if (bookingAlertType === 'success') {
             <i class="fa-solid fa-check" aria-hidden="true"></i>
+          } @else if (bookingAlertType === 'warning') {
+            <i class="fa-solid fa-exclamation" aria-hidden="true"></i>
           } @else {
             !
           }
@@ -242,7 +244,7 @@
 
         <div class="appointments-alert-copy">
           <strong class="appointments-alert-title">
-            {{ bookingAlertType === 'success' ? (bookingAlertTitle || 'Prenotazione completata') : 'Prenotazione non riuscita' }}
+            {{ bookingAlertTitle || 'Prenotazione non riuscita' }}
           </strong>
           <div class="appointments-alert-text">{{ bookingAlertMessage }}</div>
         </div>

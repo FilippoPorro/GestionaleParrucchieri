@@ -9,13 +9,21 @@ import {
   OnInit,
   ViewChild
 } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { DashboardService } from '../../services/dashboard';
+
+interface DashboardActionCard {
+  title: string;
+  text: string;
+  ctaLabel: string;
+  route: string;
+}
 
 @Component({
   selector: 'app-home.component',
   standalone: true,
-  imports: [CommonModule, SidenavComponent],
+  imports: [CommonModule, RouterModule, SidenavComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -241,18 +249,51 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
     }
   }
 
-  readonly focusCards = [
+  readonly focusCards: DashboardActionCard[] = [
     {
       title: 'Agenda del giorno',
-      text: 'Vista rapida degli slot, ritardi e conferme prenotazione da gestire in reception.'
+      text: 'Vista rapida degli slot, ritardi e conferme prenotazione da gestire in reception.',
+      ctaLabel: 'Apri agenda',
+      route: '/gestionale/appuntamenti'
     },
     {
       title: 'Movimenti cassa',
-      text: 'Controllo incassi, metodi di pagamento e chiusura operativa di fine giornata.'
+      text: 'Controllo incassi, metodi di pagamento e chiusura operativa di fine giornata.',
+      ctaLabel: 'Vai alla cassa',
+      route: '/gestionale/cassa'
     },
     {
       title: 'Magazzino attivo',
-      text: 'Monitoraggio prodotti professionali, vendita retail e soglie minime di riordino.'
+      text: 'Monitoraggio prodotti professionali, vendita retail e soglie minime di riordino.',
+      ctaLabel: 'Controlla magazzino',
+      route: '/gestionale/magazzino'
+    }
+  ];
+
+  readonly reminderCards: DashboardActionCard[] = [
+    {
+      title: 'Appuntamenti in arrivo',
+      text: 'Verifica appuntamenti in arrivo e clienti in ritardo.',
+      ctaLabel: 'Apri appuntamenti',
+      route: '/gestionale/appuntamenti'
+    },
+    {
+      title: 'Pagamenti aperti',
+      text: 'Controlla incassi e pagamenti ancora aperti.',
+      ctaLabel: 'Verifica pagamenti',
+      route: '/gestionale/cassa'
+    },
+    {
+      title: 'Prodotti sotto soglia',
+      text: 'Rivedi prodotti sotto soglia prima della chiusura.',
+      ctaLabel: 'Vedi prodotti',
+      route: '/gestionale/magazzino'
+    },
+    {
+      title: 'Schede cliente',
+      text: 'Aggiorna schede cliente dopo servizi tecnici.',
+      ctaLabel: 'Apri clienti',
+      route: '/gestionale/clienti'
     }
   ];
 }

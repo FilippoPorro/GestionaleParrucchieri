@@ -548,6 +548,11 @@
   border: 1px solid rgba(74, 168, 106, 0.65);
 }
 
+.appointments-alert.warning {
+  background: rgba(214, 154, 21, 0.2);
+  border: 1px solid rgba(255, 204, 94, 0.38);
+}
+
 .appointments-alert.error {
   background: rgba(200, 60, 60, 0.18);
   border: 1px solid rgba(255, 120, 120, 0.25);
@@ -569,6 +574,12 @@
 .appointments-alert.success .appointments-alert-icon {
   color: #163d22;
   background: #78f294;
+  box-shadow: none;
+}
+
+.appointments-alert.warning .appointments-alert-icon {
+  color: #5a3a00;
+  background: #ffd36f;
   box-shadow: none;
 }
 

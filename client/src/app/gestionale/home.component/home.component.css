@@ -251,6 +251,9 @@
   padding: 18px;
   background: rgba(255, 255, 255, 0.035);
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .management-focus-card h3 {
@@ -265,20 +268,108 @@
   line-height: 1.7;
 }
 
-.management-checklist {
-  display: grid;
-  gap: 10px;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
+.management-card-action {
+  width: fit-content;
+  min-width: 152px;
+  margin-top: auto;
+  padding: 12px 16px;
+  border: 1px solid rgba(242, 209, 139, 0.42);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 240, 204, 0.18), rgba(242, 209, 139, 0.1)),
+    linear-gradient(135deg, #d4a85b, #9d6630);
+  color: #fff9ec;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  line-height: 1.1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 24px rgba(0, 0, 0, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
 }
 
-.management-checklist li {
-  padding: 12px 14px;
+.management-card-action:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 229, 168, 0.74);
+  background:
+    linear-gradient(135deg, rgba(255, 245, 218, 0.24), rgba(242, 209, 139, 0.12)),
+    linear-gradient(135deg, #e0b96d, #af7338);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 16px 28px rgba(0, 0, 0, 0.28);
+}
+
+.management-card-action:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+.management-card-action:focus-visible {
+  outline: 2px solid rgba(255, 228, 163, 0.9);
+  outline-offset: 3px;
+}
+
+.management-card-action--secondary {
+  min-width: 142px;
+  padding: 10px 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
+    rgba(31, 24, 18, 0.9);
+  border-color: rgba(212, 176, 106, 0.34);
+  color: #f7e9c6;
+}
+
+.management-card-action--secondary:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05)),
+    rgba(42, 31, 22, 0.96);
+  border-color: rgba(242, 209, 139, 0.58);
+  color: #fff4d8;
+}
+
+.management-checklist {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.management-checklist-card {
+  padding: 10px 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.035);
-  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.management-checklist-card h3 {
+  margin: 0 0 4px;
+  color: #fff7e8;
+  font-size: 15px;
+}
+
+.management-checklist-card p {
+  margin: 0;
+  color: rgba(248, 241, 231, 0.68);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 @media (max-width: 1200px) {
@@ -288,6 +379,11 @@
 
   .management-focus-grid {
     grid-template-columns: 1fr;
+  }
+
+  .management-checklist-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
