@@ -11,13 +11,25 @@ import {
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
-import { DashboardService } from '../../services/dashboard';
+import { DashboardService, DashboardStats } from '../../services/dashboard';
 
 interface DashboardActionCard {
   title: string;
   text: string;
   ctaLabel: string;
   route: string;
+  icon: string;
+}
+
+interface DashboardQuickReminder {
+  title: string;
+  detail: string;
+  meta: string;
+  badge: string;
+  route: string;
+  queryParams?: Record<string, string | number>;
+  icon: string;
+  tone: 'now' | 'soon' | 'stock' | 'cash' | 'quiet';
 }
 
 @Component({
@@ -40,6 +52,17 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
   private isRestoringContentScroll = true;
 
   isSidenavCollapsed = false;
+  quickReminders: DashboardQuickReminder[] = [
+    {
+      title: 'Caricamento promemoria',
+      detail: 'Sto preparando appuntamenti, clienti in arrivo e controlli rapidi.',
+      meta: 'Dashboard live',
+      badge: 'Live',
+      route: '/gestionale/appuntamenti',
+      icon: 'bi-arrow-repeat',
+      tone: 'quiet'
+    }
+  ];
 
   toggleSidenav(): void {
     this.persistContentScrollPosition();
@@ -83,7 +106,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
           {
             label: 'Prodotti in riordino',
             value: String(dashboardStats.prodottiInRiordino),
-            trend: `stock <= ${dashboardStats.sogliaRiordino}`
+            trend: `riordino < ${dashboardStats.sogliaRiordino}`
           },
           {
             label: 'Clienti in salone',
@@ -91,6 +114,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
             trend: `${slotStart}-${slotEnd}`
           }
         ];
+        this.quickReminders = this.buildQuickReminders(dashboardStats);
         this.cdr.detectChanges();
         this.scheduleContentScrollRestore();
       },
@@ -249,51 +273,85 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
     }
   }
 
+  private buildQuickReminders(dashboardStats: DashboardStats): DashboardQuickReminder[] {
+    const appointmentReminders = (dashboardStats.promemoria?.appuntamenti || []).map((appointment) => {
+      const isCurrent = appointment.stato === 'in_corso';
+
+      return {
+        title: appointment.clienteNome,
+        detail: `${appointment.servizio} con ${appointment.operatoreNome}`,
+        meta: `${appointment.ora}-${appointment.oraFine}`,
+        badge: isCurrent ? 'Adesso' : 'In arrivo',
+        route: '/gestionale/appuntamenti',
+        icon: isCurrent ? 'bi-scissors' : 'bi-clock-history',
+        tone: isCurrent ? 'now' : 'soon'
+      } satisfies DashboardQuickReminder;
+    });
+
+    const productReminders = (dashboardStats.promemoria?.prodotti || []).map((product) => ({
+      title: product.nome,
+      detail: 'Prodotto sotto soglia da controllare in magazzino.',
+      meta: `${product.quantita} pezzi rimasti`,
+      badge: 'Stock',
+      route: '/gestionale/magazzino',
+      queryParams: { prodotto: product.idProdotto, edit: 1 },
+      icon: 'bi-box-seam',
+      tone: 'stock'
+    } satisfies DashboardQuickReminder));
+
+    const cashReminder: DashboardQuickReminder[] = dashboardStats.incassoPrevistoAppuntamenti > dashboardStats.incassoGiornaliero
+      ? [{
+        title: 'Incassi da verificare',
+        detail: 'Il previsto degli appuntamenti supera l’incasso registrato.',
+        meta: this.formatCurrency(dashboardStats.incassoPrevistoAppuntamenti - dashboardStats.incassoGiornaliero),
+        badge: 'Cassa',
+        route: '/gestionale/cassa',
+        icon: 'bi-receipt',
+        tone: 'cash'
+      }]
+      : [];
+
+    const reminders = [...appointmentReminders, ...cashReminder, ...productReminders];
+
+    if (reminders.length > 0) {
+      return reminders;
+    }
+
+    return [
+      {
+        title: 'Nessuna urgenza adesso',
+        detail: 'Non risultano clienti in arrivo nelle prossime ore o prodotti critici.',
+        meta: dashboardStats.slotCorrente.inizio ? `${this.formatTime(dashboardStats.slotCorrente.inizio)}-${this.formatTime(dashboardStats.slotCorrente.fine)}` : 'Live',
+        badge: 'Ok',
+        route: '/gestionale/appuntamenti',
+        icon: 'bi-check2-circle',
+        tone: 'quiet'
+      }
+    ];
+  }
+
   readonly focusCards: DashboardActionCard[] = [
     {
       title: 'Agenda del giorno',
       text: 'Vista rapida degli slot, ritardi e conferme prenotazione da gestire in reception.',
       ctaLabel: 'Apri agenda',
-      route: '/gestionale/appuntamenti'
+      route: '/gestionale/appuntamenti',
+      icon: 'bi-calendar2-week'
     },
     {
       title: 'Movimenti cassa',
       text: 'Controllo incassi, metodi di pagamento e chiusura operativa di fine giornata.',
       ctaLabel: 'Vai alla cassa',
-      route: '/gestionale/cassa'
+      route: '/gestionale/cassa',
+      icon: 'bi-receipt'
     },
     {
       title: 'Magazzino attivo',
       text: 'Monitoraggio prodotti professionali, vendita retail e soglie minime di riordino.',
       ctaLabel: 'Controlla magazzino',
-      route: '/gestionale/magazzino'
+      route: '/gestionale/magazzino',
+      icon: 'bi-box-seam'
     }
   ];
 
-  readonly reminderCards: DashboardActionCard[] = [
-    {
-      title: 'Appuntamenti in arrivo',
-      text: 'Verifica appuntamenti in arrivo e clienti in ritardo.',
-      ctaLabel: 'Apri appuntamenti',
-      route: '/gestionale/appuntamenti'
-    },
-    {
-      title: 'Pagamenti aperti',
-      text: 'Controlla incassi e pagamenti ancora aperti.',
-      ctaLabel: 'Verifica pagamenti',
-      route: '/gestionale/cassa'
-    },
-    {
-      title: 'Prodotti sotto soglia',
-      text: 'Rivedi prodotti sotto soglia prima della chiusura.',
-      ctaLabel: 'Vedi prodotti',
-      route: '/gestionale/magazzino'
-    },
-    {
-      title: 'Schede cliente',
-      text: 'Aggiorna schede cliente dopo servizi tecnici.',
-      ctaLabel: 'Apri clienti',
-      route: '/gestionale/clienti'
-    }
-  ];
 }

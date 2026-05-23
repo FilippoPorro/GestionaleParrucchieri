@@ -9,12 +9,32 @@
     </div>
   </div>
 
-  <div class="management-sidenav__status">
+  <div class="management-sidenav__status" [class.is-closed]="!isSalonOpen">
     <span class="management-sidenav__status-dot"></span>
     <div class="management-sidenav__status-copy">
-      <strong>Salone operativo</strong>
-      <p>Monitoraggio live di agenda e vendite</p>
+      <strong>{{ salonStatusTitle }}</strong>
+      <p>{{ salonStatusCopy }}</p>
     </div>
+  </div>
+
+  <div class="management-sidenav__account" *ngIf="currentUser">
+    <div class="management-sidenav__account-main">
+      <span class="management-sidenav__account-avatar">{{ accountInitials }}</span>
+      <div class="management-sidenav__account-copy">
+        <span>{{ accountRoleLabel }}</span>
+        <strong>{{ accountDisplayName }}</strong>
+        <p>{{ currentUser.email || 'Email non disponibile' }}</p>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="management-sidenav__account-switch"
+      (click)="changeAccount()"
+      [attr.title]="isCollapsed ? 'Cambia account' : null"
+    >
+      <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+      <span>Cambia account</span>
+    </button>
   </div>
 
   <nav
@@ -29,11 +49,9 @@
       <a
         *ngFor="let item of section.items"
         class="management-sidenav__link"
-        [href]="item.href"
+        [routerLink]="[item.href]"
         [class.is-active]="isItemActive(item.href)"
         [attr.title]="isCollapsed ? item.label : null"
-        (pointerdown)="rememberNavPosition()"
-        (click)="navigateTo($event, item.href)"
       >
         <div class="management-sidenav__link-copy">
           <span class="management-sidenav__link-monogram">{{ item.label.slice(0, 2) }}</span>
@@ -48,9 +66,9 @@
   </nav>
 
   <div class="management-sidenav__footer">
-    <p class="management-sidenav__footer-title">Area staff</p>
+    <p class="management-sidenav__footer-title">Sito</p>
     <p class="management-sidenav__footer-copy">
-      Gestione operativa del salone.
+      Esci dal gestionale e torna alla homepage.
     </p>
     <a
       class="management-sidenav__site-link"

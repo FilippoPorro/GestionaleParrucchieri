@@ -19,6 +19,14 @@ interface GenericResponse {
   message: string;
 }
 
+export interface AuthUserSummary {
+  id: number | null;
+  nome: string;
+  cognome: string;
+  email: string;
+  ruolo: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -49,6 +57,8 @@ export class AuthService {
   isAdmin = computed(() => this.userRole() === 'admin');
 
   isOperatore = computed(() => this.userRole() === 'operatore' || this.userRole() === 'admin');
+
+  currentUser = computed<AuthUserSummary | null>(() => this.getUserSummaryFromToken());
 
   mustChangePassword = computed(() => {
     const token = this._token();
@@ -167,6 +177,37 @@ export class AuthService {
       return typeof decodedPayload.email === 'string' ? decodedPayload.email : null;
     } catch (e) {
       console.error('Errore decodifica email dal token', e);
+      return null;
+    }
+  }
+
+  getUserSummaryFromToken(): AuthUserSummary | null {
+    const token = this._token();
+
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payloadBase64 = token.split('.')[1];
+
+      if (!payloadBase64) {
+        return null;
+      }
+
+      const decodedPayload = JSON.parse(atob(payloadBase64));
+
+      return {
+        id: Number.isFinite(Number(decodedPayload.idUtente ?? decodedPayload.id))
+          ? Number(decodedPayload.idUtente ?? decodedPayload.id)
+          : null,
+        nome: typeof decodedPayload.nome === 'string' ? decodedPayload.nome : '',
+        cognome: typeof decodedPayload.cognome === 'string' ? decodedPayload.cognome : '',
+        email: typeof decodedPayload.email === 'string' ? decodedPayload.email : '',
+        ruolo: typeof decodedPayload.ruolo === 'string' ? decodedPayload.ruolo : ''
+      };
+    } catch (e) {
+      console.error('Errore decodifica utente dal token', e);
       return null;
     }
   }

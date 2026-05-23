@@ -10,8 +10,11 @@
   min-height: 100%;
   padding: 24px 16px 18px;
   color: #f8f1e7;
-  background: linear-gradient(180deg, rgba(24, 18, 13, 0.98), rgba(10, 8, 6, 0.98));
-  border-right: 1px solid rgba(212, 176, 106, 0.14);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.88) 0%, rgba(7, 7, 7, 0.96) 52%, rgba(0, 0, 0, 0.98) 100%),
+    radial-gradient(circle at top left, rgba(212, 176, 106, 0.08), transparent 34%);
+  border-right: 1px solid rgba(212, 176, 106, 0.18);
+  box-shadow: 18px 0 42px rgba(0, 0, 0, 0.28);
   overflow: hidden;
 }
 
@@ -39,6 +42,9 @@
   flex: 0 0 48px;
   color: #20160d;
   background: linear-gradient(135deg, #f2d18b, #c7923d);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 16px 28px rgba(0, 0, 0, 0.24);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -74,9 +80,12 @@
   gap: 12px;
   padding: 13px;
   margin-bottom: 18px;
-  border: 1px solid rgba(212, 176, 106, 0.14);
+  border: 1px solid rgba(212, 176, 106, 0.18);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.024)),
+    rgba(0, 0, 0, 0.52);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.16);
   flex: 0 0 auto;
 }
 
@@ -90,6 +99,18 @@
   box-shadow: 0 0 0 5px rgba(121, 208, 154, 0.12);
 }
 
+.management-sidenav__status.is-closed {
+  border-color: rgba(218, 82, 82, 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.022)),
+    rgba(18, 6, 6, 0.72);
+}
+
+.management-sidenav__status.is-closed .management-sidenav__status-dot {
+  background: #e25a5a;
+  box-shadow: 0 0 0 5px rgba(226, 90, 90, 0.14);
+}
+
 .management-sidenav__status strong,
 .management-sidenav__footer-title {
   display: block;
@@ -99,12 +120,109 @@
 }
 
 .management-sidenav__status p,
+.management-sidenav__account-copy p,
 .management-sidenav__footer-copy,
 .management-sidenav__link p {
   margin: 0;
   color: rgba(248, 241, 231, 0.62);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.management-sidenav__account {
+  flex: 0 0 auto;
+  margin-bottom: 18px;
+  padding: 13px;
+  border: 1px solid rgba(212, 176, 106, 0.16);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
+    rgba(0, 0, 0, 0.48);
+}
+
+.management-sidenav__account-main {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+}
+
+.management-sidenav__account-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 209, 139, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.62);
+  color: #f2d18b;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.management-sidenav__account-copy {
+  min-width: 0;
+}
+
+.management-sidenav__account-copy span {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(255, 226, 175, 0.7);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.management-sidenav__account-copy strong {
+  display: block;
+  color: #fff7e8;
+  font-size: 14px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-sidenav__account-copy p {
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-sidenav__account-switch {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(242, 209, 139, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.62);
+  color: #f2d18b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.management-sidenav__account-switch:hover {
+  transform: translateY(-1px);
+  border-color: rgba(242, 209, 139, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.78);
+  color: #ffe7aa;
 }
 
 .management-sidenav__nav {
@@ -146,20 +264,33 @@
   color: inherit;
   border-radius: 8px;
   padding: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.025);
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  border: 1px solid rgba(212, 176, 106, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .management-sidenav__link:hover {
   transform: translateX(3px);
-  border-color: rgba(212, 176, 106, 0.24);
-  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(242, 209, 139, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
+    rgba(0, 0, 0, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.18);
 }
 
 .management-sidenav__link.is-active {
-  border-color: rgba(212, 176, 106, 0.38);
-  background: rgba(212, 176, 106, 0.12);
+  border-color: rgba(212, 176, 106, 0.3);
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.13), rgba(212, 176, 106, 0.055)),
+    rgba(0, 0, 0, 0.48);
+  box-shadow:
+    inset 3px 0 0 rgba(212, 176, 106, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .management-sidenav__link-copy {
@@ -180,8 +311,8 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  background: rgba(255, 255, 255, 0.055);
   color: #f8e2b1;
   font-size: 11px;
   font-weight: 900;
@@ -190,9 +321,9 @@
 }
 
 .management-sidenav__link.is-active .management-sidenav__link-monogram {
-  border-color: transparent;
-  background: linear-gradient(135deg, #f2d18b, #be8640);
-  color: #2b1c0f;
+  border-color: rgba(212, 176, 106, 0.28);
+  background: rgba(212, 176, 106, 0.14);
+  color: #f8e2b1;
 }
 
 .management-sidenav__link-head {
@@ -230,8 +361,10 @@
   margin-top: 18px;
   padding: 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
+    rgba(23, 18, 13, 0.68);
 }
 
 .management-sidenav__site-link {

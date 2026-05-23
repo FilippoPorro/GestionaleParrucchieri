@@ -49,6 +49,100 @@ function isStockError(error: unknown): boolean {
   return /stock[_ ]insufficiente/i.test(message);
 }
 
+function isMissingCheckoutRpcError(error: unknown): boolean {
+  const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return code === "PGRST202" && /complete_checkout_sicuro/i.test(message);
+}
+
+async function completeCheckoutWithFallback(
+  idCliente: number | null,
+  totale: number,
+  prodottiVenduti: NormalizedCassaProduct[]
+): Promise<number> {
+  const productIds = prodottiVenduti.map((item) => item.productId);
+
+  const { data: stockRows, error: stockReadError } = await db
+    .from("prodotti")
+    .select("idProdotto, quantitaMagazzino")
+    .in("idProdotto", productIds);
+
+  if (stockReadError) throw stockReadError;
+
+  const stockByProductId = new Map<number, number>();
+
+  (stockRows || []).forEach((row: any) => {
+    stockByProductId.set(Number(row.idProdotto), Number(row.quantitaMagazzino || 0));
+  });
+
+  for (const item of prodottiVenduti) {
+    const availableStock = stockByProductId.get(item.productId);
+
+    if (availableStock === undefined) {
+      throw new Error("product_not_found");
+    }
+
+    if (availableStock < item.qty) {
+      throw new Error("stock_insufficiente");
+    }
+  }
+
+  const { data: venditaData, error: venditaError } = await db
+    .from("vendite")
+    .insert({
+      idCliente,
+      totale,
+      data: new Date().toISOString()
+    })
+    .select("idVendita")
+    .single();
+
+  if (venditaError) throw venditaError;
+
+  const idVendita = Number((venditaData as any).idVendita);
+
+  for (const item of prodottiVenduti) {
+    const currentStock = stockByProductId.get(item.productId) ?? 0;
+
+    const { data: updatedProduct, error: updateError } = await db
+      .from("prodotti")
+      .update({
+        quantitaMagazzino: currentStock - item.qty
+      })
+      .eq("idProdotto", item.productId)
+      .gte("quantitaMagazzino", item.qty)
+      .select("idProdotto")
+      .maybeSingle();
+
+    if (updateError) throw updateError;
+
+    if (!updatedProduct) {
+      throw new Error("stock_insufficiente");
+    }
+  }
+
+  const dettagliVendita = prodottiVenduti.map((item) => ({
+    idVendita,
+    idProdotto: item.productId,
+    quantita: item.qty,
+    prezzoUnitario: item.prezzoUnitario
+  }));
+
+  const { error: dettagliError } = await db
+    .from("dettagliovendita")
+    .insert(dettagliVendita);
+
+  if (dettagliError) throw dettagliError;
+
+  return idVendita;
+}
+
 function normalizeMetodoPagamento(metodo: unknown): "contanti" | "carta" | null {
   const value = String(metodo || "").trim().toLowerCase();
 
@@ -287,11 +381,21 @@ router.post("/registra", async (req: Request, res: Response) => {
         })
         .single();
 
-      if (checkoutError) {
+      if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
         throw checkoutError;
       }
 
-      idVendita = Number((checkoutData as any)?.idVendita);
+      idVendita = checkoutError
+        ? await completeCheckoutWithFallback(
+          idCliente ? Number(idCliente) : null,
+          Number(totale),
+          prodottiVenduti
+        )
+        : Number((checkoutData as any)?.idVendita);
+
+      if (!Number.isFinite(idVendita) || idVendita <= 0) {
+        throw new Error("checkout_result_invalid");
+      }
     } else {
       // 1. Inserimento della vendita
       const { data: venditaData, error: venditaError } = await db

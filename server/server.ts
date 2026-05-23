@@ -351,6 +351,100 @@ function isStockError(error: unknown): boolean {
 
   return /stock[_ ]insufficiente/i.test(message);
 }
+
+function isMissingCheckoutRpcError(error: unknown): boolean {
+  const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return code === "PGRST202" && /complete_checkout_sicuro/i.test(message);
+}
+
+async function completeCheckoutWithFallback(
+  userId: number | null,
+  total: number,
+  normalizedItems: NormalizedCartItem[]
+): Promise<CheckoutRpcResult> {
+  const productIds = normalizedItems.map((item) => item.productId);
+
+  const { data: stockRows, error: stockReadError } = await db
+    .from("prodotti")
+    .select("idProdotto, quantitaMagazzino")
+    .in("idProdotto", productIds);
+
+  if (stockReadError) throw stockReadError;
+
+  const stockByProductId = new Map<number, number>();
+
+  (stockRows || []).forEach((row: any) => {
+    stockByProductId.set(Number(row.idProdotto), Number(row.quantitaMagazzino || 0));
+  });
+
+  for (const item of normalizedItems) {
+    const availableStock = stockByProductId.get(item.productId);
+
+    if (availableStock === undefined) {
+      throw new Error("product_not_found");
+    }
+
+    if (availableStock < item.qty) {
+      throw new Error("stock_insufficiente");
+    }
+  }
+
+  const { data: venditaData, error: venditaError } = await db
+    .from("vendite")
+    .insert({
+      idCliente: userId,
+      data: new Date().toISOString(),
+      totale: total
+    })
+    .select("idVendita")
+    .single();
+
+  if (venditaError) throw venditaError;
+
+  const idVendita = Number((venditaData as any).idVendita);
+
+  for (const item of normalizedItems) {
+    const currentStock = stockByProductId.get(item.productId) ?? 0;
+
+    const { data: updatedProduct, error: updateError } = await db
+      .from("prodotti")
+      .update({
+        quantitaMagazzino: currentStock - item.qty
+      })
+      .eq("idProdotto", item.productId)
+      .gte("quantitaMagazzino", item.qty)
+      .select("idProdotto")
+      .maybeSingle();
+
+    if (updateError) throw updateError;
+
+    if (!updatedProduct) {
+      throw new Error("stock_insufficiente");
+    }
+  }
+
+  const details = normalizedItems.map((item) => ({
+    idVendita,
+    idProdotto: item.productId,
+    quantita: item.qty,
+    prezzoUnitario: item.prezzoUnitario
+  }));
+
+  const { error: detailsError } = await db
+    .from("dettagliovendita")
+    .insert(details);
+
+  if (detailsError) throw detailsError;
+
+  return { idVendita };
+}
 app.get("/api/imgParrucchieri", async (req, res) => {
   try {
     const result = await cloudinary.v2.search
@@ -602,9 +696,17 @@ app.post("/api/checkout/complete", async (req, res) => {
       })
       .single();
 
-    if (checkoutError) throw checkoutError;
+    if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
+      throw checkoutError;
+    }
 
-    const vendita = checkoutData as CheckoutRpcResult | null;
+    const vendita = checkoutError
+      ? await completeCheckoutWithFallback(userId, total, normalizedItems)
+      : checkoutData as CheckoutRpcResult | null;
+
+    if (!vendita?.idVendita) {
+      throw new Error("checkout_result_invalid");
+    }
 
     try {
       await sendOrderConfirmationEmail({

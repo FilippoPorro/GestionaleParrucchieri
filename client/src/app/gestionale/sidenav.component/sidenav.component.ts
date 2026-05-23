@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService, AuthUserSummary } from '../../services/auth';
 
 let lastKnownNavScrollTop: number | null = null;
 
@@ -9,11 +10,22 @@ interface SideNavItem {
   href: string;
   description: string;
   badge?: string;
+  adminOnly?: boolean;
 }
 
 interface SideNavSection {
   title: string;
   items: SideNavItem[];
+}
+
+interface OpeningInterval {
+  start: string;
+  end: string;
+}
+
+interface DailySchedule {
+  name: string;
+  intervals: OpeningInterval[];
 }
 
 @Component({
@@ -23,7 +35,7 @@ interface SideNavSection {
   templateUrl: './sidenav.component.html',
   styleUrl: './sidenav.component.css',
 })
-export class SidenavComponent implements AfterViewInit, OnDestroy {
+export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
   @Input() isCollapsed = false;
   @Output() collapsedChange = new EventEmitter<boolean>();
   @ViewChild('navScroll') private navScroll?: ElementRef<HTMLElement>;
@@ -34,6 +46,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
   private restoreScrollTimeouts: ReturnType<typeof setTimeout>[] = [];
   private restoreAnimationFrameIds: number[] = [];
   private navResizeObserver?: ResizeObserver;
+  private salonStatusTimer: ReturnType<typeof setInterval> | null = null;
   private isRestoringNavScroll = true;
   private readonly persistNavScrollFromNativeScroll = () => {
     this.persistNavScrollPosition();
@@ -42,9 +55,30 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
     this.persistNavScrollPosition(true);
   };
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly auth: AuthService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  readonly sections: SideNavSection[] = [
+  private readonly openingSchedule: Record<number, DailySchedule> = {
+    0: { name: 'Domenica', intervals: [] },
+    1: { name: 'Lunedi', intervals: [] },
+    2: { name: 'Martedi', intervals: [{ start: '08:00', end: '12:30' }, { start: '14:00', end: '19:30' }] },
+    3: { name: 'Mercoledi', intervals: [{ start: '13:00', end: '21:30' }] },
+    4: { name: 'Giovedi', intervals: [{ start: '08:00', end: '12:30' }, { start: '14:00', end: '19:30' }] },
+    5: { name: 'Venerdi', intervals: [{ start: '07:00', end: '19:30' }] },
+    6: { name: 'Sabato', intervals: [{ start: '07:00', end: '18:00' }] }
+  };
+
+  isSalonOpen = false;
+  salonStatusTitle = 'Salone non operativo';
+  salonStatusCopy = 'Fuori dagli orari di apertura';
+  currentUser: AuthUserSummary | null = null;
+
+  sections: SideNavSection[] = [];
+
+  private readonly allSections: SideNavSection[] = [
     {
       title: 'Operativita',
       items: [
@@ -77,6 +111,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
           label: 'Report',
           href: '/gestionale/report',
           description: 'Vendite, performance e KPI',
+          adminOnly: true,
         },
         {
           label: 'Magazzino',
@@ -103,16 +138,12 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
           label: 'Staff',
           href: '/gestionale/staff',
           description: 'Operatori e permessi',
+          adminOnly: true,
         },
         {
           label: 'Promozioni',
           href: '/gestionale/promozioni',
           description: 'Coupon, pacchetti e offerte',
-        },
-        {
-          label: 'Impostazioni',
-          href: '/gestionale/impostazioni',
-          description: 'Parametri salone e preferenze',
         }
       ]
     }
@@ -124,6 +155,13 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
     this.collapsedChange.emit(this.isCollapsed);
   }
 
+  ngOnInit(): void {
+    this.currentUser = this.auth.currentUser();
+    this.sections = this.buildVisibleSections();
+    this.updateSalonStatus();
+    this.salonStatusTimer = setInterval(() => this.updateSalonStatus(), 15000);
+  }
+
   ngAfterViewInit(): void {
     this.bindNativeNavScrollPersistence();
     this.observeNavScrollSize();
@@ -131,6 +169,11 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.salonStatusTimer) {
+      clearInterval(this.salonStatusTimer);
+      this.salonStatusTimer = null;
+    }
+
     this.unbindNativeNavScrollPersistence();
     this.clearRestoreTimeouts();
     this.clearRestoreAnimationFrames();
@@ -152,6 +195,12 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
     this.persistWindowScrollPosition();
   }
 
+  @HostListener('window:focus')
+  @HostListener('document:visibilitychange')
+  refreshSalonStatus(): void {
+    this.updateSalonStatus();
+  }
+
   onNavScroll(): void {
     this.persistNavScrollPosition();
   }
@@ -161,18 +210,43 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
     this.persistWindowScrollPosition();
   }
 
-  navigateTo(event: MouseEvent, href: string): void {
-    this.rememberNavPosition();
+  get accountDisplayName(): string {
+    const fullName = `${this.currentUser?.nome || ''} ${this.currentUser?.cognome || ''}`.trim();
+    return fullName || this.currentUser?.email || 'Account gestionale';
+  }
 
-    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
-      return;
+  get accountInitials(): string {
+    const source = this.accountDisplayName || this.currentUser?.email || 'GP';
+    const parts = source
+      .split(/\s+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length >= 2) {
+      return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
     }
 
-    event.preventDefault();
+    return source.slice(0, 2).toUpperCase();
+  }
 
-    if (this.router.url !== href) {
-      void this.router.navigateByUrl(href);
-    }
+  get accountRoleLabel(): string {
+    const role = this.currentUser?.ruolo || 'utente';
+    return role === 'admin' ? 'Admin' : role === 'operatore' ? 'Operatore' : role;
+  }
+
+  changeAccount(): void {
+    this.persistNavScrollPosition(true);
+    this.persistWindowScrollPosition();
+    this.auth.logout();
+  }
+
+  private buildVisibleSections(): SideNavSection[] {
+    return this.allSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => !item.adminOnly || this.auth.isAdmin())
+      }))
+      .filter((section) => section.items.length > 0);
   }
 
   isItemActive(href: string): boolean {
@@ -181,6 +255,70 @@ export class SidenavComponent implements AfterViewInit, OnDestroy {
     }
 
     return this.router.url === href || this.router.url.startsWith(`${href}/`);
+  }
+
+  private updateSalonStatus(now = new Date()): void {
+    const dayOfWeek = now.getDay();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const todaySchedule = this.openingSchedule[dayOfWeek];
+    const activeInterval = todaySchedule?.intervals.find((interval) => this.isMinuteWithinInterval(currentMinutes, interval));
+
+    this.isSalonOpen = Boolean(activeInterval);
+
+    if (activeInterval) {
+      this.salonStatusTitle = 'Salone operativo';
+      this.salonStatusCopy = `Aperto fino alle ${activeInterval.end}`;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.salonStatusTitle = 'Salone non operativo';
+    this.salonStatusCopy = this.buildClosedStatusCopy(dayOfWeek, currentMinutes);
+    this.cdr.detectChanges();
+  }
+
+  private buildClosedStatusCopy(dayOfWeek: number, currentMinutes: number): string {
+    const todaySchedule = this.openingSchedule[dayOfWeek];
+    const nextIntervalToday = todaySchedule?.intervals.find(
+      (interval) => this.timeToMinutes(interval.start) > currentMinutes
+    );
+
+    if (nextIntervalToday) {
+      return `Apre alle ${nextIntervalToday.start}`;
+    }
+
+    const nextOpening = this.findNextOpening(dayOfWeek);
+    return nextOpening
+      ? `Riapre ${nextOpening.dayLabel} alle ${nextOpening.time}`
+      : 'Fuori dagli orari di apertura';
+  }
+
+  private findNextOpening(dayOfWeek: number): { dayLabel: string; time: string } | null {
+    for (let offset = 1; offset <= 7; offset += 1) {
+      const scheduleDay = (dayOfWeek + offset) % 7;
+      const schedule = this.openingSchedule[scheduleDay];
+      const firstInterval = schedule?.intervals[0];
+
+      if (firstInterval) {
+        return {
+          dayLabel: offset === 1 ? 'domani' : schedule.name.toLowerCase(),
+          time: firstInterval.start
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private isMinuteWithinInterval(currentMinutes: number, interval: OpeningInterval): boolean {
+    const start = this.timeToMinutes(interval.start);
+    const end = this.timeToMinutes(interval.end);
+    return currentMinutes >= start && currentMinutes < end;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours = '0', minutes = '0'] = time.split(':');
+    return Number(hours) * 60 + Number(minutes);
   }
 
   private persistNavScrollPosition(force = false): void {

@@ -44,9 +44,11 @@
 
     <section class="management-stats">
       <article class="management-stat-card" *ngFor="let stat of stats">
-        <p>{{ stat.label }}</p>
+        <div class="management-stat-card__top">
+          <p>{{ stat.label }}</p>
+        </div>
         <strong>{{ stat.value }}</strong>
-        <span>{{ stat.trend }}</span>
+        <span class="management-stat-card__trend">{{ stat.trend }}</span>
       </article>
     </section>
 
@@ -59,10 +61,16 @@
 
         <div class="management-focus-grid">
           <article class="management-focus-card" *ngFor="let card of focusCards">
-            <h3>{{ card.title }}</h3>
+            <div class="management-focus-card__head">
+              <span class="management-card-icon" aria-hidden="true">
+                <i class="bi" [ngClass]="card.icon"></i>
+              </span>
+              <h3>{{ card.title }}</h3>
+            </div>
             <p>{{ card.text }}</p>
             <a class="management-card-action" [routerLink]="card.route">
               {{ card.ctaLabel }}
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
           </article>
         </div>
@@ -75,15 +83,26 @@
         </div>
 
         <div class="management-checklist">
-          <article class="management-checklist-card" *ngFor="let reminder of reminderCards">
-            <div>
+          <a
+            class="management-checklist-card"
+            *ngFor="let reminder of quickReminders"
+            [routerLink]="reminder.route"
+            [queryParams]="reminder.queryParams"
+            [class.is-now]="reminder.tone === 'now'"
+            [class.is-stock]="reminder.tone === 'stock'"
+            [class.is-cash]="reminder.tone === 'cash'"
+            [class.is-quiet]="reminder.tone === 'quiet'"
+          >
+            <span class="management-checklist-icon" [attr.data-badge]="reminder.badge" aria-hidden="true">
+              <i class="bi" [ngClass]="reminder.icon"></i>
+            </span>
+            <div class="management-checklist-main">
+              <span>{{ reminder.meta }}</span>
               <h3>{{ reminder.title }}</h3>
-              <p>{{ reminder.text }}</p>
+              <p>{{ reminder.detail }}</p>
             </div>
-            <a class="management-card-action management-card-action--secondary" [routerLink]="reminder.route">
-              {{ reminder.ctaLabel }}
-            </a>
-          </article>
+            <i class="bi bi-arrow-right-short management-checklist-arrow" aria-hidden="true"></i>
+          </a>
         </div>
       </div>
     </section>

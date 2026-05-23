@@ -14,6 +14,26 @@ export interface DashboardStats {
   prodottiInRiordino: number;
   clientiInSalone: number;
   sogliaRiordino: number;
+  promemoria?: {
+    appuntamenti: DashboardAppointmentReminder[];
+    prodotti: DashboardProductReminder[];
+  };
+}
+
+export interface DashboardAppointmentReminder {
+  idAppuntamento: number;
+  clienteNome: string;
+  operatoreNome: string;
+  ora: string;
+  oraFine: string;
+  servizio: string;
+  stato: 'in_corso' | 'in_arrivo';
+}
+
+export interface DashboardProductReminder {
+  idProdotto: number;
+  nome: string;
+  quantita: number;
 }
 
 @Injectable({

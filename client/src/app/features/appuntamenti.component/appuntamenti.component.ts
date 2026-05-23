@@ -82,6 +82,7 @@ export class AppuntamentiComponent implements OnInit {
   selectedServiceName = '';
   operatorSelectOpen = false;
   operatori: Utente[] = [];
+  clienti: Utente[] = [];
   availableServiceOperatorIds = new Set<number>();
   user: any = null;
   showError = false;
@@ -231,9 +232,13 @@ export class AppuntamentiComponent implements OnInit {
     this.syncCalendarPickerMonth(new Date());
     this.getLoggedUser();
 
-    this.utenteService.getOperatori().subscribe({
-      next: (operatori) => {
+    forkJoin({
+      operatori: this.utenteService.getOperatori(),
+      clienti: this.utenteService.getClienti()
+    }).subscribe({
+      next: ({ operatori, clienti }) => {
         this.operatori = operatori;
+        this.clienti = clienti;
 
         if (this.operatori.length > 0) {
           if (this.requestedOperatorId && this.operatori.some((operatore) => operatore.idUtente === this.requestedOperatorId)) {
@@ -249,7 +254,7 @@ export class AppuntamentiComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Errore caricando operatori:", err)
+      error: (err) => console.error("Errore caricando operatori e clienti:", err)
     });
 
 
@@ -404,17 +409,19 @@ export class AppuntamentiComponent implements OnInit {
       const isPastAppointment =
         !Number.isNaN(appointmentEnd.getTime()) &&
         appointmentEnd.getTime() < nowTimestamp;
-      const canManage = this.canUserManageAppointment(a);
-      const canModify = this.isUntilDayBefore(a.dataOraInizio);
-      const canDelete = this.isUntilDayBefore(a.dataOraInizio);
-      const isVisible = this.canUserViewAppointment(a);
       const isPermission = this.isPermissionAppointment(a);
+      const isFerie = isPermission && String(a.note || '').trim() === 'Ferie';
       const canSeePermissionLabel = isPermission && this.canCurrentUserSeePermissionLabel();
+      const canManage = this.canUserManageAppointment(a);
+      const canModify = this.canModifyAppointment(a);
+      const canDelete = this.canDeleteAppointment(a);
+      const isVisible = this.canUserViewAppointment(a);
       const serviceName = isPermission ? '' : (a.note || '').trim();
       const normalizedServiceName = serviceName.toLowerCase();
       const serviceDescription = this.serviceDescriptionByName.get(normalizedServiceName) || '';
+      const clientDetails = isPermission ? null : this.getAppointmentClientDetails(a);
       const displayTitle = canSeePermissionLabel
-        ? 'Permesso'
+        ? (isFerie ? 'Ferie' : 'Permesso')
         : isPermission
         ? 'Occupato'
         : isVisible
@@ -437,11 +444,15 @@ export class AppuntamentiComponent implements OnInit {
           displayTitle,
           serviceName,
           serviceDescription,
-          operatorName: this.selectedOperatorLabel
+          operatorName: this.selectedOperatorLabel,
+          clientName: clientDetails?.name ?? '',
+          clientPhone: clientDetails?.phone ?? '',
+          clientEmail: clientDetails?.email ?? ''
         },
         classNames: [
-          isPastAppointment ? 'past-appointment' : (isMyAppointment ? 'my-appointment' : 'other-appointment'),
-          canSeePermissionLabel ? 'permission-appointment' : '',
+          isMyAppointment && !isPermission ? 'my-appointment' : (isPastAppointment ? 'past-appointment' : 'other-appointment'),
+          isFerie && canSeePermissionLabel ? 'ferie-appointment' : '',
+          canSeePermissionLabel && !isFerie ? 'permission-appointment' : '',
           isPermission && !canSeePermissionLabel ? 'permission-occupied-appointment' : '',
           !isVisible ? 'masked-appointment' : ''
         ].filter(Boolean)
@@ -527,7 +538,7 @@ export class AppuntamentiComponent implements OnInit {
 
     if (startInEditMode) {
       if (!this.canModifySelectedAppointment) {
-        this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+        this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       } else {
         this.isEditingAppointment = true;
       }
@@ -578,7 +589,7 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       return;
     }
 
@@ -672,7 +683,7 @@ export class AppuntamentiComponent implements OnInit {
     this.closeEditServicesPicker();
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare l'appuntamento solo fino al giorno prima.";
+      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
       return;
     }
 
@@ -742,17 +753,7 @@ export class AppuntamentiComponent implements OnInit {
       return;
     }
 
-    if (!this.canUserManageAppointment(appointment)) {
-      return;
-    }
-
-    if (!this.isUntilDayBefore(appointment.dataOraInizio)) {
-      const message = "Puoi eliminare l'appuntamento solo fino al giorno prima.";
-      if (keepDetailOpen) {
-        this.appointmentActionError = message;
-      } else {
-        this.showAlert(message);
-      }
+    if (!this.canDeleteAppointment(appointment)) {
       return;
     }
 
@@ -772,6 +773,13 @@ export class AppuntamentiComponent implements OnInit {
 
   confirmDeleteAppointment(): void {
     if (!this.deleteConfirmAppointment || this.isAppointmentActionLoading) {
+      return;
+    }
+
+    if (!this.canDeleteAppointment(this.deleteConfirmAppointment)) {
+      this.cancelDeleteConfirmation();
+      this.appointmentActionError = 'Puoi eliminare solo appuntamenti futuri e gestibili.';
+      this.forceViewRefresh();
       return;
     }
 
@@ -804,15 +812,11 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   get canManageSelectedAppointment(): boolean {
-    if (!this.selectedAppointment || !this.user) {
+    if (!this.selectedAppointment) {
       return false;
     }
 
-    if (this.user.ruolo === 'admin' || this.user.ruolo === 'operatore') {
-      return true;
-    }
-
-    return this.user.ruolo === 'cliente' && this.selectedAppointment.idCliente === this.user.idUtente;
+    return this.canUserManageAppointment(this.selectedAppointment);
   }
 
   get canModifySelectedAppointment(): boolean {
@@ -820,12 +824,12 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    return this.isUntilDayBefore(this.selectedAppointment.dataOraInizio);
+    return this.canModifyAppointment(this.selectedAppointment);
   }
 
   private canUserViewAppointment(appointment: Appuntamento): boolean {
     if (this.isPermissionAppointment(appointment)) {
-      return false;
+      return this.canCurrentUserSeePermissionLabel();
     }
 
     if (!this.user) {
@@ -864,7 +868,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    return this.isUntilDayBefore(this.selectedAppointment.dataOraInizio);
+    return this.canDeleteAppointment(this.selectedAppointment);
   }
 
   onAppointmentModalOverlayClick(event: MouseEvent): void {
@@ -1118,6 +1122,9 @@ export class AppuntamentiComponent implements OnInit {
     const serviceName = this.escapeHtml(String(arg.event.extendedProps['serviceName'] ?? '').trim());
     const serviceDescription = this.escapeHtml(String(arg.event.extendedProps['serviceDescription'] ?? '').trim());
     const operatorName = this.escapeHtml(String(arg.event.extendedProps['operatorName'] ?? '').trim());
+    const clientName = this.escapeHtml(String(arg.event.extendedProps['clientName'] ?? '').trim());
+    const clientPhone = this.escapeHtml(String(arg.event.extendedProps['clientPhone'] ?? '').trim());
+    const clientEmail = this.escapeHtml(String(arg.event.extendedProps['clientEmail'] ?? '').trim());
     const timeText = this.escapeHtml(this.buildEventTimeText(arg));
     const canManage = Boolean(arg.event.extendedProps['canManage']);
     const canModify = Boolean(arg.event.extendedProps['canModify']);
@@ -1149,6 +1156,9 @@ export class AppuntamentiComponent implements OnInit {
           </div>
           <div class="appointment-event-expand">
             <span class="appointment-event-time">${timeText}</span>
+            ${clientName ? `<span class="appointment-event-info"><strong>Cliente:</strong> ${clientName}</span>` : ''}
+            ${clientPhone ? `<span class="appointment-event-info"><strong>Telefono:</strong> ${clientPhone}</span>` : ''}
+            ${clientEmail ? `<span class="appointment-event-info"><strong>Email:</strong> ${clientEmail}</span>` : ''}
             ${isCompactEvent ? compactRow : (serviceName ? `<span class="appointment-event-info"><strong>Servizio:</strong> ${serviceName}</span>` : '')}
             ${serviceDescription ? `<span class="appointment-event-info"><strong>Descrizione:</strong> ${serviceDescription}</span>` : ''}
             ${operatorName ? `<span class="appointment-event-info"><strong>Operatore:</strong> ${operatorName}</span>` : ''}
@@ -1210,6 +1220,32 @@ export class AppuntamentiComponent implements OnInit {
     return end < minimumEnd ? minimumEnd : end;
   }
 
+  private canModifyAppointment(appointment: Appuntamento): boolean {
+    if (!this.canUserManageAppointment(appointment)) {
+      return false;
+    }
+
+    if (appointment.stato === 'completato') {
+      return false;
+    }
+
+    const appointmentEnd = new Date(appointment.dataOraFine);
+    return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() > Date.now();
+  }
+
+  private canDeleteAppointment(appointment: Appuntamento): boolean {
+    if (!this.canUserManageAppointment(appointment)) {
+      return false;
+    }
+
+    return !this.isPastAppointment(appointment);
+  }
+
+  private isPastAppointment(appointment: Appuntamento): boolean {
+    const appointmentEnd = new Date(appointment.dataOraFine);
+    return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() < Date.now();
+  }
+
   private escapeHtml(value: string): string {
     return value
       .replace(/&/g, '&amp;')
@@ -1220,21 +1256,285 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private getAppointmentToneClass(appointment: Appuntamento): string {
-    const appointmentEnd = new Date(appointment.dataOraFine);
-    const isPast = !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() < Date.now();
+    const isPermission = this.isPermissionAppointment(appointment);
+    const isFerie = isPermission && appointment.note === 'Ferie';
 
-    if (isPast) {
+    if (isFerie) {
+      return 'tone-ferie';
+    }
+
+    if (isPermission) {
+      return 'tone-permission';
+    }
+
+    if (this.isPastAppointment(appointment) || appointment.stato === 'completato') {
       return 'tone-past';
     }
 
     return this.canUserManageAppointment(appointment) ? 'tone-my' : 'tone-other';
   }
 
+  get isSelectedPermissionAppointment(): boolean {
+    return Boolean(this.selectedAppointment && this.isPermissionAppointment(this.selectedAppointment));
+  }
+
+  get isSelectedFerieAppointment(): boolean {
+    return Boolean(this.selectedAppointment && this.isPermissionAppointment(this.selectedAppointment) && this.selectedAppointment.note === 'Ferie');
+  }
+
+  get selectedAbsenceTypeLabel(): string {
+    return this.isSelectedFerieAppointment ? 'Ferie' : 'Permesso';
+  }
+
+  get appointmentDetailKicker(): string {
+    return this.isSelectedPermissionAppointment ? this.selectedAbsenceTypeLabel : 'Appuntamento';
+  }
+
+  get selectedAbsenceStatusLabel(): string {
+    if (!this.selectedAppointment) {
+      return 'Non indicato';
+    }
+
+    return this.isPastAppointment(this.selectedAppointment) ? 'Terminato' : 'Programmato';
+  }
+
+  get selectedAbsenceDetailLabel(): string {
+    if (!this.selectedAppointment) {
+      return 'Non indicato';
+    }
+
+    const note = String(this.selectedAppointment.note ?? '').trim();
+    const normalizedNote = note.toLowerCase();
+
+    if (!note || normalizedNote === 'ferie' || normalizedNote === 'permesso') {
+      return 'Non sono stati inseriti dettagli';
+    }
+
+    return note;
+  }
+
+  private getAppointmentClientDetails(appointment: Appuntamento): { name: string; phone: string; email: string } | null {
+    if (!appointment.idCliente) {
+      return null;
+    }
+
+    const cliente = this.clienti.find((item) => item.idUtente === appointment.idCliente);
+    return {
+      name: cliente ? `${cliente.nome} ${cliente.cognome}` : `Cliente #${appointment.idCliente}`,
+      phone: cliente?.telefono?.trim() ?? '',
+      email: cliente?.email?.trim() ?? ''
+    };
+  }
+
+  getSelectedAppointmentServiceLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    return this.selectedAppointment.servizioNome?.trim()
+      || this.selectedAppointment.note?.trim()
+      || 'Servizio non indicato';
+  }
+
+  getSelectedAppointmentClientLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    return this.getAppointmentClientDetails(this.selectedAppointment)?.name || 'Non indicato';
+  }
+
+  getSelectedAppointmentClientPhoneLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    return this.getAppointmentClientDetails(this.selectedAppointment)?.phone || 'Non indicato';
+  }
+
+  getSelectedAppointmentClientEmailLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    return this.getAppointmentClientDetails(this.selectedAppointment)?.email || 'Non indicata';
+  }
+
+  getSelectedAppointmentOperatorLabel(): string {
+    if (!this.selectedAppointment) {
+      return '';
+    }
+
+    const operatore = this.operatori.find(
+      (item) => item.idUtente === this.selectedAppointment?.idOperatore
+    );
+
+    return operatore
+      ? `${operatore.nome} ${operatore.cognome}`
+      : `Operatore #${this.selectedAppointment.idOperatore}`;
+  }
+
+  formatAppointmentDateTime(value: string | undefined): string {
+    if (!value) {
+      return 'Non indicato';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('it-IT', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date);
+  }
+
+  get selectedAppointmentStartLabel(): string {
+    const range = this.getSelectedAppointmentDisplayRange();
+    return range ? this.formatDateTimeValue(range.start) : 'Non indicato';
+  }
+
+  get selectedAppointmentEndLabel(): string {
+    const range = this.getSelectedAppointmentDisplayRange();
+    return range ? this.formatDateTimeValue(range.end) : 'Non indicato';
+  }
+
+  getSelectedAppointmentDurationLabel(): string {
+    const range = this.getSelectedAppointmentDisplayRange();
+
+    if (!range) {
+      return 'Non indicata';
+    }
+
+    const start = range.start;
+    const end = range.end;
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return 'Non indicata';
+    }
+
+    return this.formatDurationLabel(Math.round((end.getTime() - start.getTime()) / 60000));
+  }
+
+  private getSelectedAppointmentDisplayRange(): { start: Date; end: Date } | null {
+    return this.selectedAppointment
+      ? this.getAppointmentDisplayRange(this.selectedAppointment)
+      : null;
+  }
+
+  private getAppointmentDisplayRange(appointment: Appuntamento): { start: Date; end: Date } | null {
+    const start = new Date(appointment.dataOraInizio);
+    const end = new Date(appointment.dataOraFine);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+
+    if (!this.isFerieAppointment(appointment)) {
+      return { start, end };
+    }
+
+    const ferieBlocks = this.loadedAppointments
+      .filter((item) => item.idOperatore === appointment.idOperatore && this.isFerieAppointment(item))
+      .map((item) => ({
+        appointment: item,
+        start: new Date(item.dataOraInizio),
+        end: new Date(item.dataOraFine)
+      }))
+      .filter((item) => !Number.isNaN(item.start.getTime()) && !Number.isNaN(item.end.getTime()))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    const selectedIndex = ferieBlocks.findIndex(
+      (item) => item.appointment.idAppuntamento === appointment.idAppuntamento
+    );
+
+    if (selectedIndex < 0) {
+      return { start, end };
+    }
+
+    let firstIndex = selectedIndex;
+    let lastIndex = selectedIndex;
+
+    while (
+      firstIndex > 0 &&
+      this.areConsecutiveLocalDays(ferieBlocks[firstIndex - 1].start, ferieBlocks[firstIndex].start)
+    ) {
+      firstIndex -= 1;
+    }
+
+    while (
+      lastIndex < ferieBlocks.length - 1 &&
+      this.areConsecutiveLocalDays(ferieBlocks[lastIndex].start, ferieBlocks[lastIndex + 1].start)
+    ) {
+      lastIndex += 1;
+    }
+
+    const rangeBlocks = ferieBlocks.slice(firstIndex, lastIndex + 1);
+    return {
+      start: rangeBlocks.reduce((earliest, item) => item.start < earliest ? item.start : earliest, rangeBlocks[0].start),
+      end: rangeBlocks.reduce((latest, item) => item.end > latest ? item.end : latest, rangeBlocks[0].end)
+    };
+  }
+
+  private isFerieAppointment(appointment: Appuntamento): boolean {
+    return this.isPermissionAppointment(appointment) && String(appointment.note ?? '').trim() === 'Ferie';
+  }
+
+  private areConsecutiveLocalDays(previous: Date, next: Date): boolean {
+    const previousDay = new Date(previous.getFullYear(), previous.getMonth(), previous.getDate());
+    const nextDay = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+    const diffDays = Math.round((nextDay.getTime() - previousDay.getTime()) / 86400000);
+    return diffDays === 1;
+  }
+
+  private formatDateTimeValue(date: Date): string {
+    if (Number.isNaN(date.getTime())) {
+      return 'Non indicato';
+    }
+
+    return new Intl.DateTimeFormat('it-IT', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date);
+  }
+
+  private formatDurationLabel(totalMinutes: number): string {
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+      return 'Non indicata';
+    }
+
+    const dayMinutes = 24 * 60;
+    const days = Math.floor(totalMinutes / dayMinutes);
+    const remainingAfterDays = totalMinutes % dayMinutes;
+    const hours = Math.floor(remainingAfterDays / 60);
+    const minutes = remainingAfterDays % 60;
+    const parts: string[] = [];
+
+    if (days > 0) {
+      parts.push(days === 1 ? '1 giorno' : `${days} giorni`);
+    }
+
+    if (hours > 0) {
+      parts.push(hours === 1 ? '1 ora' : `${hours} ore`);
+    }
+
+    if (minutes > 0 || parts.length === 0) {
+      parts.push(minutes === 1 ? '1 minuto' : `${minutes} minuti`);
+    }
+
+    return parts.join(' e ');
+  }
+
   private isPermissionAppointment(appointment: Appuntamento): boolean {
+    const note = String(appointment.note ?? '').trim();
+    const serviceName = String(appointment.servizioNome ?? '').trim();
+
     return !appointment.idCliente &&
       !appointment.idServizio &&
-      !appointment.servizioNome &&
-      !appointment.note &&
+      (!serviceName || serviceName === note) &&
+      (!note || note === 'Permesso' || note === 'Ferie') &&
       !appointment.stato;
   }
 

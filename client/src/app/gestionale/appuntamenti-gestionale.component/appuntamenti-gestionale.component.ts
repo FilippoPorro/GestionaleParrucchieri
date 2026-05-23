@@ -156,7 +156,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     displayEventEnd: true,
     expandRows: false,
     height: '82vh',
-    nowIndicator: true,
+    nowIndicator: this.initialCalendarView !== 'operatorDay' || this.isSameLocalDay(this.initialCalendarDate, new Date()),
     stickyHeaderDates: true,
     selectable: false,
     businessHours: [
@@ -176,11 +176,21 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     eventMinHeight: 0,
     eventShortHeight: 0,
     headerToolbar: {
-      left: 'prev,next managementToday',
+      left: 'managementPrev,managementNext managementToday',
       center: 'title',
       right: this.getResponsiveToolbarRight()
     },
     customButtons: {
+      managementPrev: {
+        icon: 'chevron-left',
+        hint: 'Periodo precedente',
+        click: this.goToPreviousCalendarPeriod.bind(this)
+      },
+      managementNext: {
+        icon: 'chevron-right',
+        hint: 'Periodo successivo',
+        click: this.goToNextCalendarPeriod.bind(this)
+      },
       managementToday: {
         text: 'Oggi',
         click: this.goToToday.bind(this)
@@ -638,7 +648,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }
 
     if (isDeleteClick) {
-      if (this.canUserManageAppointment(appointment)) {
+      if (this.canDeleteAppointment(appointment)) {
         this.openDeleteConfirmation(appointment, false);
       }
       return;
@@ -658,13 +668,17 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     this.visibleRangeStart = arg.start;
     this.visibleRangeEnd = arg.end;
+    this.syncCalendarNowIndicator();
     this.syncDatePickerValue(arg.start);
     this.persistCalendarState(arg);
     this.syncCalendarTitleState(arg.view?.title);
+    this.syncTodayButtonStateSoon();
     this.updateCalendarPickerPosition();
 
     if (changedOperatorMode) {
       this.loadAppointments();
+    } else if (this.isOperatorDayView) {
+      this.rebuildCalendarEvents();
     } else {
       this.refreshCalendarEvents();
     }
@@ -896,7 +910,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         actualEnd: normalizedEnd,
         canManage: this.canUserManageAppointment(appointment),
         canModify: this.canModifyAppointment(appointment),
-        canDelete: this.canUserManageAppointment(appointment),
+        canDelete: this.canDeleteAppointment(appointment),
         isVisible: true,
         displayTitle,
         serviceName,
@@ -1249,7 +1263,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   openDeleteConfirmation(appointment: Appuntamento, keepDetailOpen: boolean): void {
-    if (this.isAppointmentActionLoading || !this.canUserManageAppointment(appointment)) {
+    if (this.isAppointmentActionLoading || !this.canDeleteAppointment(appointment)) {
       return;
     }
 
@@ -1269,6 +1283,13 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   confirmDeleteAppointment(): void {
     if (!this.deleteConfirmAppointment || this.isAppointmentActionLoading) {
+      return;
+    }
+
+    if (!this.canDeleteAppointment(this.deleteConfirmAppointment)) {
+      this.cancelDeleteConfirmation();
+      this.appointmentActionError = 'Puoi eliminare solo appuntamenti futuri e gestibili.';
+      this.forceViewRefresh();
       return;
     }
 
@@ -1309,7 +1330,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   get canDeleteSelectedAppointment(): boolean {
-    return Boolean(this.selectedAppointment && this.canUserManageAppointment(this.selectedAppointment));
+    return Boolean(this.selectedAppointment && this.canDeleteAppointment(this.selectedAppointment));
   }
 
   onAppointmentModalOverlayClick(event: MouseEvent): void {
@@ -1456,6 +1477,45 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return 'tone-my';
   }
 
+  get isSelectedPermissionAppointment(): boolean {
+    return Boolean(this.selectedAppointment && this.isPermissionAppointment(this.selectedAppointment));
+  }
+
+  get isSelectedFerieAppointment(): boolean {
+    return Boolean(this.selectedAppointment && this.isPermissionAppointment(this.selectedAppointment) && this.selectedAppointment.note === 'Ferie');
+  }
+
+  get selectedAbsenceTypeLabel(): string {
+    return this.isSelectedFerieAppointment ? 'Ferie' : 'Permesso';
+  }
+
+  get appointmentDetailKicker(): string {
+    return this.isSelectedPermissionAppointment ? this.selectedAbsenceTypeLabel : 'Appuntamento';
+  }
+
+  get selectedAbsenceStatusLabel(): string {
+    if (!this.selectedAppointment) {
+      return 'Non indicato';
+    }
+
+    return this.isPastAppointment(this.selectedAppointment) ? 'Terminato' : 'Programmato';
+  }
+
+  get selectedAbsenceDetailLabel(): string {
+    if (!this.selectedAppointment) {
+      return 'Non indicato';
+    }
+
+    const note = String(this.selectedAppointment.note ?? '').trim();
+    const normalizedNote = note.toLowerCase();
+
+    if (!note || normalizedNote === 'ferie' || normalizedNote === 'permesso') {
+      return 'Non sono stati inseriti dettagli';
+    }
+
+    return note;
+  }
+
   getSelectedAppointmentClientLabel(): string {
     if (!this.selectedAppointment) {
       return '';
@@ -1511,19 +1571,140 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }).format(date);
   }
 
+  get selectedAppointmentStartLabel(): string {
+    const range = this.getSelectedAppointmentDisplayRange();
+    return range ? this.formatDateTimeValue(range.start) : 'Non indicato';
+  }
+
+  get selectedAppointmentEndLabel(): string {
+    const range = this.getSelectedAppointmentDisplayRange();
+    return range ? this.formatDateTimeValue(range.end) : 'Non indicato';
+  }
+
   getSelectedAppointmentDurationLabel(): string {
-    if (!this.selectedAppointment) {
+    const range = this.getSelectedAppointmentDisplayRange();
+
+    if (!range) {
       return 'Non indicata';
     }
 
-    const start = new Date(this.selectedAppointment.dataOraInizio);
-    const end = new Date(this.selectedAppointment.dataOraFine);
+    const start = range.start;
+    const end = range.end;
 
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
       return 'Non indicata';
     }
 
-    return `${Math.round((end.getTime() - start.getTime()) / 60000)} min`;
+    return this.formatDurationLabel(Math.round((end.getTime() - start.getTime()) / 60000));
+  }
+
+  private getSelectedAppointmentDisplayRange(): { start: Date; end: Date } | null {
+    return this.selectedAppointment
+      ? this.getAppointmentDisplayRange(this.selectedAppointment)
+      : null;
+  }
+
+  private getAppointmentDisplayRange(appointment: Appuntamento): { start: Date; end: Date } | null {
+    const start = new Date(appointment.dataOraInizio);
+    const end = new Date(appointment.dataOraFine);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+
+    if (!this.isFerieAppointment(appointment)) {
+      return { start, end };
+    }
+
+    const ferieBlocks = this.loadedAppointments
+      .filter((item) => item.idOperatore === appointment.idOperatore && this.isFerieAppointment(item))
+      .map((item) => ({
+        appointment: item,
+        start: new Date(item.dataOraInizio),
+        end: new Date(item.dataOraFine)
+      }))
+      .filter((item) => !Number.isNaN(item.start.getTime()) && !Number.isNaN(item.end.getTime()))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    const selectedIndex = ferieBlocks.findIndex(
+      (item) => item.appointment.idAppuntamento === appointment.idAppuntamento
+    );
+
+    if (selectedIndex < 0) {
+      return { start, end };
+    }
+
+    let firstIndex = selectedIndex;
+    let lastIndex = selectedIndex;
+
+    while (
+      firstIndex > 0 &&
+      this.areConsecutiveLocalDays(ferieBlocks[firstIndex - 1].start, ferieBlocks[firstIndex].start)
+    ) {
+      firstIndex -= 1;
+    }
+
+    while (
+      lastIndex < ferieBlocks.length - 1 &&
+      this.areConsecutiveLocalDays(ferieBlocks[lastIndex].start, ferieBlocks[lastIndex + 1].start)
+    ) {
+      lastIndex += 1;
+    }
+
+    const rangeBlocks = ferieBlocks.slice(firstIndex, lastIndex + 1);
+    return {
+      start: rangeBlocks.reduce((earliest, item) => item.start < earliest ? item.start : earliest, rangeBlocks[0].start),
+      end: rangeBlocks.reduce((latest, item) => item.end > latest ? item.end : latest, rangeBlocks[0].end)
+    };
+  }
+
+  private isFerieAppointment(appointment: Appuntamento): boolean {
+    return this.isPermissionAppointment(appointment) && String(appointment.note ?? '').trim() === 'Ferie';
+  }
+
+  private areConsecutiveLocalDays(previous: Date, next: Date): boolean {
+    const previousDay = new Date(previous.getFullYear(), previous.getMonth(), previous.getDate());
+    const nextDay = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+    const diffDays = Math.round((nextDay.getTime() - previousDay.getTime()) / 86400000);
+    return diffDays === 1;
+  }
+
+  private formatDateTimeValue(date: Date): string {
+    if (Number.isNaN(date.getTime())) {
+      return 'Non indicato';
+    }
+
+    return new Intl.DateTimeFormat('it-IT', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date);
+  }
+
+  private formatDurationLabel(totalMinutes: number): string {
+    if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+      return 'Non indicata';
+    }
+
+    const dayMinutes = 24 * 60;
+    const days = Math.floor(totalMinutes / dayMinutes);
+    const remainingAfterDays = totalMinutes % dayMinutes;
+    const hours = Math.floor(remainingAfterDays / 60);
+    const minutes = remainingAfterDays % 60;
+    const parts: string[] = [];
+
+    if (days > 0) {
+      parts.push(days === 1 ? '1 giorno' : `${days} giorni`);
+    }
+
+    if (hours > 0) {
+      parts.push(hours === 1 ? '1 ora' : `${hours} ore`);
+    }
+
+    if (minutes > 0 || parts.length === 0) {
+      parts.push(minutes === 1 ? '1 minuto' : `${minutes} minuti`);
+    }
+
+    return parts.join(' e ');
   }
 
   private loadEditableServicesForSelectedAppointment(): void {
@@ -1727,6 +1908,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() > Date.now();
   }
 
+  private canDeleteAppointment(appointment: Appuntamento): boolean {
+    if (!this.canUserManageAppointment(appointment)) {
+      return false;
+    }
+
+    return !this.isPastAppointment(appointment);
+  }
+
   private isUntilDayBefore(dateString: string): boolean {
     const appointmentDate = new Date(dateString);
 
@@ -1755,11 +1944,13 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   private isPermissionAppointment(appointment: Appuntamento): boolean {
+    const note = String(appointment.note ?? '').trim();
+    const serviceName = String(appointment.servizioNome ?? '').trim();
+
     return !appointment.idCliente &&
       !appointment.idServizio &&
-      !appointment.servizioNome &&
-      !appointment.note &&
-      !appointment.stato;
+      !appointment.stato &&
+      (!serviceName || serviceName === note);
   }
 
   private isBookableDateTime(date: Date): boolean {
@@ -2078,6 +2269,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const day = this.startOfDay(date);
     this.operatorDayDate = day;
     this.operatorDayAnchorDate = new Date(day);
+    this.visibleRangeStart = new Date(day);
+    this.visibleRangeEnd = this.addDays(day, Math.max(1, this.getOperatorDayColumnOperators().length));
   }
 
   private getOperatorDayColumnOperators(): Utente[] {
@@ -2216,7 +2409,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       initialView: nextView,
       headerToolbar: {
         ...this.calendarOptions.headerToolbar,
-        left: 'prev,next managementToday',
+        left: 'managementPrev,managementNext managementToday',
         center: 'title',
         right: nextToolbarRight
       }
@@ -2225,7 +2418,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     if (this.calendarComponent) {
       const calendarApi = this.calendarComponent.getApi();
       calendarApi.setOption('headerToolbar', {
-        left: 'prev,next managementToday',
+        left: 'managementPrev,managementNext managementToday',
         center: 'title',
         right: nextToolbarRight
       });
@@ -2247,6 +2440,11 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return;
     }
 
+    if (this.isCalendarShowingToday()) {
+      this.syncTodayButtonStateSoon();
+      return;
+    }
+
     if (!this.isOperatorDayView) {
       calendarApi.today();
       return;
@@ -2254,7 +2452,93 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     const today = this.startOfDay(new Date());
     this.setOperatorDayDate(today);
+    this.syncCalendarNowIndicator();
     calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    this.syncTodayButtonStateSoon();
+  }
+
+  private goToPreviousCalendarPeriod(): void {
+    this.moveCalendarPeriod(-1);
+  }
+
+  private goToNextCalendarPeriod(): void {
+    this.moveCalendarPeriod(1);
+  }
+
+  private moveCalendarPeriod(direction: -1 | 1): void {
+    const calendarApi = this.calendarComponent?.getApi();
+
+    if (!calendarApi) {
+      return;
+    }
+
+    if (!this.isOperatorDayView) {
+      if (direction < 0) {
+        calendarApi.prev();
+      } else {
+        calendarApi.next();
+      }
+
+      return;
+    }
+
+    const nextDay = this.addDays(this.operatorDayDate, direction);
+    this.setOperatorDayDate(nextDay);
+    this.syncCalendarNowIndicator();
+    calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    this.syncTodayButtonStateSoon();
+  }
+
+  private isCalendarShowingToday(): boolean {
+    if (this.isOperatorDayView) {
+      return this.isSameLocalDay(this.operatorDayDate, new Date());
+    }
+
+    const activeDate = this.calendarComponent?.getApi().getDate();
+    return activeDate ? this.isSameLocalDay(activeDate, new Date()) : false;
+  }
+
+  private syncTodayButtonStateSoon(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => this.syncTodayButtonState());
+    window.setTimeout(() => this.syncTodayButtonState(), 80);
+  }
+
+  private syncTodayButtonState(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const todayButton = document.querySelector(
+      '.management-appointments-section .calendar-wrapper .fc-managementToday-button'
+    ) as HTMLButtonElement | null;
+
+    if (!todayButton) {
+      return;
+    }
+
+    const isShowingToday = this.isCalendarShowingToday();
+    todayButton.disabled = isShowingToday;
+    todayButton.setAttribute('aria-disabled', String(isShowingToday));
+    todayButton.classList.toggle('is-current-day', isShowingToday);
+  }
+
+  private syncCalendarNowIndicator(): void {
+    const shouldShowNowIndicator = !this.isOperatorDayView || this.isSameLocalDay(this.operatorDayDate, new Date());
+    const calendarApi = this.calendarComponent?.getApi();
+
+    if (!calendarApi) {
+      this.calendarOptions = {
+        ...this.calendarOptions,
+        nowIndicator: shouldShowNowIndicator
+      };
+      return;
+    }
+
+    calendarApi.setOption('nowIndicator', shouldShowNowIndicator);
   }
 
   private getSavedCalendarView(): 'timeGridWeek' | 'timeGridDay' | 'operatorDay' | null {

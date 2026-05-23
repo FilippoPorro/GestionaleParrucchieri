@@ -166,7 +166,7 @@
   >
     <div class="appointment-detail-head">
       <div>
-        <p class="appointment-detail-kicker">Appuntamento</p>
+        <p class="appointment-detail-kicker">{{ appointmentDetailKicker }}</p>
         <h3 class="appointment-detail-title">{{ selectedAppointmentLabel }}</h3>
       </div>
       <button type="button" class="appointment-detail-close" (click)="closeAppointmentDetail()" aria-label="Chiudi dettaglio">
@@ -174,18 +174,90 @@
       </button>
     </div>
 
-    <div class="appointment-detail-body" *ngIf="!isEditingAppointment">
+    <div class="appointment-detail-body appointment-detail-body--grid" *ngIf="!isEditingAppointment && !isSelectedPermissionAppointment">
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Servizio</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentServiceLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Cliente</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentClientLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Telefono</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentClientPhoneLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Email</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentClientEmailLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Operatore</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentOperatorLabel() }}</strong>
+      </div>
+
       <div class="appointment-detail-row">
         <span class="appointment-detail-label">Inizio</span>
-        <strong class="appointment-detail-value">{{ selectedAppointment.dataOraInizio | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        <strong class="appointment-detail-value">{{ selectedAppointmentStartLabel }}</strong>
       </div>
+
       <div class="appointment-detail-row">
         <span class="appointment-detail-label">Fine</span>
-        <strong class="appointment-detail-value">{{ selectedAppointment.dataOraFine | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        <strong class="appointment-detail-value">{{ selectedAppointmentEndLabel }}</strong>
       </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Durata</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentDurationLabel() }}</strong>
+      </div>
+
       <div class="appointment-detail-row">
         <span class="appointment-detail-label">Dettagli</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota' }}</strong>
+      </div>
+    </div>
+
+    <div
+      class="appointment-detail-body appointment-detail-body--grid appointment-detail-body--absence"
+      *ngIf="!isEditingAppointment && isSelectedPermissionAppointment"
+    >
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Tipo</span>
+        <strong class="appointment-detail-value">{{ selectedAbsenceTypeLabel }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Operatore</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentOperatorLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Inizio</span>
+        <strong class="appointment-detail-value">{{ selectedAppointmentStartLabel }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Fine</span>
+        <strong class="appointment-detail-value">{{ selectedAppointmentEndLabel }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Durata</span>
+        <strong class="appointment-detail-value">{{ getSelectedAppointmentDurationLabel() }}</strong>
+      </div>
+
+      <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Stato</span>
+        <strong class="appointment-detail-value">{{ selectedAbsenceStatusLabel }}</strong>
+      </div>
+
+      <div class="appointment-detail-row appointment-detail-row--wide">
+        <span class="appointment-detail-label">Dettagli</span>
+        <strong class="appointment-detail-value">{{ selectedAbsenceDetailLabel }}</strong>
       </div>
     </div>
 

@@ -119,52 +119,47 @@
   grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   align-items: stretch;
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   overflow: visible;
 }
 
 .management-appointments-section .appointments-hero,
 .management-appointments-section .appointments-select-wrapper {
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.38)),
-    rgba(0, 0, 0, 0.24);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 18px 36px rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(20px) saturate(145%);
-  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  border-radius: 8px;
+  background: rgba(23, 18, 13, 0.78);
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
 }
 
 .management-appointments-section .appointments-hero {
-  padding: 26px 30px;
+  padding: 28px;
 }
 
 .management-appointments-section .appointments-eyebrow,
 .management-appointments-section .appointments-select-wrapper label {
   margin: 0 0 10px;
-  color: rgba(242, 209, 139, 0.82);
+  color: rgba(255, 226, 175, 0.72);
   text-transform: uppercase;
-  letter-spacing: 1.8px;
-  font-size: 12px;
+  letter-spacing: 0.16em;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .management-appointments-section .appointments-title {
   margin: 0;
-  color: #fff;
-  font-size: clamp(28px, 2.6vw, 38px);
-  line-height: 1.05;
+  color: #fff7e8;
+  font-size: clamp(2rem, 2.7vw, 2.85rem);
+  line-height: 1.04;
   letter-spacing: 0;
+  font-weight: 800;
 }
 
 .management-appointments-section .appointments-subtitle {
   max-width: 760px;
-  margin: 12px 0 0;
-  color: rgba(255, 249, 239, 0.92);
-  font-size: 14px;
-  line-height: 1.55;
+  margin: 14px 0 0;
+  color: rgba(248, 241, 231, 0.72);
+  font-size: 15px;
+  line-height: 1.75;
 }
 
 .management-appointments-section .appointments-select-wrapper {
@@ -173,7 +168,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 26px 30px;
+  padding: 28px;
   overflow: visible;
 }
 
@@ -189,11 +184,11 @@
   min-height: 58px;
   width: 100%;
   padding: 12px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.14);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-    rgba(0, 0, 0, 0.24);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.34);
   color: #fff7e8;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
@@ -206,10 +201,10 @@
 
 .management-appointments-section .booking-dropdown-trigger:hover,
 .management-appointments-section .booking-dropdown-trigger.open {
-  border-color: rgba(242, 209, 139, 0.42);
+  border-color: rgba(242, 209, 139, 0.38);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
-    rgba(0, 0, 0, 0.34);
+    rgba(0, 0, 0, 0.48);
 }
 
 .management-appointments-section .booking-dropdown-trigger:disabled {
@@ -378,17 +373,11 @@
   width: 100%;
   max-width: none;
   box-sizing: border-box;
-  padding: 24px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.38)),
-    rgba(0, 0, 0, 0.24);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 18px 36px rgba(0, 0, 0, 0.16);
-  backdrop-filter: blur(20px) saturate(145%);
-  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  padding: 28px;
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  border-radius: 8px;
+  background: rgba(23, 18, 13, 0.78);
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
 }
 
 .management-appointments-section .appointments-service-alert {
@@ -421,8 +410,8 @@
   align-items: stretch;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 14px;
-  padding: 0 2px 14px;
+  margin-bottom: 18px;
+  padding: 0 0 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -431,13 +420,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.03)),
-    rgba(0, 0, 0, 0.24);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .management-appointments-section .appointments-calendar-operator-label {
@@ -506,6 +492,11 @@
   cursor: pointer;
 }
 
+:host ::ng-deep .management-layout:not(.is-sidenav-collapsed) .management-appointments-section .fc-toolbar-title {
+  font-size: clamp(1.8rem, 2.75vw, 2.75rem) !important;
+  line-height: 1.05;
+}
+
 :host ::ng-deep .fc-toolbar-title:hover {
   color: #e6c786;
 }
@@ -547,11 +538,18 @@
 :host ::ng-deep .fc .fc-today-button,
 :host ::ng-deep .fc .fc-today-button:disabled,
 :host ::ng-deep .fc .fc-button-primary.fc-today-button,
-:host ::ng-deep .fc .fc-button-primary.fc-today-button:disabled {
+:host ::ng-deep .fc .fc-button-primary.fc-today-button:disabled,
+:host ::ng-deep .fc .fc-managementToday-button,
+:host ::ng-deep .fc .fc-managementToday-button:disabled {
   border-color: #d4b06a;
   border-style: dashed;
   background: rgba(0, 0, 0, 0.3);
   color: #d4b06a;
+}
+
+:host ::ng-deep .fc .fc-managementToday-button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
 }
 
 :host ::ng-deep .fc-col-header-cell {
@@ -638,36 +636,37 @@
 
 :host ::ng-deep .fc-scroller {
   scrollbar-width: thin;
-  scrollbar-color: rgba(212, 176, 106, 0.58) rgba(0, 0, 0, 0.22);
+  scrollbar-color: rgba(212, 176, 106, 0.45) transparent;
 }
 
 :host ::ng-deep .fc-scroller::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 :host ::ng-deep .fc-scroller::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.22);
+  background: transparent;
 }
 
 :host ::ng-deep .fc-scroller::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(0, 0, 0, 0.22);
   border-radius: 999px;
-  background: rgba(212, 176, 106, 0.58);
-}
-
-:host ::ng-deep .fc-scroller::-webkit-scrollbar-button,
-:host ::ng-deep .fc-scroller::-webkit-scrollbar-corner,
-:host ::ng-deep .fc-scrollgrid-section-header .fc-scroller::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  background: rgba(212, 176, 106, 0.45);
 }
 
 :host ::ng-deep .fc-scrollgrid-section-header .fc-scroller {
-  overflow: hidden !important;
-  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+:host ::ng-deep .fc-scrollgrid-section-header .fc-scroller::-webkit-scrollbar-track,
+:host ::ng-deep .fc-scrollgrid-section-header .fc-scroller::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+:host ::ng-deep .fc-scroller::-webkit-scrollbar-button,
+:host ::ng-deep .fc-scroller::-webkit-scrollbar-corner {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 :host ::ng-deep .fc-v-event {
@@ -684,36 +683,52 @@
 }
 
 :host ::ng-deep .fc-event.my-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.18);
+  --fc-event-border-color: rgba(212, 176, 106, 0.34);
   background:
-    linear-gradient(145deg, rgba(212, 176, 106, 0.24), rgba(126, 91, 35, 0.18)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)),
-    rgba(0, 0, 0, 0.34) !important;
-  border-left-color: #d4b06a !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018)),
+    rgba(212, 176, 106, 0.18) !important;
+  border-color: rgba(212, 176, 106, 0.34) !important;
+  color: #fff4df !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 :host ::ng-deep .fc-event.other-appointment,
 :host ::ng-deep .fc-event.past-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.18);
+  --fc-event-border-color: rgba(212, 176, 106, 0.34);
   background:
-    linear-gradient(145deg, rgba(190, 52, 52, 0.34), rgba(112, 24, 24, 0.28)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.045)),
-    rgba(0, 0, 0, 0.34) !important;
-  border-left-color: #c63434 !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018)),
+    rgba(212, 176, 106, 0.18) !important;
+  border-color: rgba(212, 176, 106, 0.34) !important;
+  color: #fff4df !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 :host ::ng-deep .fc-event.permission-appointment {
+  --fc-event-bg-color: rgba(39, 174, 96, 0.18);
+  --fc-event-border-color: rgba(46, 204, 113, 0.34);
   background:
-    linear-gradient(145deg, rgba(76, 166, 96, 0.38), rgba(29, 101, 55, 0.3)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
-    rgba(0, 0, 0, 0.34) !important;
-  border-left-color: #55c878 !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018)),
+    rgba(39, 174, 96, 0.18) !important;
+  border-color: rgba(46, 204, 113, 0.34) !important;
+  color: #eafaf1 !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 :host ::ng-deep .fc-event.ferie-appointment {
+  --fc-event-bg-color: rgba(41, 128, 185, 0.18);
+  --fc-event-border-color: rgba(52, 152, 219, 0.34);
   background:
-    linear-gradient(145deg, rgba(41, 128, 185, 0.38), rgba(21, 67, 96, 0.3)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055)),
-    rgba(0, 0, 0, 0.34) !important;
-  border-left-color: #3498db !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018)),
+    rgba(41, 128, 185, 0.18) !important;
+  border-color: rgba(52, 152, 219, 0.34) !important;
+  color: #ebf8ff !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 :host ::ng-deep .appointment-event-head {
@@ -750,6 +765,16 @@
   padding-left: 2px !important;
   font-size: 9px !important;
   line-height: 1.05 !important;
+}
+
+:host ::ng-deep .fc-event.my-appointment,
+:host ::ng-deep .fc-event.other-appointment,
+:host ::ng-deep .fc-event.past-appointment,
+:host ::ng-deep .fc-event.permission-appointment,
+:host ::ng-deep .fc-event.ferie-appointment {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 8px 18px rgba(0, 0, 0, 0.24) !important;
 }
 
 .appointment-detail-modal {
@@ -796,6 +821,10 @@
   gap: 12px !important;
 }
 
+.appointment-detail-body--absence {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
 .appointment-detail-row {
   min-height: 74px;
   justify-content: center;
@@ -816,7 +845,116 @@
 }
 
 .appointment-confirm-modal {
-  z-index: 90;
+  position: fixed;
+  inset: 0 0 0 320px !important;
+  z-index: 90 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: calc(28vh + 3px) 20px 20px !important;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.42)) !important;
+  pointer-events: auto;
+  transition: inset 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.appointment-confirm-modal.is-sidenav-collapsed {
+  inset: 0 !important;
+}
+
+.appointment-confirm-card {
+  width: min(980px, 100%) !important;
+  border: 1px solid rgba(255, 124, 124, 0.34) !important;
+  background:
+    linear-gradient(90deg, rgba(185, 72, 72, 0.24), rgba(103, 55, 55, 0.42)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)),
+    rgba(42, 30, 30, 0.88) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 16px 34px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  padding: 10px 12px;
+  pointer-events: auto;
+}
+
+.appointment-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffe8e8;
+  width: 100%;
+}
+
+.appointment-confirm-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff3f3;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.appointment-confirm-text {
+  margin: 0;
+  color: #fff5f5;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+  flex: 1;
+}
+
+.appointment-confirm-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.appointment-confirm-actions .appointment-action {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(18, 18, 18, 0.26);
+  color: #fff3d9;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 14px rgba(0, 0, 0, 0.2);
+  transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.appointment-confirm-actions .appointment-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(230, 199, 134, 0.78);
+  color: #fff0cb;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 18px rgba(0, 0, 0, 0.26);
+}
+
+.appointment-confirm-actions .appointment-action.danger {
+  border-color: rgba(220, 95, 95, 0.58);
+  background:
+    linear-gradient(180deg, rgba(220, 95, 95, 0.22), rgba(220, 95, 95, 0.1)),
+    rgba(26, 18, 18, 0.28);
+  color: #ffe3e3;
+}
+
+.appointment-confirm-actions .appointment-action.danger:hover {
+  border-color: rgba(255, 146, 146, 0.78);
+  color: #fff1f1;
 }
 
 @media (max-width: 980px) {
@@ -849,6 +987,25 @@
   .management-layout.is-sidenav-collapsed .management-layout__content {
     margin-left: 0;
     padding: 18px;
+  }
+
+  .appointment-confirm-modal,
+  .appointment-confirm-modal.is-sidenav-collapsed {
+    inset: 0 !important;
+    padding: 20px !important;
+  }
+
+  .appointment-confirm-head {
+    flex-wrap: wrap;
+  }
+
+  .appointment-confirm-text {
+    font-size: 13px;
+  }
+
+  .appointment-confirm-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .management-appointments-section .appointments-top-row {
@@ -896,40 +1053,46 @@
 .management-appointments-section .appointments-select-wrapper,
 .management-appointments-section .calendar-wrapper {
   border-color: rgba(212, 176, 106, 0.14) !important;
-  background: rgba(5, 5, 5, 0.5) !important;
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.22) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: rgba(0, 0, 0, 0.78) !important;
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .management-appointments-section .booking-dropdown-trigger,
 .management-appointments-section .appointments-calendar-meta-item {
-  background: rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(0, 0, 0, 0.76) !important;
+  border-color: rgba(212, 176, 106, 0.24) !important;
   box-shadow: none !important;
 }
 
 .management-appointments-section .booking-dropdown-trigger:hover,
 .management-appointments-section .booking-dropdown-trigger.open {
-  background: rgba(0, 0, 0, 0.48) !important;
+  background: rgba(0, 0, 0, 0.86) !important;
   border-color: rgba(242, 209, 139, 0.5) !important;
 }
 
 .management-appointments-section .booking-dropdown-panel {
-  background: rgba(0, 0, 0, 0.86) !important;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.98)),
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 42%) !important;
   border-color: rgba(212, 176, 106, 0.2) !important;
   box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34) !important;
 }
 
 .management-appointments-section .booking-dropdown-list li {
-  background: rgba(0, 0, 0, 0.72) !important;
-  border-color: rgba(212, 176, 106, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.24) !important;
+  border-color: rgba(212, 176, 106, 0.12) !important;
   box-shadow: none !important;
 }
 
 .management-appointments-section .booking-dropdown-list li:hover,
 .management-appointments-section .booking-dropdown-list li.active {
-  background: rgba(0, 0, 0, 0.9) !important;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.045)),
+    rgba(0, 0, 0, 0.03) !important;
   border-color: rgba(242, 209, 139, 0.5) !important;
 }
 
@@ -966,8 +1129,7 @@
 
 
 
-.appointment-detail-card,
-.appointment-confirm-card {
+.appointment-detail-card {
   background: rgba(0, 0, 0, 0.78) !important;
   border-color: rgba(212, 176, 106, 0.2) !important;
   box-shadow: 0 24px 52px rgba(0, 0, 0, 0.42) !important;

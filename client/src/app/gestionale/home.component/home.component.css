@@ -372,6 +372,426 @@
   line-height: 1.35;
 }
 
+/* Dashboard allineata allo stile nero/oro della Cassa */
+.management-layout__toggle {
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.management-hero,
+.management-stat-card,
+.management-panel {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.management-focus-card,
+.management-checklist-card {
+  border-color: rgba(212, 176, 106, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.24);
+}
+
+.management-focus-card:hover,
+.management-checklist-card:hover {
+  border-color: rgba(242, 209, 139, 0.36);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.48);
+}
+
+.management-card-action,
+.management-card-action--secondary,
+.management-hero__badge,
+.management-hero__badge--soft {
+  border-color: rgba(242, 209, 139, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.76);
+  color: #f2d18b;
+}
+
+.management-card-action:hover,
+.management-card-action--secondary:hover {
+  border-color: rgba(242, 209, 139, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(0, 0, 0, 0.86);
+  color: #ffe7aa;
+}
+
+.management-hero__badge--soft {
+  color: #fff0cd;
+}
+
+/* Rifinitura visuale dashboard */
+.management-layout__content {
+  padding-top: 28px;
+}
+
+.management-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 204px;
+  align-items: center;
+  background:
+    linear-gradient(100deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.74) 58%, rgba(0, 0, 0, 0.52) 100%) !important;
+}
+
+.management-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(242, 209, 139, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 44%);
+  opacity: 0.72;
+}
+
+.management-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.management-hero h1 {
+  max-width: 760px;
+  font-size: clamp(2.4rem, 4.2vw, 4.6rem);
+  letter-spacing: 0;
+}
+
+.management-hero__copy {
+  max-width: 860px;
+  font-size: 16px;
+}
+
+.management-hero__stats {
+  align-items: stretch;
+}
+
+.management-hero__badge {
+  min-width: 148px;
+  min-height: 100px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  text-align: right;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 14px 26px rgba(0, 0, 0, 0.28);
+}
+
+.management-hero__badge strong {
+  color: #fff3d2;
+  font-size: 29px;
+}
+
+.management-stats {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.management-stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 148px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-color: rgba(212, 176, 106, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(0, 0, 0, 0.76);
+}
+
+.management-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f2d18b, rgba(190, 134, 64, 0.22));
+}
+
+.management-stat-card::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  bottom: -40px;
+  width: 118px;
+  height: 118px;
+  border: 1px solid rgba(242, 209, 139, 0.1);
+  border-radius: 50%;
+}
+
+.management-stat-card__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.management-stat-card p {
+  margin: 0;
+  color: rgba(248, 241, 231, 0.76);
+  font-size: 14px;
+}
+
+.management-stat-card strong {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 10px;
+  color: #fff4df;
+  font-size: clamp(1.8rem, 2.4vw, 2.45rem);
+}
+
+.management-stat-card__trend {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(248, 241, 231, 0.66);
+  font-size: 12px;
+}
+
+.management-panels {
+  grid-template-columns: minmax(0, 1.38fr) minmax(430px, 0.92fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.management-panel {
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(0, 0, 0, 0.78);
+}
+
+.management-panel__head {
+  margin-bottom: 18px;
+}
+
+.management-panel__head h2 {
+  font-size: clamp(2rem, 2.55vw, 2.6rem);
+  line-height: 1;
+}
+
+.management-focus-grid {
+  gap: 14px;
+  margin-top: 0;
+  align-items: stretch;
+}
+
+.management-focus-card {
+  position: relative;
+  min-height: 304px;
+  padding: 22px;
+  overflow: hidden;
+  gap: 16px;
+  display: grid;
+  grid-template-rows: auto minmax(96px, 1fr) auto;
+  align-content: stretch;
+}
+
+.management-focus-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 8px 18px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(242, 209, 139, 0.42), transparent);
+  opacity: 0.62;
+}
+
+.management-focus-card__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 92px;
+}
+
+.management-card-icon,
+.management-checklist-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(242, 209, 139, 0.26);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.58);
+  color: #f2d18b;
+  font-size: 18px;
+}
+
+.management-focus-card h3 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.08;
+}
+
+.management-focus-card p {
+  color: rgba(248, 241, 231, 0.72);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 28ch;
+}
+
+.management-card-action {
+  width: 100%;
+  min-height: 58px;
+  border-radius: 8px;
+  padding: 12px 18px;
+  justify-content: space-between;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  align-self: end;
+}
+
+.management-card-action i {
+  flex: 0 0 auto;
+  font-size: 15px;
+  transition: transform 0.18s ease;
+}
+
+.management-card-action:hover i {
+  transform: translateX(3px);
+}
+
+.management-checklist {
+  gap: 12px;
+  max-height: 342px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: none;
+}
+
+.management-checklist::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.management-checklist-card {
+  position: relative;
+  min-height: 156px;
+  padding: 18px 56px 18px 22px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  align-items: center;
+  gap: 24px;
+}
+
+.management-checklist-card::before {
+  content: "";
+  position: absolute;
+  inset: 14px auto 14px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(242, 209, 139, 0.46);
+}
+
+.management-checklist-card.is-now::before {
+  background: #f2d18b;
+  box-shadow: 0 0 18px rgba(242, 209, 139, 0.32);
+}
+
+.management-checklist-card.is-stock::before {
+  background: rgba(74, 163, 223, 0.82);
+}
+
+.management-checklist-card.is-cash::before {
+  background: rgba(103, 214, 143, 0.82);
+}
+
+.management-checklist-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.management-checklist-main > span {
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid rgba(242, 209, 139, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(242, 209, 139, 0.92);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.management-checklist-card h3 {
+  max-width: 100%;
+  margin-top: 2px;
+  font-size: 21px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-checklist-card p {
+  color: rgba(248, 241, 231, 0.72);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.management-checklist-icon {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  font-size: 22px;
+}
+
+.management-checklist-icon::after {
+  content: attr(data-badge);
+  position: absolute;
+  top: -12px;
+  right: -10px;
+  max-width: 70px;
+  padding: 3px 6px;
+  border: 1px solid rgba(242, 209, 139, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.82);
+  color: #f2d18b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.management-checklist-arrow {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(242, 209, 139, 0.92);
+  font-size: 22px;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.management-checklist-card:hover .management-checklist-arrow {
+  transform: translate(4px, -50%);
+  color: #ffe7aa;
+}
+
 @media (max-width: 1200px) {
   .management-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

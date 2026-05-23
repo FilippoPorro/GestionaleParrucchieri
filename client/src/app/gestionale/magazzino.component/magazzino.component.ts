@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { timeout } from 'rxjs/operators';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { Prodotto, ProdottoService } from '../../services/prodotto';
@@ -56,6 +57,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
 
   constructor(
     private prodottoService: ProdottoService,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -216,7 +218,15 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.prodotti = this.sortProdotti(prodotti);
         this.currentPage = 1;
         this.pendingDeleteProdotto = null;
-        if (this.selectedProdotto) {
+        const productIdFromRoute = this.getProductIdFromRoute();
+
+        if (productIdFromRoute !== null) {
+          const routeSelection = this.prodotti.find((p) => p.idProdotto === productIdFromRoute) ?? null;
+
+          if (routeSelection) {
+            this.openProductFromRoute(routeSelection);
+          }
+        } else if (this.selectedProdotto) {
           const updatedSelection = this.prodotti.find((p) => p.idProdotto === this.selectedProdotto?.idProdotto) ?? null;
           if (updatedSelection) {
             this.selectProdotto(updatedSelection);
@@ -566,5 +576,25 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         behavior: 'smooth'
       });
     });
+  }
+
+  private getProductIdFromRoute(): number | null {
+    const rawValue =
+      this.route.snapshot.queryParamMap.get('prodotto') ||
+      this.route.snapshot.queryParamMap.get('idProdotto');
+    const productId = Number(rawValue);
+
+    return Number.isFinite(productId) && productId > 0 ? productId : null;
+  }
+
+  private openProductFromRoute(prodotto: Prodotto): void {
+    this.selectedCategoriaFilter = '';
+    this.selectedMarcaFilter = '';
+    this.searchTerm = '';
+    this.currentPage = Math.max(
+      1,
+      Math.ceil((this.filteredProdotti.findIndex((p) => p.idProdotto === prodotto.idProdotto) + 1) / this.pageSize)
+    );
+    this.selectProdotto(prodotto, true);
   }
 }
