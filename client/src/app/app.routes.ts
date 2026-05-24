@@ -37,7 +37,7 @@ export const routes: Routes = [
     { path: 'services', component: ServicesListComponent },
     { path: 'service/:id', component: ServiceDetailsComponent },
     { path: 'cart', component: CartComponent },
-    { path: 'payment', component: PaymentComponent, canActivate: [authGuard] },
+    { path: 'payment', component: PaymentComponent },
     { path: 'payment-success', component: PaymentSuccessComponent, canActivate: [paymentSuccessGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'register', component: RegisterComponent, canActivate: [registerGuard] },

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { ProdottoService } from './prodotto';
 
 interface LoginResponse {
   token: string;
@@ -78,7 +79,8 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private prodottoService: ProdottoService
   ) {}
 
   login(
@@ -125,6 +127,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearCartStorage();
     this.clearToken();
     localStorage.removeItem('rememberedEmail');
     this.router.navigate(['/login']);
@@ -226,5 +229,29 @@ export class AuthService {
 
   private getStoredToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+  }
+
+  private getUserIdFromToken(token: string | null): number | null {
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payloadBase64 = token.split('.')[1];
+      if (!payloadBase64) return null;
+
+      const decodedPayload = JSON.parse(atob(payloadBase64));
+      const id = Number(decodedPayload.userId ?? decodedPayload.idUtente ?? decodedPayload.id);
+      return Number.isFinite(id) ? id : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearCartStorage(): void {
+    localStorage.removeItem('cart');
+    localStorage.removeItem('cart_id');
+    localStorage.removeItem('cart_expires_at');
+    localStorage.removeItem('cart_total');
   }
 }

@@ -1164,7 +1164,7 @@
 /* Prenotazione gestionale: stile allineato ad Appuntamenti gestionale */
 .booking-page.is-management-booking {
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.7), rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58)),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
 }
 

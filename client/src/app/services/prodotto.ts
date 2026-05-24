@@ -1,7 +1,7 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 export interface Prodotto {
   idProdotto: number;
@@ -31,6 +31,12 @@ export interface CheckoutCustomerData {
   lockerLabel?: string;
 }
 
+interface ReservedCartResponse {
+  cartId: string | null;
+  expiresAt: string | null;
+  items: any[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -38,6 +44,7 @@ export class ProdottoService {
   private readonly cartTtlMs = 10 * 60 * 1000;
   private readonly storageKey = 'cart';
   private readonly cartExpiresAtStorageKey = 'cart_expires_at';
+  private readonly cartIdStorageKey = 'cart_id';
 
   private _cart: WritableSignal<Prodotto[]> = signal([]);
   cart = this._cart.asReadonly();
@@ -46,6 +53,7 @@ export class ProdottoService {
 
   private apiUrl = 'http://localhost:3000/api/prodotti';
   private apiBaseUrl = 'http://localhost:3000';
+  private cartApiUrl = 'http://localhost:3000/api/cart';
 
   constructor(private http: HttpClient) {
     this.loadCart();
@@ -54,10 +62,41 @@ export class ProdottoService {
   }
 
   getProdotti(): Observable<Prodotto[]> {
-    return this.http.get<any[]>(this.apiUrl).pipe(
+    return this.http.get<any[]>(this.apiUrl, { headers: this.getCartHeaders() }).pipe(
       map(prodotti =>
         prodotti.map(p => this.mapProdotto(p))
       )
+    );
+  }
+
+  loadReservedCart(): Observable<void> {
+    return this.http.get<ReservedCartResponse>(this.cartApiUrl, { headers: this.getCartHeaders() }).pipe(
+      tap((cart) => this.applyReservedCart(cart)),
+      map(() => undefined)
+    );
+  }
+
+  loadActiveUserCart(): Observable<void> {
+    return this.http.get<ReservedCartResponse>(`${this.cartApiUrl}/active`).pipe(
+      tap((cart) => this.applyReservedCart(cart)),
+      map(() => undefined)
+    );
+  }
+
+  claimCurrentCart(): Observable<void> {
+    const cartId = this.getCartId();
+
+    if (!cartId) {
+      return this.loadActiveUserCart();
+    }
+
+    return this.http.post<ReservedCartResponse>(
+      `${this.cartApiUrl}/claim`,
+      { cartId },
+      { headers: new HttpHeaders({ 'x-cart-id': cartId }) }
+    ).pipe(
+      tap((cart) => this.applyReservedCart(cart)),
+      map(() => undefined)
     );
   }
 
@@ -123,6 +162,67 @@ export class ProdottoService {
         this.clearCart();
       }
     }
+  }
+
+  private getCartId(): string | null {
+    return localStorage.getItem(this.cartIdStorageKey);
+  }
+
+  private ensureCartId(): string {
+    const existingCartId = this.getCartId();
+
+    if (existingCartId) {
+      return existingCartId;
+    }
+
+    const cartId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : this.createFallbackUuid();
+
+    this.setCartId(cartId);
+    return cartId;
+  }
+
+  private createFallbackUuid(): string {
+    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (char) => {
+      const randomValue = crypto.getRandomValues(new Uint8Array(1))[0];
+      return (Number(char) ^ (randomValue & (15 >> (Number(char) / 4)))).toString(16);
+    });
+  }
+
+  private setCartId(cartId: string | null): void {
+    if (cartId) {
+      localStorage.setItem(this.cartIdStorageKey, cartId);
+      return;
+    }
+
+    localStorage.removeItem(this.cartIdStorageKey);
+  }
+
+  private getCartHeaders(): HttpHeaders {
+    const cartId = this.getCartId();
+    return cartId ? new HttpHeaders({ 'x-cart-id': cartId }) : new HttpHeaders();
+  }
+
+  private applyReservedCart(cart: ReservedCartResponse | null): void {
+    if (!cart?.cartId || !cart.expiresAt || (cart.items || []).length === 0) {
+      this.setCartId(null);
+      this.clearLocalCart();
+      return;
+    }
+
+    this.setCartId(cart.cartId);
+    localStorage.setItem(this.cartExpiresAtStorageKey, `${new Date(cart.expiresAt).getTime()}`);
+    this._cart.set((cart.items || []).map(p => this.mapProdotto(p)));
+    this.saveCart();
+  }
+
+  private clearLocalCart(): void {
+    this._cart.set([]);
+    localStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.cartExpiresAtStorageKey);
+    localStorage.removeItem('cart_total');
+    this._cartRemainingSeconds.set(0);
   }
 
   private saveCart() {
@@ -193,72 +293,68 @@ export class ProdottoService {
     };
   }
 
-  addProductToCart(prod: Prodotto) {
+  addProductToCart(prod: Prodotto, quantity: number = 1): Observable<void> {
     if (this.isCartExpired()) {
       this.clearCart();
     }
 
-    this._cart.update(cart => {
-      const existing = cart.find(p => p.idProdotto === prod.idProdotto);
-      if (existing) {
-        return cart.map(p =>
-          p.idProdotto === prod.idProdotto
-            ? { ...p, quantita: (p.quantita || 1) + 1 }
-            : p
-        );
-      }
-      return [...cart, { ...prod, quantita: 1 }];
-    });
-    this.saveCart();
+    const safeQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
+    const nextQuantity = this.getCartItemQuantity(prod.idProdotto) + safeQuantity;
+    return this.reserveProductQuantity(prod.idProdotto, nextQuantity);
   }
 
-  increaseQuantity(productId: number) {
+  increaseQuantity(productId: number): Observable<void> {
     if (this.isCartExpired()) {
       this.clearCart();
-      return;
+      return this.loadReservedCart();
     }
 
-    this._cart.update(cart =>
-      cart.map(p =>
-        p.idProdotto === productId
-          ? { ...p, quantita: (p.quantita || 1) + 1 }
-          : p
-      )
-    );
-    this.saveCart();
+    return this.reserveProductQuantity(productId, this.getCartItemQuantity(productId) + 1);
   }
 
-  decreaseQuantity(productId: number) {
+  decreaseQuantity(productId: number): Observable<void> {
     if (this.isCartExpired()) {
       this.clearCart();
-      return;
+      return this.loadReservedCart();
     }
 
-    this._cart.update(cart =>
-      cart
-        .map(p =>
-          p.idProdotto === productId
-            ? { ...p, quantita: (p.quantita || 1) - 1 }
-            : p
-        )
-        .filter(p => (p.quantita || 1) > 0)
-    );
-    this.saveCart();
+    return this.reserveProductQuantity(productId, Math.max(0, this.getCartItemQuantity(productId) - 1));
   }
 
-  removeProductFromCart(productId: number | string): void {
-    this._cart.update(cart =>
-      cart.filter(product => product.idProdotto != productId)
+  removeProductFromCart(productId: number | string): Observable<void> {
+    return this.http.delete<ReservedCartResponse>(
+      `${this.cartApiUrl}/items/${productId}`,
+      { headers: this.getCartHeaders() }
+    ).pipe(
+      tap((cart) => this.applyReservedCart(cart)),
+      map(() => undefined)
     );
-    this.saveCart();
   }
 
   clearCart(): void {
-    this._cart.set([]);
-    localStorage.removeItem(this.storageKey);
-    localStorage.removeItem(this.cartExpiresAtStorageKey);
-    localStorage.removeItem('cart_total');
-    this._cartRemainingSeconds.set(0);
+    const cartId = this.getCartId();
+    this.clearLocalCart();
+    this.setCartId(null);
+
+    if (cartId) {
+      this.http.delete(this.cartApiUrl, {
+        headers: new HttpHeaders({ 'x-cart-id': cartId })
+      }).subscribe({ error: () => undefined });
+    }
+  }
+
+  abandonCurrentCart(): void {
+    const cartId = this.getCartId();
+    this.clearLocalCart();
+    this.setCartId(null);
+
+    if (!cartId) {
+      return;
+    }
+
+    this.http.delete(this.cartApiUrl, {
+      headers: new HttpHeaders({ 'x-cart-id': cartId })
+    }).subscribe({ error: () => undefined });
   }
 
   getCart(): Prodotto[] {
@@ -297,6 +393,23 @@ export class ProdottoService {
     localStorage.setItem('cart_total', JSON.stringify(total));
   }
 
+  private reserveProductQuantity(productId: number, quantity: number): Observable<void> {
+    const cartId = this.ensureCartId();
+
+    return this.http.post<ReservedCartResponse>(
+      `${this.cartApiUrl}/items`,
+      {
+        cartId,
+        productId,
+        quantity
+      },
+      { headers: new HttpHeaders({ 'x-cart-id': cartId }) }
+    ).pipe(
+      tap((cart) => this.applyReservedCart(cart)),
+      map(() => undefined)
+    );
+  }
+
   getCartItemCount(): number {
     return this.getCart().reduce((sum, p) => sum + (p.quantita || 1), 0);
   }
@@ -318,9 +431,15 @@ export class ProdottoService {
     customer: CheckoutCustomerData
   ) {
     return this.http.post('http://localhost:3000/api/checkout/complete', {
+      cartId: this.getCartId(),
       cartItems,
       total,
       customer
-    });
+    }, { headers: this.getCartHeaders() }).pipe(
+      tap(() => {
+        this.clearLocalCart();
+        this.setCartId(null);
+      })
+    );
   }
 }

@@ -79,9 +79,29 @@
             </div>
         </div>
 
-        <button class="btn btn-add-cart" (click)="addToCart()">
+        <div class="product-quantity-control" aria-label="Quantita da aggiungere">
+            <button
+                type="button"
+                (click)="decreaseSelectedQuantity()"
+                [disabled]="selectedQuantity <= 1"
+                aria-label="Riduci quantita">
+                -
+            </button>
+
+            <span>{{ selectedQuantity }}</span>
+
+            <button
+                type="button"
+                (click)="increaseSelectedQuantity()"
+                [disabled]="!canIncreaseSelectedQuantity"
+                aria-label="Aumenta quantita">
+                +
+            </button>
+        </div>
+
+        <button class="btn btn-add-cart" (click)="addToCart()" [disabled]="isAddingToCart">
             <i class="bi bi-bag-plus me-2"></i>
-            Aggiungi al carrello
+            {{ isAddingToCart ? 'Aggiungo...' : 'Aggiungi al carrello' }}
         </button>
 
         <button class="btn btn-back" [routerLink]="['/products']">

@@ -312,6 +312,116 @@ type CheckoutRpcResult = {
   idVendita: number;
 };
 
+type CartReservationRow = {
+  "idProdotto": number;
+  "quantita": number;
+  "prezzoUnitario": number;
+  prodotti?: any;
+};
+
+const CART_TTL_MINUTES = 10;
+const GUEST_CHECKOUT_USER_ID = -1;
+
+function formatRomeTimestamp(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
+}
+
+function getCartIdFromRequest(req: express.Request): string | null {
+  const headerCartId = req.header("x-cart-id");
+  const bodyCartId = typeof req.body?.cartId === "string" ? req.body.cartId : "";
+  const cartId = (headerCartId || bodyCartId || "").trim();
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cartId)
+    ? cartId
+    : null;
+}
+
+function mapReservedCartItem(row: CartReservationRow) {
+  const product = Array.isArray(row.prodotti) ? row.prodotti[0] || {} : row.prodotti || {};
+
+  return {
+    idProdotto: Number(row.idProdotto),
+    foto: product.foto ?? null,
+    nome: product.nome ?? "",
+    marca: product.marca ?? "",
+    formato: product.formato ?? "",
+    descrizione: product.descrizione ?? "",
+    prezzoRivendita: Number(product.prezzoRivendita ?? row.prezzoUnitario ?? 0),
+    prezzoAcquisto: Number(product.prezzoAcquisto ?? 0),
+    quantitaMagazzino: Number(product.quantitaMagazzino ?? 0),
+    categoria: product.categoria ?? "",
+    quantita: Number(row.quantita || 0)
+  };
+}
+
+async function getReservedCart(cartId: string) {
+  await db.rpc("expire_cart_reservations");
+
+  const { data: cart, error: cartError } = await db
+    .from("cart_sessions")
+    .select("idCart, idUtente, expiresAt, status")
+    .eq("idCart", cartId)
+    .maybeSingle();
+
+  if (cartError) throw cartError;
+
+  if (!cart || cart.status !== "active" || new Date(cart.expiresAt).getTime() <= Date.now()) {
+    return null;
+  }
+
+  const { data: items, error: itemsError } = await db
+    .from("cart_items")
+    .select(`
+      idProdotto,
+      quantita,
+      prezzoUnitario,
+      prodotti (
+        idProdotto,
+        foto,
+        nome,
+        marca,
+        formato,
+        descrizione,
+        prezzoRivendita,
+        prezzoAcquisto,
+        quantitaMagazzino,
+        categoria
+      )
+    `)
+    .eq("idCart", cartId)
+    .order("idProdotto", { ascending: true });
+
+  if (itemsError) throw itemsError;
+
+  if ((items || []).length === 0) {
+    await db
+      .from("cart_sessions")
+      .delete()
+      .eq("idCart", cartId);
+
+    return null;
+  }
+
+  return {
+    cartId: String(cart.idCart),
+    expiresAt: String(cart.expiresAt),
+    items: (items || []).map((item: any) => mapReservedCartItem(item))
+  };
+}
+
 function normalizeCartItems(cartItems: any[]): NormalizedCartItem[] {
   const byProduct = new Map<number, NormalizedCartItem>();
 
@@ -349,7 +459,7 @@ function isStockError(error: unknown): boolean {
         ? (error as any).message
         : "";
 
-  return /stock[_ ]insufficiente/i.test(message);
+  return /stock[_ ]insufficiente|cart_expired|cart_owner_mismatch/i.test(message);
 }
 
 function isMissingCheckoutRpcError(error: unknown): boolean {
@@ -361,7 +471,19 @@ function isMissingCheckoutRpcError(error: unknown): boolean {
         ? (error as any).message
         : "";
 
-  return code === "PGRST202" && /complete_checkout_sicuro/i.test(message);
+  return code === "PGRST202" && /complete_(reserved_cart_)?checkout_sicuro/i.test(message);
+}
+
+function isMissingCartSchemaError(error: unknown): boolean {
+  const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return code === "PGRST202" || code === "42P01" || /cart_sessions|cart_items|expire_cart_reservations/i.test(message);
 }
 
 async function completeCheckoutWithFallback(
@@ -485,6 +607,13 @@ app.use("/api/cassa", cassaRoute);
 app.use("/api/fornitori", fornitoriRoute);
 app.get("/api/prodotti", async (req, res) => {
   try {
+    const cartId = getCartIdFromRequest(req);
+    const { error: expireError } = await db.rpc("expire_cart_reservations");
+
+    if (expireError && !isMissingCartSchemaError(expireError)) {
+      throw expireError;
+    }
+
     const { data, error } = await db
       .from("prodotti")
       .select(
@@ -495,10 +624,240 @@ app.get("/api/prodotti", async (req, res) => {
       .order("nome", { ascending: true })
       .order("idProdotto", { ascending: true });
     if (error) throw error;
-    res.json(data);
+
+    const { data: reservedRows, error: reservedError } = await db
+      .from("cart_items")
+      .select("idCart, idProdotto, quantita, cart_sessions!inner(status, expiresAt)")
+      .eq("cart_sessions.status", "active")
+      .gt("cart_sessions.expiresAt", formatRomeTimestamp());
+
+    if (reservedError) {
+      if (isMissingCartSchemaError(reservedError)) {
+        return res.json(data || []);
+      }
+
+      throw reservedError;
+    }
+
+    const reservedByProduct = new Map<number, number>();
+
+    (reservedRows || []).forEach((row: any) => {
+      if (cartId && row.idCart === cartId) {
+        return;
+      }
+
+      const productId = Number(row.idProdotto);
+      reservedByProduct.set(productId, (reservedByProduct.get(productId) || 0) + Number(row.quantita || 0));
+    });
+
+    res.json((data || []).map((product: any) => ({
+      ...product,
+      quantitaMagazzino: Math.max(
+        0,
+        Number(product.quantitaMagazzino || 0) - (reservedByProduct.get(Number(product.idProdotto)) || 0)
+      )
+    })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Errore server" });
+  }
+});
+
+app.get("/api/cart", async (req, res) => {
+  let cartId = getCartIdFromRequest(req);
+  const userId = getOptionalUserIdFromRequest(req);
+
+  try {
+    if (!cartId && userId !== null) {
+      const { data: userCart, error: userCartError } = await db
+        .from("cart_sessions")
+        .select("idCart")
+        .eq("idUtente", userId)
+        .eq("status", "active")
+        .gt("expiresAt", formatRomeTimestamp())
+        .order("updatedAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (userCartError) throw userCartError;
+
+      cartId = userCart?.idCart ? String(userCart.idCart) : null;
+    }
+
+    if (!cartId) {
+      return res.json({ cartId: null, expiresAt: null, items: [] });
+    }
+
+    const cart = await getReservedCart(cartId);
+    return res.json(cart || { cartId: null, expiresAt: null, items: [] });
+  } catch (err: any) {
+    console.error("Errore GET /api/cart:", err);
+    return res.status(500).json({ message: "Errore caricamento carrello", error: err.message });
+  }
+});
+
+app.get("/api/cart/active", async (req, res) => {
+  const userId = getOptionalUserIdFromRequest(req);
+
+  if (userId === null) {
+    return res.json({ cartId: null, expiresAt: null, items: [] });
+  }
+
+  try {
+    const { data: userCart, error: userCartError } = await db
+      .from("cart_sessions")
+      .select("idCart")
+      .eq("idUtente", userId)
+      .eq("status", "active")
+      .gt("expiresAt", formatRomeTimestamp())
+      .order("updatedAt", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (userCartError) throw userCartError;
+
+    const cartId = userCart?.idCart ? String(userCart.idCart) : null;
+
+    if (!cartId) {
+      return res.json({ cartId: null, expiresAt: null, items: [] });
+    }
+
+    const cart = await getReservedCart(cartId);
+    return res.json(cart || { cartId: null, expiresAt: null, items: [] });
+  } catch (err: any) {
+    console.error("Errore GET /api/cart/active:", err);
+    return res.status(500).json({ message: "Errore caricamento carrello", error: err.message });
+  }
+});
+
+app.post("/api/cart/claim", async (req, res) => {
+  const cartId = getCartIdFromRequest(req);
+  const userId = getOptionalUserIdFromRequest(req);
+
+  if (!cartId || userId === null) {
+    return res.json({ cartId: null, expiresAt: null, items: [] });
+  }
+
+  try {
+    await db.rpc("expire_cart_reservations");
+
+    const { error: claimError } = await db
+      .from("cart_sessions")
+      .update({
+        idUtente: userId,
+        updatedAt: formatRomeTimestamp()
+      })
+      .eq("idCart", cartId)
+      .eq("status", "active")
+      .gt("expiresAt", formatRomeTimestamp());
+
+    if (claimError) throw claimError;
+
+    const cart = await getReservedCart(cartId);
+    return res.json(cart || { cartId: null, expiresAt: null, items: [] });
+  } catch (err: any) {
+    console.error("Errore POST /api/cart/claim:", err);
+    return res.status(500).json({ message: "Errore associazione carrello", error: err.message });
+  }
+});
+
+app.post("/api/cart/items", async (req, res) => {
+  const cartId = getCartIdFromRequest(req);
+  const productId = Number(req.body?.productId ?? req.body?.idProdotto);
+  const quantity = Number(req.body?.quantity ?? req.body?.quantita ?? 1);
+  const userId = getOptionalUserIdFromRequest(req);
+
+  if (!Number.isFinite(productId) || productId <= 0 || !Number.isFinite(quantity) || quantity < 0) {
+    return res.status(400).json({ message: "Prodotto o quantita non validi" });
+  }
+
+  try {
+    const { data, error } = await db
+      .rpc("reserve_cart_item_sicuro", {
+        p_cart_id: cartId,
+        p_id_utente: userId,
+        p_product_id: productId,
+        p_qty: quantity,
+        p_ttl_minutes: CART_TTL_MINUTES
+      })
+      .single();
+
+    if (error) throw error;
+
+    const reservedCartId = String((data as any)?.cartId || (data as any)?.idCart || cartId || "");
+    const cart = reservedCartId ? await getReservedCart(reservedCartId) : null;
+
+    return res.json(cart || {
+      cartId: reservedCartId || null,
+      expiresAt: (data as any)?.expiresAt || null,
+      items: []
+    });
+  } catch (err: any) {
+    console.error("Errore POST /api/cart/items:", err);
+    return res.status(isStockError(err) ? 409 : 500).json({
+      message: isStockError(err) ? "Stock insufficiente" : "Errore aggiornamento carrello",
+      error: err.message
+    });
+  }
+});
+
+app.delete("/api/cart/items/:productId", async (req, res) => {
+  const cartId = getCartIdFromRequest(req);
+  const productId = Number(req.params.productId);
+
+  if (!cartId || !Number.isFinite(productId) || productId <= 0) {
+    return res.status(400).json({ message: "Carrello o prodotto non valido" });
+  }
+
+  try {
+    const { data, error } = await db
+      .rpc("reserve_cart_item_sicuro", {
+        p_cart_id: cartId,
+        p_id_utente: getOptionalUserIdFromRequest(req),
+        p_product_id: productId,
+        p_qty: 0,
+        p_ttl_minutes: CART_TTL_MINUTES
+      })
+      .single();
+
+    if (error) throw error;
+
+    const reservedCartId = String((data as any)?.cartId || (data as any)?.idCart || cartId);
+    const cart = await getReservedCart(reservedCartId);
+
+    return res.json(cart || { cartId: reservedCartId, expiresAt: null, items: [] });
+  } catch (err: any) {
+    console.error("Errore DELETE /api/cart/items/:productId:", err);
+    return res.status(500).json({ message: "Errore rimozione prodotto", error: err.message });
+  }
+});
+
+app.delete("/api/cart", async (req, res) => {
+  const cartId = getCartIdFromRequest(req);
+
+  if (!cartId) {
+    return res.json({ message: "Carrello svuotato" });
+  }
+
+  try {
+    const { error: itemsDeleteError } = await db
+      .from("cart_items")
+      .delete()
+      .eq("idCart", cartId);
+
+    if (itemsDeleteError) throw itemsDeleteError;
+
+    const { error } = await db
+      .from("cart_sessions")
+      .delete()
+      .eq("idCart", cartId);
+
+    if (error) throw error;
+
+    return res.json({ message: "Carrello svuotato" });
+  } catch (err: any) {
+    console.error("Errore DELETE /api/cart:", err);
+    return res.status(500).json({ message: "Errore svuotamento carrello", error: err.message });
   }
 });
 app.post("/api/prodotti", async (req, res) => {
@@ -661,7 +1020,8 @@ app.post("/api/checkout/complete", async (req, res) => {
   const cartItems = Array.isArray(req.body?.cartItems) ? req.body.cartItems : [];
   const total = Number(req.body?.total ?? 0);
   const customer = req.body?.customer ?? {};
-  const userId = getOptionalUserIdFromRequest(req);
+  const authenticatedUserId = getOptionalUserIdFromRequest(req);
+  const cartId = getCartIdFromRequest(req);
   const customerEmail = String(customer?.email ?? "").trim();
   const customerName = String(customer?.name ?? "").trim();
   const customerSurname = String(customer?.surname ?? "").trim();
@@ -686,26 +1046,58 @@ app.post("/api/checkout/complete", async (req, res) => {
   }
 
   try {
-    const normalizedItems = normalizeCartItems(cartItems);
+    const checkoutUserId = authenticatedUserId ?? GUEST_CHECKOUT_USER_ID;
+    let vendita: CheckoutRpcResult | null = null;
 
-    const { data: checkoutData, error: checkoutError } = await db
-      .rpc("complete_checkout_sicuro", {
-        p_id_cliente: userId,
-        p_total: total,
-        p_items: normalizedItems
-      })
-      .single();
+    if (cartId) {
+      const { data: cartCheckoutData, error: cartCheckoutError } = await db
+        .rpc("complete_reserved_cart_checkout_sicuro", {
+          p_cart_id: cartId,
+          p_id_cliente: checkoutUserId,
+          p_total: total
+        })
+        .single();
 
-    if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
-      throw checkoutError;
+      if (!cartCheckoutError) {
+        vendita = cartCheckoutData as CheckoutRpcResult | null;
+      } else if (!isMissingCheckoutRpcError(cartCheckoutError)) {
+        throw cartCheckoutError;
+      }
     }
 
-    const vendita = checkoutError
-      ? await completeCheckoutWithFallback(userId, total, normalizedItems)
-      : checkoutData as CheckoutRpcResult | null;
+    if (!vendita?.idVendita) {
+      const normalizedItems = normalizeCartItems(cartItems);
+
+      const { data: checkoutData, error: checkoutError } = await db
+        .rpc("complete_checkout_sicuro", {
+          p_id_cliente: checkoutUserId,
+          p_total: total,
+          p_items: normalizedItems
+        })
+        .single();
+
+      if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
+        throw checkoutError;
+      }
+
+      vendita = checkoutError
+        ? await completeCheckoutWithFallback(checkoutUserId, total, normalizedItems)
+        : checkoutData as CheckoutRpcResult | null;
+    }
 
     if (!vendita?.idVendita) {
       throw new Error("checkout_result_invalid");
+    }
+
+    if (cartId) {
+      const { error: cartCleanupError } = await db
+        .from("cart_sessions")
+        .delete()
+        .eq("idCart", cartId);
+
+      if (cartCleanupError) {
+        console.error("Errore pulizia carrello dopo checkout:", cartCleanupError);
+      }
     }
 
     try {

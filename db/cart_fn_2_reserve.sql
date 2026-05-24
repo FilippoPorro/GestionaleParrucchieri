@@ -1,0 +1,103 @@
+DROP FUNCTION IF EXISTS public.reserve_cart_item_sicuro(uuid, integer, integer, integer, integer);
+
+CREATE OR REPLACE FUNCTION public.reserve_cart_item_sicuro(
+  p_cart_id uuid,
+  p_id_utente integer,
+  p_product_id integer,
+  p_qty integer,
+  p_ttl_minutes integer DEFAULT 10
+)
+RETURNS TABLE ("cartId" uuid, "expiresAt" timestamp without time zone)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_cart_id uuid;
+  v_expires_at timestamp without time zone;
+  v_stock integer;
+  v_reserved_by_others integer;
+  v_unit_price numeric(10, 2);
+  v_existing_user_id integer;
+BEGIN
+  IF p_product_id IS NULL OR p_product_id <= 0 OR p_qty IS NULL OR p_qty < 0 THEN
+    RAISE EXCEPTION 'invalid_cart_item' USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM public.expire_cart_reservations();
+  PERFORM pg_advisory_xact_lock(hashtextextended('products:stock:' || p_product_id::text, 0));
+
+  IF p_cart_id IS NOT NULL THEN
+    SELECT cs."idUtente"
+    INTO v_existing_user_id
+    FROM public.cart_sessions cs
+    WHERE cs."idCart" = p_cart_id
+      AND cs."status" = 'active'
+      AND cs."expiresAt" > timezone('Europe/Rome', now());
+
+    IF FOUND AND v_existing_user_id IS DISTINCT FROM p_id_utente THEN
+      RAISE EXCEPTION 'cart_owner_mismatch' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
+  SELECT p."quantitaMagazzino", p."prezzoRivendita"
+  INTO v_stock, v_unit_price
+  FROM public.prodotti p
+  WHERE p."idProdotto" = p_product_id;
+
+  IF v_stock IS NULL THEN
+    RAISE EXCEPTION 'product_not_found' USING ERRCODE = 'P0001';
+  END IF;
+
+  SELECT COALESCE(SUM(ci."quantita"), 0)::integer
+  INTO v_reserved_by_others
+  FROM public.cart_items ci
+  INNER JOIN public.cart_sessions cs ON cs."idCart" = ci."idCart"
+  WHERE ci."idProdotto" = p_product_id
+    AND cs."status" = 'active'
+    AND cs."expiresAt" > timezone('Europe/Rome', now())
+    AND (p_cart_id IS NULL OR ci."idCart" <> p_cart_id);
+
+  IF p_qty > v_stock - v_reserved_by_others THEN
+    RAISE EXCEPTION 'stock_insufficiente' USING ERRCODE = 'P0001';
+  END IF;
+
+  v_cart_id := COALESCE(p_cart_id, gen_random_uuid());
+  v_expires_at := timezone('Europe/Rome', now()) + make_interval(mins => GREATEST(COALESCE(p_ttl_minutes, 10), 1));
+
+  INSERT INTO public.cart_sessions ("idCart", "idUtente", "expiresAt", "status", "updatedAt")
+  VALUES (v_cart_id, p_id_utente, v_expires_at, 'active', timezone('Europe/Rome', now()))
+  ON CONFLICT ("idCart") DO UPDATE
+    SET
+      "idUtente" = COALESCE(EXCLUDED."idUtente", public.cart_sessions."idUtente"),
+      "expiresAt" = EXCLUDED."expiresAt",
+      "status" = 'active',
+      "updatedAt" = timezone('Europe/Rome', now());
+
+  IF p_qty = 0 THEN
+    DELETE FROM public.cart_items
+    WHERE public.cart_items."idCart" = v_cart_id
+      AND public.cart_items."idProdotto" = p_product_id;
+
+    DELETE FROM public.cart_sessions
+    WHERE public.cart_sessions."idCart" = v_cart_id
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.cart_items ci
+        WHERE ci."idCart" = v_cart_id
+      );
+  ELSE
+    INSERT INTO public.cart_items ("idCart", "idProdotto", "quantita", "prezzoUnitario", "updatedAt")
+    VALUES (v_cart_id, p_product_id, p_qty, COALESCE(v_unit_price, 0), timezone('Europe/Rome', now()))
+    ON CONFLICT ("idCart", "idProdotto") DO UPDATE
+      SET
+        "quantita" = EXCLUDED."quantita",
+        "prezzoUnitario" = EXCLUDED."prezzoUnitario",
+        "updatedAt" = timezone('Europe/Rome', now());
+  END IF;
+
+  RETURN QUERY SELECT v_cart_id AS "cartId", v_expires_at AS "expiresAt";
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.reserve_cart_item_sicuro(uuid, integer, integer, integer, integer) TO service_role;

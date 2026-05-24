@@ -75,10 +75,10 @@
 }
 
 :host ::ng-deep .permission-appointment {
-  --fc-event-bg-color: rgba(39, 174, 96, 0.28);
-  --fc-event-border-color: rgba(46, 204, 113, 0.4);
-  background: rgba(39, 174, 96, 0.28) !important;
-  border-color: rgba(46, 204, 113, 0.4) !important;
+  --fc-event-bg-color: rgba(39, 174, 96, 0.1);
+  --fc-event-border-color: rgba(46, 204, 113, 0.28);
+  background: rgba(39, 174, 96, 0.1) !important;
+  border-color: rgba(46, 204, 113, 0.28) !important;
   color: #eafaf1 !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -247,4 +247,206 @@
 :host ::ng-deep .fc-bg-event.invalid-slot-background.is-past-slot {
   background: rgba(170, 170, 170, 0.2) !important;
   cursor: not-allowed !important;
+}
+
+/* Popup staff allineati allo stile squadrato dei promemoria prodotti */
+.permission-modal {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.66)) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.permission-card,
+.permission-card.delete-confirm-card {
+  position: relative;
+  overflow: hidden;
+  width: min(620px, calc(100% - 36px));
+  border-radius: 8px !important;
+  border: 1px solid rgba(212, 176, 106, 0.14) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.78) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 26px 58px rgba(0, 0, 0, 0.48) !important;
+  padding: 24px 26px;
+}
+
+.permission-card::before {
+  content: "";
+  position: absolute;
+  inset: 18px auto 18px 0;
+  width: 3px;
+  background: linear-gradient(180deg, #55d284, rgba(85, 210, 132, 0.18));
+  box-shadow: 0 0 14px rgba(85, 210, 132, 0.2);
+}
+
+.permission-card.delete-confirm-card::before {
+  background: linear-gradient(180deg, #e95d5d, rgba(233, 93, 93, 0.18));
+  box-shadow: 0 0 14px rgba(233, 93, 93, 0.2);
+}
+
+.permission-card:has(.appointment-detail-kicker:nth-child(1)) .permission-head {
+  position: relative;
+}
+
+.permission-head {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.permission-body {
+  gap: 14px;
+}
+
+.permission-card .appointment-detail-kicker {
+  color: #f2d18b !important;
+  letter-spacing: 2px;
+}
+
+.permission-card .appointment-detail-title {
+  color: #fff7e8 !important;
+  font-size: 26px !important;
+}
+
+.permission-card .appointment-detail-close {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 8px !important;
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  color: #f2d18b !important;
+}
+
+.permission-card .appointment-detail-field > span {
+  color: #f2d18b;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.permission-card .appointment-field-control {
+  border-radius: 8px !important;
+  border-color: rgba(212, 176, 106, 0.14) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+.permission-card .appointment-detail-actions {
+  gap: 10px;
+  margin-top: 22px !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action {
+  min-height: 44px;
+  border-radius: 8px !important;
+  border-color: rgba(212, 176, 106, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(0, 0, 0, 0.48) !important;
+  color: #f2d18b !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(242, 209, 139, 0.5) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.026)),
+    rgba(0, 0, 0, 0.64) !important;
+  color: #ffe7aa !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action.success {
+  border-color: rgba(85, 210, 132, 0.36) !important;
+  background:
+    linear-gradient(180deg, rgba(85, 210, 132, 0.16), rgba(85, 210, 132, 0.06)),
+    rgba(0, 0, 0, 0.5) !important;
+  color: #deffeb !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action.danger {
+  border-color: rgba(233, 93, 93, 0.36) !important;
+  background:
+    linear-gradient(180deg, rgba(233, 93, 93, 0.16), rgba(233, 93, 93, 0.06)),
+    rgba(0, 0, 0, 0.5) !important;
+  color: #ffdede !important;
+}
+
+:host ::ng-deep .permission-appointment {
+  --fc-event-bg-color: rgba(39, 174, 96, 0.075) !important;
+  --fc-event-border-color: rgba(85, 210, 132, 0.34) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.21), rgba(255, 255, 255, 0.045)),
+    rgba(39, 174, 96, 0.075) !important;
+  border-color: rgba(85, 210, 132, 0.34) !important;
+  border-left-color: rgba(85, 210, 132, 0.95) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 22px rgba(255, 255, 255, 0.045),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+:host ::ng-deep .my-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.075) !important;
+  --fc-event-border-color: rgba(242, 209, 139, 0.34) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.21), rgba(255, 255, 255, 0.045)),
+    rgba(212, 176, 106, 0.075) !important;
+  border-color: rgba(242, 209, 139, 0.34) !important;
+  border-left-color: rgba(242, 209, 139, 0.95) !important;
+  color: #fff7e8 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 22px rgba(255, 255, 255, 0.045),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+:host ::ng-deep .permission-appointment {
+  --fc-event-bg-color: rgba(39, 174, 96, 0.11) !important;
+  --fc-event-border-color: rgba(85, 210, 132, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(85, 210, 132, 0.26), rgba(39, 174, 96, 0.07)),
+    rgba(39, 174, 96, 0.055) !important;
+  border-color: rgba(85, 210, 132, 0.42) !important;
+  border-left-color: rgba(85, 210, 132, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(154, 242, 185, 0.22),
+    inset 0 0 22px rgba(85, 210, 132, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+:host ::ng-deep .my-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.12) !important;
+  --fc-event-border-color: rgba(242, 209, 139, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(242, 209, 139, 0.28), rgba(212, 176, 106, 0.07)),
+    rgba(212, 176, 106, 0.06) !important;
+  border-color: rgba(242, 209, 139, 0.42) !important;
+  border-left-color: rgba(242, 209, 139, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 227, 165, 0.24),
+    inset 0 0 22px rgba(242, 209, 139, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+:host ::ng-deep .past-appointment {
+  --fc-event-bg-color: rgba(190, 52, 52, 0.12) !important;
+  --fc-event-border-color: rgba(233, 93, 93, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(233, 93, 93, 0.28), rgba(190, 52, 52, 0.07)),
+    rgba(190, 52, 52, 0.06) !important;
+  border-color: rgba(233, 93, 93, 0.42) !important;
+  border-left-color: rgba(233, 93, 93, 0.98) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 155, 155, 0.22),
+    inset 0 0 22px rgba(233, 93, 93, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
 }

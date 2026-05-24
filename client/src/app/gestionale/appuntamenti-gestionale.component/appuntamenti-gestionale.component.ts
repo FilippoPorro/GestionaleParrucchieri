@@ -284,7 +284,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
 
-    if (target?.closest('.fc-toolbar-title')) {
+    if (target?.closest('.management-appointments-section .calendar-wrapper .fc-toolbar-title')) {
       this.toggleCalendarPicker();
       this.isOperatorDropdownOpen = false;
       return;
@@ -416,6 +416,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const calendarApi = this.calendarComponent?.getApi();
     if (calendarApi) {
       calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+      this.syncCalendarTitleStateSoon();
     }
 
     this.loadAppointments();
@@ -513,6 +514,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const calendarApi = this.calendarComponent?.getApi();
     if (calendarApi) {
       calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+      this.syncCalendarTitleStateSoon();
     }
 
     this.rebuildCalendarEvents();
@@ -672,6 +674,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.syncDatePickerValue(arg.start);
     this.persistCalendarState(arg);
     this.syncCalendarTitleState(arg.view?.title);
+    this.syncCalendarTitleStateSoon(arg.view?.title);
     this.syncTodayButtonStateSoon();
     this.updateCalendarPickerPosition();
 
@@ -749,12 +752,15 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     if (this.isOperatorDayView) {
       this.setOperatorDayDate(day.date);
       calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+      this.syncCalendarTitleStateSoon();
     } else {
       calendarApi.gotoDate(value);
+      this.syncCalendarTitleStateSoon();
     }
 
     if (this.isMobileCalendar && !this.isOperatorDayView) {
       calendarApi.changeView('timeGridDay', value);
+      this.syncCalendarTitleStateSoon();
     }
 
     this.syncCalendarPickerMonth(day.date);
@@ -2423,6 +2429,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         right: nextToolbarRight
       });
       calendarApi.changeView(nextView);
+      this.syncCalendarTitleStateSoon();
     }
 
     this.cdr.detectChanges();
@@ -2454,6 +2461,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.setOperatorDayDate(today);
     this.syncCalendarNowIndicator();
     calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    this.syncCalendarTitleStateSoon();
     this.syncTodayButtonStateSoon();
   }
 
@@ -2486,6 +2494,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.setOperatorDayDate(nextDay);
     this.syncCalendarNowIndicator();
     calendarApi.changeView('operatorDay', this.operatorDayAnchorDate);
+    this.syncCalendarTitleStateSoon();
     this.syncTodayButtonStateSoon();
   }
 
@@ -2758,19 +2767,40 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return;
     }
 
-    const title = document.querySelector('.fc-toolbar-title');
+    const title = this.getCalendarTitleElement();
 
     if (!title) {
       return;
     }
 
-    if (this.isOperatorDayView) {
-      title.textContent = this.formatOperatorDayTitle(this.operatorDayDate);
-    } else if (fullCalendarTitle) {
-      title.textContent = fullCalendarTitle;
+    const nextTitle = this.isOperatorDayView
+      ? this.formatOperatorDayTitle(this.operatorDayDate)
+      : (fullCalendarTitle ?? this.calendarComponent?.getApi().view.title);
+
+    if (nextTitle && title.textContent !== nextTitle) {
+      title.textContent = nextTitle;
     }
 
     title.classList.toggle('is-picker-open', this.calendarPickerOpen && !this.calendarPickerClosing);
+  }
+
+  private syncCalendarTitleStateSoon(fullCalendarTitle?: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => this.syncCalendarTitleState(fullCalendarTitle));
+    window.setTimeout(() => this.syncCalendarTitleState(fullCalendarTitle), 80);
+  }
+
+  private getCalendarTitleElement(): HTMLElement | null {
+    if (typeof document === 'undefined') {
+      return null;
+    }
+
+    return document.querySelector(
+      '.management-appointments-section .calendar-wrapper .fc-toolbar-title'
+    ) as HTMLElement | null;
   }
 
   private formatOperatorDayTitle(date: Date): string {

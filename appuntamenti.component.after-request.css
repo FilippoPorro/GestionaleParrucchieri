@@ -3,13 +3,14 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
     linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.02));
   --glass-inner-bg:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(244, 239, 231, 0.04));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.045)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(244, 239, 231, 0.03));
   --glass-inner-bg-strong:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(247, 243, 235, 0.05));
-  --glass-outer-border: rgba(255, 255, 255, 0.1);
-  --glass-inner-border: rgba(255, 255, 255, 0.2);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.06)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(247, 243, 235, 0.04));
+  --glass-outer-border: rgba(212, 176, 106, 0.06);
+  --glass-inner-border: rgba(255, 255, 255, 0.17);
+  --glass-gold-border: rgba(212, 176, 106, 0.18);
   --glass-outer-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 14px 30px rgba(0, 0, 0, 0.12);
@@ -35,7 +36,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(0, 0, 0, 0.34);
   z-index: 1;
 }
 
@@ -45,8 +46,8 @@
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.38)),
-    radial-gradient(circle at top right, rgba(212, 176, 106, 0.16), transparent 34%);
+    linear-gradient(180deg, rgba(10, 9, 8, 0.14), rgba(7, 7, 7, 0.24)),
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.12), transparent 34%);
 }
 
 .appointments-section {
@@ -195,12 +196,9 @@
 .appointments-hours-card {
   margin-top: 8px;
   padding: 18px 20px;
-  border-radius: 24px;
+  border-radius: 26px;
   border: 1px solid var(--glass-inner-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 30%),
-    linear-gradient(90deg, rgba(212, 176, 106, 0.1), transparent 22%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(244, 239, 231, 0.05));
+  background: var(--glass-inner-bg-strong);
   box-shadow: var(--glass-inner-shadow);
   backdrop-filter: blur(18px) saturate(145%);
   -webkit-backdrop-filter: blur(18px) saturate(145%);
@@ -270,14 +268,36 @@
 }
 
 .appointments-hero {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding: 34px 36px;
-  border-radius: 28px;
+  padding: 38px 40px;
+  border-radius: 34px;
   border: 1px solid var(--glass-outer-border);
   background: var(--glass-outer-bg);
   box-shadow: var(--glass-outer-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.appointments-hero::before,
+.calendar-wrapper::before,
+.appointments-select-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(212, 176, 106, 0.04), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 24%);
+}
+
+.appointments-hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .appointments-eyebrow {
@@ -310,25 +330,15 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 22px 22px 20px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: transparent;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 16px 34px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding: 28px;
+  border-radius: 34px;
+  border: 1px solid var(--glass-outer-border);
+  background: var(--glass-outer-bg);
+  box-shadow: var(--glass-outer-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.appointments-select-wrapper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, rgba(212, 176, 106, 0.08), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 26%);
 }
 
 .appointments-select-wrapper label {
@@ -367,12 +377,10 @@
   min-height: 96px;
   padding: 18px 20px 18px 22px;
   border-radius: 24px;
-  border: 1px solid rgba(212, 176, 106, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.17);
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 34%),
-    linear-gradient(135deg, rgba(212, 176, 106, 0.12), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(245, 240, 232, 0.02));
+    linear-gradient(90deg, rgba(212, 176, 106, 0.12), transparent 28%),
+    var(--glass-inner-bg);
   color: #f7e4ba;
   font: inherit;
   font-size: 14px;
@@ -402,10 +410,8 @@
   transform: none;
   border-color: rgba(212, 176, 106, 0.3);
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 34%),
-    linear-gradient(135deg, rgba(212, 176, 106, 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(247, 242, 235, 0.03));
+    linear-gradient(90deg, rgba(212, 176, 106, 0.14), transparent 28%),
+    var(--glass-inner-bg-strong);
   color: #f8e7bf;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -477,11 +483,9 @@
   width: 100%;
   position: relative;
   min-height: 66px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.03)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(245, 240, 232, 0.01));
+  border-radius: 22px;
+  border: 1px solid var(--glass-outer-border);
+  background: var(--glass-inner-bg);
   color: #f4e9d4;
   padding: 14px 18px;
   font: inherit;
@@ -548,19 +552,20 @@
 
 .calendar-wrapper {
   position: relative;
-  padding: 24px;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.1)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(244, 239, 231, 0.025));
-  backdrop-filter: blur(20px) saturate(145%);
-  -webkit-backdrop-filter: blur(20px) saturate(145%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 18px 36px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  padding: 28px;
+  border-radius: 34px;
+  border: 1px solid var(--glass-outer-border);
+  background: var(--glass-outer-bg);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--glass-outer-shadow);
   cursor: default;
+}
+
+.calendar-wrapper > * {
+  position: relative;
+  z-index: 1;
 }
 
 .appointments-calendar-meta {
@@ -580,11 +585,9 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(244, 239, 231, 0.015));
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .appointments-calendar-operator-label {
@@ -614,13 +617,11 @@
   border-radius: 30px;
   border: 1px solid rgba(212, 176, 106, 0.3);
   background:
-    radial-gradient(circle at top center, rgba(255, 219, 148, 0.07), transparent 52%),
-    linear-gradient(180deg, rgba(8, 9, 12, 0.96), rgba(10, 10, 12, 0.9)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.015));
+    radial-gradient(circle at top center, rgba(255, 219, 148, 0.08), transparent 52%),
+    var(--glass-inner-bg-strong);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -22px 30px rgba(0, 0, 0, 0.2),
-    0 26px 54px rgba(0, 0, 0, 0.44);
+    0 18px 34px rgba(0, 0, 0, 0.18);
   backdrop-filter: blur(20px) saturate(145%);
   -webkit-backdrop-filter: blur(20px) saturate(145%);
   animation: appointmentsDatePickerPanelIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
@@ -655,9 +656,7 @@
   border: 1px solid rgba(212, 176, 106, 0.28);
   border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(244, 239, 231, 0.02)),
-    rgba(24, 24, 24, 0.5);
+    var(--glass-inner-bg);
   color: #d4b06a;
   display: inline-flex;
   align-items: center;
@@ -703,8 +702,7 @@
   border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: 13px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
-    rgba(19, 19, 20, 0.9);
+    var(--glass-inner-bg);
   color: #f1e6cf;
   font-size: 16px;
   font-weight: 700;
@@ -723,9 +721,7 @@
 
 .appointments-date-picker-day.is-outside {
   color: rgba(241, 230, 207, 0.24);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
-    rgba(17, 17, 17, 0.76);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .appointments-date-picker-day.is-today {
@@ -738,7 +734,7 @@
   background:
     linear-gradient(180deg, rgba(244, 219, 166, 0.24), rgba(156, 122, 55, 0.26)),
     linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(244, 239, 231, 0.025)),
-    rgba(24, 21, 17, 0.9);
+    rgba(255, 255, 255, 0.04);
   color: #fff7e3;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -780,6 +776,21 @@
 :host ::ng-deep .fc-theme-standard td,
 :host ::ng-deep .fc-theme-standard th {
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+:host ::ng-deep .fc-theme-standard .fc-scrollgrid {
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background:
+    var(--glass-inner-bg) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 18px 34px rgba(0, 0, 0, 0.16);
+}
+
+:host ::ng-deep .fc-scrollgrid-section > td {
+  background: transparent !important;
 }
 
 :host ::ng-deep .fc th a,
@@ -904,8 +915,8 @@
 
 :host ::ng-deep .fc-col-header-cell {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.075)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(244, 239, 231, 0.04));
   padding: 12px 0;
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -914,7 +925,8 @@
 :host ::ng-deep .fc-timegrid-slot-label,
 :host ::ng-deep .fc-timegrid-axis,
 :host ::ng-deep .fc-timegrid-col {
-  background: rgba(0, 0, 0, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.024));
 }
 
 :host ::ng-deep .fc .fc-timegrid-col-bg .fc-non-business {
@@ -1413,19 +1425,24 @@
 }
 
 :host ::ng-deep .fc-event.my-appointment {
+  --fc-event-bg-color: rgba(212, 176, 106, 0.18);
+  --fc-event-border-color: rgba(212, 176, 106, 0.36);
   background:
-    linear-gradient(145deg, rgba(212, 176, 106, 0.24), rgba(126, 91, 35, 0.18)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
-  border-left-color: #d4b06a;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(212, 176, 106, 0.18) !important;
+  border-left-color: #d4b06a !important;
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
-:host ::ng-deep .fc-event.other-appointment {
+:host ::ng-deep .fc-event.other-appointment,
+:host ::ng-deep .fc-event.past-appointment {
+  --fc-event-bg-color: rgba(190, 52, 52, 0.22);
+  --fc-event-border-color: rgba(198, 52, 52, 0.42);
   background:
-    linear-gradient(145deg, rgba(190, 52, 52, 0.34), rgba(112, 24, 24, 0.28)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.045));
-  border-left-color: #c63434;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(190, 52, 52, 0.22) !important;
+  border-left-color: #c63434 !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     0 8px 18px rgba(85, 14, 14, 0.28);
@@ -1433,33 +1450,12 @@
   -webkit-backdrop-filter: blur(14px) saturate(145%);
 }
 
-:host ::ng-deep .fc-event.past-appointment {
-  background:
-    linear-gradient(145deg, rgba(190, 52, 52, 0.36), rgba(112, 24, 24, 0.3)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035));
-  border-left-color: #b83232;
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-}
-
-:host ::ng-deep .fc-event.permission-appointment {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.21), rgba(255, 255, 255, 0.045)),
-    rgba(39, 174, 96, 0.075) !important;
-  border-color: rgba(85, 210, 132, 0.34) !important;
-  border-left-color: rgba(85, 210, 132, 0.95) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 0 22px rgba(255, 255, 255, 0.045),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-}
-
 :host ::ng-deep .fc-event.permission-occupied-appointment {
+  --fc-event-bg-color: rgba(190, 52, 52, 0.22);
+  --fc-event-border-color: rgba(198, 52, 52, 0.42);
   background:
-    linear-gradient(145deg, rgba(190, 52, 52, 0.36), rgba(112, 24, 24, 0.3)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.045)) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(190, 52, 52, 0.22) !important;
   border-left-color: #c63434 !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
@@ -1468,76 +1464,32 @@
   -webkit-backdrop-filter: blur(14px) saturate(145%);
 }
 
-:host ::ng-deep .fc-event.my-appointment {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.21), rgba(255, 255, 255, 0.045)),
-    rgba(212, 176, 106, 0.075) !important;
-  border-color: rgba(242, 209, 139, 0.34) !important;
-  border-left-color: rgba(242, 209, 139, 0.95) !important;
-  color: #fff7e8 !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 0 22px rgba(255, 255, 255, 0.045),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-}
-
-:host ::ng-deep .fc-event.other-appointment,
-:host ::ng-deep .fc-event.past-appointment,
-:host ::ng-deep .fc-event.permission-occupied-appointment {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.04)),
-    rgba(190, 52, 52, 0.085) !important;
-  border-color: rgba(220, 92, 92, 0.34) !important;
-  border-left-color: rgba(220, 92, 92, 0.95) !important;
-  color: #fff1f1 !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 0 22px rgba(255, 255, 255, 0.04),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
-  backdrop-filter: blur(10px) saturate(150%);
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-}
-
 :host ::ng-deep .fc-event.permission-appointment {
+  --fc-event-bg-color: rgba(39, 174, 96, 0.18);
+  --fc-event-border-color: rgba(46, 204, 113, 0.38);
   background:
-    linear-gradient(180deg, rgba(85, 210, 132, 0.26), rgba(39, 174, 96, 0.07)),
-    rgba(39, 174, 96, 0.055) !important;
-  border-color: rgba(85, 210, 132, 0.42) !important;
-  border-left-color: rgba(85, 210, 132, 0.98) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(39, 174, 96, 0.18) !important;
+  border-left-color: #2ecc71 !important;
   box-shadow:
-    inset 0 1px 0 rgba(154, 242, 185, 0.22),
-    inset 0 0 22px rgba(85, 210, 132, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 18px rgba(19, 84, 42, 0.24) !important;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
 }
 
-:host ::ng-deep .fc-event.my-appointment {
+:host ::ng-deep .fc-event.ferie-appointment {
+  --fc-event-bg-color: rgba(41, 128, 185, 0.18);
+  --fc-event-border-color: rgba(52, 152, 219, 0.38);
   background:
-    linear-gradient(180deg, rgba(242, 209, 139, 0.28), rgba(212, 176, 106, 0.07)),
-    rgba(212, 176, 106, 0.06) !important;
-  border-color: rgba(242, 209, 139, 0.42) !important;
-  border-left-color: rgba(242, 209, 139, 0.98) !important;
-  color: #fff7e8 !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    rgba(41, 128, 185, 0.18) !important;
+  border-left-color: #3498db !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 227, 165, 0.24),
-    inset 0 0 22px rgba(242, 209, 139, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
-}
-
-:host ::ng-deep .fc-event.other-appointment,
-:host ::ng-deep .fc-event.past-appointment,
-:host ::ng-deep .fc-event.permission-occupied-appointment {
-  background:
-    linear-gradient(180deg, rgba(233, 93, 93, 0.28), rgba(190, 52, 52, 0.07)),
-    rgba(190, 52, 52, 0.06) !important;
-  border-color: rgba(233, 93, 93, 0.42) !important;
-  border-left-color: rgba(233, 93, 93, 0.98) !important;
-  color: #fff1f1 !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 155, 155, 0.22),
-    inset 0 0 22px rgba(233, 93, 93, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 18px rgba(21, 67, 96, 0.24) !important;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
 }
 
 :host ::ng-deep .fc-now-indicator-line {
@@ -1563,7 +1515,7 @@
   justify-content: center;
   padding: 24px;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.64)),
+    linear-gradient(180deg, rgba(10, 9, 8, 0.3), rgba(7, 7, 7, 0.42)),
     radial-gradient(circle at top right, rgba(212, 176, 106, 0.2), transparent 40%);
   animation: appointmentModalFadeIn 0.22s ease forwards;
 }
@@ -1576,10 +1528,7 @@
   width: min(540px, calc(100% - 24px));
   border-radius: 26px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(244, 239, 231, 0.03)),
-    rgba(16, 14, 11, 0.92);
+  background: var(--glass-inner-bg-strong);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 24px 44px rgba(0, 0, 0, 0.35);
@@ -1597,24 +1546,35 @@
   border-color: rgba(212, 176, 106, 0.38);
   background:
     linear-gradient(180deg, rgba(212, 176, 106, 0.16), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
-    rgba(16, 14, 11, 0.92);
+    var(--glass-inner-bg);
 }
 
 .appointment-detail-card.tone-other {
   border-color: rgba(220, 100, 100, 0.3);
   background:
     linear-gradient(180deg, rgba(220, 100, 100, 0.14), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
-    rgba(16, 14, 11, 0.92);
+    var(--glass-inner-bg);
 }
 
 .appointment-detail-card.tone-past {
   border-color: rgba(190, 90, 90, 0.36);
   background:
     linear-gradient(180deg, rgba(190, 90, 90, 0.18), rgba(255, 255, 255, 0.04)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
-    rgba(16, 14, 11, 0.92);
+    var(--glass-inner-bg);
+}
+
+.appointment-detail-card.tone-ferie {
+  border-color: rgba(52, 152, 219, 0.38);
+  background:
+    linear-gradient(180deg, rgba(52, 152, 219, 0.16), rgba(255, 255, 255, 0.05)),
+    var(--glass-inner-bg);
+}
+
+.appointment-detail-card.tone-permission {
+  border-color: rgba(46, 204, 113, 0.38);
+  background:
+    linear-gradient(180deg, rgba(46, 204, 113, 0.16), rgba(255, 255, 255, 0.05)),
+    var(--glass-inner-bg);
 }
 
 .appointment-detail-head {
@@ -1659,6 +1619,19 @@
   gap: 10px;
 }
 
+.appointment-detail-body--grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.appointment-detail-body--absence {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.appointment-detail-row--wide {
+  grid-column: 1 / -1;
+}
+
 .appointment-detail-body.is-loading {
   position: relative;
 }
@@ -1686,8 +1659,7 @@
   border: 1px solid rgba(212, 176, 106, 0.34);
   background:
     linear-gradient(180deg, rgba(212, 176, 106, 0.16), rgba(255, 255, 255, 0.05)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.03)),
-    rgba(16, 14, 11, 0.95);
+    var(--glass-inner-bg);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 18px 30px rgba(0, 0, 0, 0.28);
@@ -2280,6 +2252,108 @@
     opacity: 0;
     transform: translateY(8px) scale(0.985);
   }
+}
+
+/* Allineamento visivo con Info utente: vetro chiaro e trasparente, senza pannelli neri. */
+.appointments-page::before {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.appointments-overlay {
+  background:
+    linear-gradient(180deg, rgba(10, 9, 8, 0.12), rgba(7, 7, 7, 0.22)),
+    radial-gradient(circle at bottom left, rgba(212, 176, 106, 0.07), transparent 24%);
+}
+
+.appointments-hero,
+.appointments-select-wrapper,
+.calendar-wrapper,
+.appointments-hours-card,
+.appointments-date-picker-panel,
+.appointment-detail-card {
+  border-color: rgba(212, 176, 106, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.02)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.appointments-select-trigger,
+.appointments-select-option,
+.appointments-calendar-meta-item,
+.appointments-date-picker-nav,
+.appointments-date-picker-day,
+.appointment-detail-row,
+.appointment-field-control,
+.appointment-edit-date-picker-panel,
+.appointment-services-picker,
+.appointment-service-option,
+.appointment-confirm-card {
+  border-color: rgba(255, 255, 255, 0.17);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.045)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(244, 239, 231, 0.03)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 18px 34px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.appointments-select-option:hover,
+.appointments-select-option.is-selected,
+.appointments-date-picker-day:hover,
+.appointment-service-option:hover,
+.appointment-service-option.is-selected {
+  background:
+    linear-gradient(90deg, rgba(212, 176, 106, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.06)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(247, 243, 235, 0.04)) !important;
+  border-color: rgba(212, 176, 106, 0.24);
+}
+
+.appointments-date-picker-day.is-outside,
+.appointment-field-control.is-readonly {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.appointment-confirm-modal,
+.appointment-detail-modal {
+  background:
+    linear-gradient(180deg, rgba(10, 9, 8, 0.26), rgba(7, 7, 7, 0.34)),
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.12), transparent 40%);
+}
+
+:host ::ng-deep .fc-theme-standard .fc-scrollgrid {
+  border-color: rgba(212, 176, 106, 0.06) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.02)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.12);
+}
+
+:host ::ng-deep .fc-col-header-cell,
+:host ::ng-deep .fc-timegrid-slot-label,
+:host ::ng-deep .fc-timegrid-axis,
+:host ::ng-deep .fc-timegrid-col,
+:host ::ng-deep .fc-scrollgrid-section > td {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)) !important;
+}
+
+:host ::ng-deep .fc .fc-button,
+:host ::ng-deep .fc .fc-button-primary,
+:host ::ng-deep .appointment-icon-btn {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.045)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(244, 239, 231, 0.03)) !important;
+  border-color: rgba(255, 255, 255, 0.17) !important;
 }
 
 @media (max-width: 1080px) {

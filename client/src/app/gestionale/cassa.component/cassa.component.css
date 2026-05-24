@@ -3,7 +3,7 @@
   height: 100vh;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 
@@ -486,7 +486,7 @@
   min-height: 70px;
   padding: 12px 10px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.76);
+  background: rgba(0, 0, 0, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
 }
@@ -1656,18 +1656,18 @@
 /* Black glass tone, aligned with gestionale appuntamenti */
 :host {
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.62) 48%, rgba(0, 0, 0, 0.78) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(0, 0, 0, 0.42) 48%, rgba(0, 0, 0, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 
 .management-layout__toggle {
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(0, 0, 0, 0.72);
 }
 
 .management-hero,
 .cash-stat-card,
 .cash-card {
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.66);
 }
 
 .cash-appointment-row,
@@ -1693,14 +1693,14 @@
 .cash-receipt-item__qty-btn,
 .cash-select,
 .cash-input {
-  background: rgba(0, 0, 0, 0.76);
+  background: rgba(0, 0, 0, 0.58);
 }
 
 .cash-icon-button:hover,
 .cash-button:hover,
 .cash-method:hover,
 .cash-receipt-item__qty-btn:hover {
-  background: rgba(0, 0, 0, 0.86);
+  background: rgba(0, 0, 0, 0.68);
 }
 
 .cash-select option {
@@ -1725,7 +1725,7 @@
 }
 
 .cash-receipt-list__head {
-  background: rgba(0, 0, 0, 0.94);
+  background: rgba(0, 0, 0, 0.78);
 }
 
 .cash-receipt-item:hover {
@@ -1749,12 +1749,12 @@
 .cash-search-select-container.is-open .cash-search-input {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.028)),
-    rgba(0, 0, 0, 0.86);
+    rgba(0, 0, 0, 0.68);
 }
 
 .cash-search-dropdown {
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.98)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.78)),
     radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 42%);
 }
 
@@ -1770,7 +1770,7 @@
   border-color: rgba(242, 209, 139, 0.5);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(0, 0, 0, 0.76);
+    rgba(0, 0, 0, 0.58);
   color: #f2d18b;
 }
 
@@ -1778,7 +1778,7 @@
   border-color: rgba(242, 209, 139, 0.68) !important;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
-    rgba(0, 0, 0, 0.86) !important;
+    rgba(0, 0, 0, 0.68) !important;
   color: #ffe7aa !important;
 }
 

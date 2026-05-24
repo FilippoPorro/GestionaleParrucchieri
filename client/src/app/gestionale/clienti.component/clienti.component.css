@@ -3,7 +3,7 @@
   height: 100vh;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 

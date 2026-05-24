@@ -29,9 +29,12 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   showCartAlert = false;
   isClosing = false;
   shakeCart = false;
+  selectedQuantity = 1;
+  isAddingToCart = false;
 
   cartAlertMessage = '';
   contProd = 0;
+  private lastAddedQuantity = 1;
 
   private currentAlertProductId: number | null = null;
   private alertTimeout: any;
@@ -67,18 +70,59 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
   }
 
   addToCart(): void {
-    if (!this.product) return;
+    if (!this.product || this.isAddingToCart) return;
 
     // Controllo lato client del limite quantità: evita UX incoerente prima della chiamata backend.
     const qty = this.prodottoService.getCartItemQuantity(this.product.idProdotto);
+    const quantityToAdd = Math.max(1, Math.min(this.selectedQuantity, this.product.qta - qty));
 
-    if (qty >= this.product.qta) {
+    if (quantityToAdd <= 0 || qty + quantityToAdd > this.product.qta) {
       this.showErrorAlert(
         `Limite massimo raggiunto (${this.product.qta})`
       );
       return;
     }
-    this.prodottoService.addProductToCart(this.product);
+    this.isAddingToCart = true;
+    this.lastAddedQuantity = quantityToAdd;
+
+    this.prodottoService.addProductToCart(this.product, quantityToAdd).subscribe({
+      next: () => {
+        this.isAddingToCart = false;
+        this.showAddedToCartAlert();
+      },
+      error: (err) => {
+        this.isAddingToCart = false;
+        this.showErrorAlert(
+          err?.status === 409
+            ? 'Prodotto non piu disponibile nella quantita richiesta'
+            : 'Non sono riuscito ad aggiornare il carrello'
+        );
+      }
+    });
+  }
+
+  increaseSelectedQuantity(): void {
+    if (!this.product) return;
+
+    const alreadyReserved = this.prodottoService.getCartItemQuantity(this.product.idProdotto);
+    const maxSelectable = Math.max(1, this.product.qta - alreadyReserved);
+
+    this.selectedQuantity = Math.min(this.selectedQuantity + 1, maxSelectable);
+  }
+
+  decreaseSelectedQuantity(): void {
+    this.selectedQuantity = Math.max(1, this.selectedQuantity - 1);
+  }
+
+  get canIncreaseSelectedQuantity(): boolean {
+    if (!this.product) return false;
+
+    const alreadyReserved = this.prodottoService.getCartItemQuantity(this.product.idProdotto);
+    return this.selectedQuantity < Math.max(1, this.product.qta - alreadyReserved);
+  }
+
+  private showAddedToCartAlert(): void {
+    if (!this.product) return;
 
     const sameProduct =
       this.showCartAlert &&
@@ -89,7 +133,7 @@ export class ProductDetailsComponent implements OnInit, OnDestroy {
     this.currentAlertProductId = this.product.idProdotto;
     this.cartAlertMessage = `${this.product.nome} aggiunto`;
 
-    this.contProd = sameProduct ? this.contProd + 1 : 1;
+    this.contProd = sameProduct ? this.contProd + this.lastAddedQuantity : this.lastAddedQuantity;
     this.shakeCart = false;
     this.cdr.detectChanges();
 

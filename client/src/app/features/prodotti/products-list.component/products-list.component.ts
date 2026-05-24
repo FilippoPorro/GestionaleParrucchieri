@@ -48,6 +48,7 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   private alertTimeout: ReturnType<typeof setTimeout> | null = null;
   private removeAlertTimeout: ReturnType<typeof setTimeout> | null = null;
   private productsSub?: Subscription;
+  private pendingCartProductIds = new Set<number>();
 
   constructor(
     private prodottiService: ProdottoService,
@@ -152,8 +153,32 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   }
 
   onAddToCart(product: Prodotto): void {
-    this.prodottiService.addProductToCart(product);
+    if (this.pendingCartProductIds.has(product.idProdotto)) {
+      return;
+    }
 
+    this.pendingCartProductIds.add(product.idProdotto);
+
+    this.prodottiService.addProductToCart(product).subscribe({
+      next: () => {
+        this.pendingCartProductIds.delete(product.idProdotto);
+        this.showAddedToCartAlert(product);
+      },
+      error: (err) => {
+        this.pendingCartProductIds.delete(product.idProdotto);
+        this.cartAlertMessage = err?.status === 409
+          ? `${product.nome} non e piu disponibile nella quantita richiesta`
+          : 'Non sono riuscito ad aggiornare il carrello';
+        this.showCartAlert = true;
+        this.isClosing = false;
+        this.currentAlertProductId = product.idProdotto;
+        this.contProd = 0;
+        this.forceUiUpdate();
+      }
+    });
+  }
+
+  private showAddedToCartAlert(product: Prodotto): void {
     // Se l'utente aggiunge più volte lo stesso prodotto mentre il toast è visibile,
     // incrementiamo il contatore invece di riaprire un nuovo alert.
     const sameProductAlertVisible =

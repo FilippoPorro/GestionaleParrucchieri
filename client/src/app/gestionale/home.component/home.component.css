@@ -3,7 +3,7 @@
   height: 100vh;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(16, 12, 9, 0.62) 48%, rgba(4, 3, 2, 0.78) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
 }
 
@@ -374,7 +374,7 @@
 
 /* Dashboard allineata allo stile nero/oro della Cassa */
 .management-layout__toggle {
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(0, 0, 0, 0.72);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -382,7 +382,7 @@
 .management-hero,
 .management-stat-card,
 .management-panel {
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 .management-focus-card,
@@ -408,7 +408,7 @@
   border-color: rgba(242, 209, 139, 0.5);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-    rgba(0, 0, 0, 0.76);
+    rgba(0, 0, 0, 0.58);
   color: #f2d18b;
 }
 
@@ -417,7 +417,7 @@
   border-color: rgba(242, 209, 139, 0.68);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
-    rgba(0, 0, 0, 0.86);
+    rgba(0, 0, 0, 0.68);
   color: #ffe7aa;
 }
 
@@ -504,7 +504,7 @@
   border-color: rgba(212, 176, 106, 0.12);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
-    rgba(0, 0, 0, 0.76);
+    rgba(0, 0, 0, 0.58);
 }
 
 .management-stat-card::before {
@@ -572,7 +572,7 @@
   padding: 24px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
-    rgba(0, 0, 0, 0.78);
+    rgba(0, 0, 0, 0.62);
 }
 
 .management-panel__head {

@@ -147,6 +147,12 @@
               <button class="cart-checkout" type="button" (click)="checkout()">
                 <i class="bi bi-credit-card"></i>
                 <span>Vai al checkout</span>
+                <i class="bi bi-arrow-right"></i>
+              </button>
+
+              <button class="cart-clear" type="button" (click)="clearCart()">
+                <i class="bi bi-bag-x"></i>
+                <span>Svuota carrello</span>
               </button>
 
               <a [routerLink]="['/products']" class="cart-continue-link">

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth';
+import { ProdottoService } from '../../services/prodotto';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
@@ -28,6 +29,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
+    private prodottoService: ProdottoService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
@@ -77,6 +79,7 @@ export class LoginComponent implements OnInit {
       if (token) {
         const rememberGoogleLogin = localStorage.getItem(this.GOOGLE_REMEMBER_KEY) === '1';
         this.auth.saveToken(token, rememberGoogleLogin);
+        this.prodottoService.claimCurrentCart().subscribe({ error: () => undefined });
         localStorage.removeItem(this.GOOGLE_REMEMBER_KEY);
         this.isLoading = false;
         this.showAlert('Accesso con Google effettuato con successo!', 'success');
@@ -122,15 +125,25 @@ export class LoginComponent implements OnInit {
   redirectAfterLogin(): void {
     if (this.auth.mustChangePassword()) {
       localStorage.removeItem('postLoginRedirect');
+      localStorage.removeItem('loginBackUrl');
       this.router.navigate(['/account']);
       return;
     }
 
     const returnUrl = localStorage.getItem('postLoginRedirect');
+    const backUrl = localStorage.getItem('loginBackUrl');
 
     localStorage.removeItem('postLoginRedirect');
+    localStorage.removeItem('loginBackUrl');
 
-    if (returnUrl && returnUrl !== '/login' && returnUrl !== '/') {
+    if (backUrl && backUrl !== '/login' && backUrl !== '/') {
+      this.router.navigateByUrl(backUrl);
+    } else if (
+      returnUrl &&
+      returnUrl !== '/login' &&
+      returnUrl !== '/' &&
+      returnUrl !== '/payment'
+    ) {
       this.router.navigateByUrl(returnUrl);
     } else {
       this.router.navigate(['/home']);
@@ -171,6 +184,7 @@ export class LoginComponent implements OnInit {
         }
 
         this.isLoading = false;
+        this.prodottoService.claimCurrentCart().subscribe({ error: () => undefined });
         this.showAlert('Accesso effettuato con successo!', 'success');
         this.cdr.detectChanges();
 

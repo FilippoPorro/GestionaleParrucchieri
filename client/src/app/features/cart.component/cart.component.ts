@@ -1,4 +1,4 @@
-import { Component, Signal, computed } from '@angular/core';
+import { Component, Signal, computed, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -7,7 +7,6 @@ import { NavbarComponent } from '../navbar.component/navbar.component';
 
 import { Prodotto } from '../../services/prodotto';
 import { ProdottoService } from '../../services/prodotto';
-import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-cart',
@@ -16,7 +15,7 @@ import { AuthService } from '../../services/auth';
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.css',
 })
-export class CartComponent {
+export class CartComponent implements OnInit {
   cartItems: Signal<Prodotto[]>;
 
   differentProductsCount = computed(() => this.cartItems().length);
@@ -35,10 +34,13 @@ export class CartComponent {
 
   constructor(
     private prodottoService: ProdottoService,
-    private authService: AuthService,
     private router: Router
   ) {
     this.cartItems = this.prodottoService.cart;
+  }
+
+  ngOnInit(): void {
+    this.prodottoService.loadReservedCart().subscribe({ error: () => undefined });
   }
 
   increase(id: number): void {
@@ -50,7 +52,9 @@ export class CartComponent {
     const quantitaMassima = product.qta;
 
     if (quantitaAttuale < quantitaMassima) {
-      this.prodottoService.increaseQuantity(id);
+      this.prodottoService.increaseQuantity(id).subscribe({
+        error: () => alert('Quantita non piu disponibile')
+      });
     }
   }
 
@@ -62,12 +66,16 @@ export class CartComponent {
     const quantitaAttuale = product.quantita || 1;
 
     if (quantitaAttuale > 1) {
-      this.prodottoService.decreaseQuantity(id);
+      this.prodottoService.decreaseQuantity(id).subscribe();
     }
   }
 
   removeFromCart(id: number): void {
-    this.prodottoService.removeProductFromCart(id);
+    this.prodottoService.removeProductFromCart(id).subscribe();
+  }
+
+  clearCart(): void {
+    this.prodottoService.clearCart();
   }
 
   checkout(): void {
@@ -75,13 +83,6 @@ export class CartComponent {
 
     if (!cart || cart.length == 0) {
       alert('Il carrello è vuoto');
-      return;
-    }
-
-    if (!this.authService.isLoggedIn()) {
-      localStorage.setItem('loginBackUrl', '/cart');
-      localStorage.setItem('postLoginRedirect', '/payment');
-      this.router.navigate(['/login']);
       return;
     }
 
