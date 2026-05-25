@@ -8,6 +8,15 @@ import { verifyToken } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
+function getFrontendUrl(): string {
+  return (process.env.FRONTEND_URL || "http://localhost:4200").replace(/\/+$/, "");
+}
+
+function buildClientUrl(path: string, params: Record<string, string>): string {
+  const query = new URLSearchParams(params);
+  return `${getFrontendUrl()}${path}?${query.toString()}`;
+}
+
 interface User {
   idUtente: number;
   nome: string;
@@ -439,7 +448,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       throw updateError;
     }
 
-    const resetLink = `http://localhost:4200/reset-password?token=${resetToken}`;
+    const resetLink = buildClientUrl("/reset-password", { token: resetToken });
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,

@@ -4,6 +4,15 @@ import passport from "../config/passport";
 
 const router = express.Router();
 
+function getFrontendUrl(): string {
+  return (process.env.FRONTEND_URL || "http://localhost:4200").replace(/\/+$/, "");
+}
+
+function buildClientRedirect(path: string, params: Record<string, string>): string {
+  const query = new URLSearchParams(params);
+  return `${getFrontendUrl()}${path}?${query.toString()}`;
+}
+
 interface JwtUser {
   id: number;
   nome: string;
@@ -51,25 +60,28 @@ router.get(
       (err: unknown, user?: JwtUser) => {
         if (err) {
           console.error("Errore passport callback Google:", err);
-          return res.redirect(
-            "http://localhost:4200/login?googleError=true&reason=callback"
-          );
+          return res.redirect(buildClientRedirect("/login", {
+            googleError: "true",
+            reason: "callback"
+          }));
         }
 
         if (!user) {
-          return res.redirect(
-            "http://localhost:4200/login?googleError=true&reason=no-user"
-          );
+          return res.redirect(buildClientRedirect("/login", {
+            googleError: "true",
+            reason: "no-user"
+          }));
         }
 
         try {
           const token = generateToken(user);
-          return res.redirect(`http://localhost:4200/login?token=${token}`);
+          return res.redirect(buildClientRedirect("/login", { token }));
         } catch (tokenError) {
           console.error("Errore generazione token Google:", tokenError);
-          return res.redirect(
-            "http://localhost:4200/login?googleError=true&reason=token"
-          );
+          return res.redirect(buildClientRedirect("/login", {
+            googleError: "true",
+            reason: "token"
+          }));
         }
       }
     )(req, res, next);
