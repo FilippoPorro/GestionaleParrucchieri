@@ -369,10 +369,13 @@ router.post("/registra", async (req: Request, res: Response) => {
     }
 
     const prodottiVenduti = normalizeCassaProducts(Array.isArray(prodotti) ? prodotti : []);
+    const hasProdottiVenduti = prodottiVenduti.length > 0;
 
     let idVendita: number;
 
-    if (prodottiVenduti.length > 0) {
+    if (hasProdottiVenduti) {
+      // Quando la vendita da gestionale include prodotti, passiamo dalla RPC
+      // così vengono aggiornati stock, vendite e dettagliovendita.
       const { data: checkoutData, error: checkoutError } = await db
         .rpc("complete_checkout_sicuro", {
           p_id_cliente: idCliente ? Number(idCliente) : null,
@@ -397,6 +400,7 @@ router.post("/registra", async (req: Request, res: Response) => {
         throw new Error("checkout_result_invalid");
       }
     } else {
+      // Se ci sono solo servizi, registriamo la vendita senza righe prodotto.
       // 1. Inserimento della vendita
       const { data: venditaData, error: venditaError } = await db
         .from("vendite")
