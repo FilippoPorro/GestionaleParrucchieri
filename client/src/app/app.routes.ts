@@ -28,6 +28,7 @@ import { ServiziComponent } from './gestionale/servizi.component/servizi.compone
 import { MagazzinoComponent } from './gestionale/magazzino.component/magazzino.component';
 import { FornitoriComponent } from './gestionale/fornitori.component/fornitori.component';
 import { GestionalePlaceholderComponent } from './gestionale/gestionale-placeholder.component/gestionale-placeholder.component';
+import { ReportComponent } from './gestionale/report.component/report.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -57,26 +58,8 @@ export const routes: Routes = [
     { path: 'gestionale/fornitori', component: FornitoriComponent, canActivate: [managementGuard] },
     {
         path: 'gestionale/report',
-        component: GestionalePlaceholderComponent,
+        component: ReportComponent,
         canActivate: [adminManagementGuard],
-        data: {
-            title: 'Report',
-            description: 'Analisi di vendite, appuntamenti e andamento operativo del salone.',
-            cards: [
-                {
-                    title: 'Vendite',
-                    text: 'Riepiloghi per periodo, metodo di pagamento e servizi piu richiesti.'
-                },
-                {
-                    title: 'Performance staff',
-                    text: 'Confronto tra appuntamenti gestiti, incassi e occupazione agenda.'
-                },
-                {
-                    title: 'KPI salone',
-                    text: 'Indicatori su clienti, incasso medio e prodotti da monitorare.'
-                }
-            ]
-        }
     },
     {
         path: 'gestionale/promozioni',

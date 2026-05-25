@@ -1,0 +1,162 @@
+<div class="management-layout" [class.is-sidenav-collapsed]="isSidenavCollapsed">
+  <button
+    type="button"
+    class="management-layout__toggle"
+    (click)="toggleSidenav()"
+    [class.is-collapsed]="isSidenavCollapsed"
+    [attr.aria-label]="isSidenavCollapsed ? 'Apri navigazione gestionale' : 'Chiudi navigazione gestionale'"
+    [attr.aria-expanded]="!isSidenavCollapsed"
+  >
+    <span class="management-layout__toggle-shell" aria-hidden="true">
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--rail"></span>
+      <span class="management-layout__toggle-pane management-layout__toggle-pane--body"></span>
+    </span>
+  </button>
+
+  <div class="management-layout__sidebar">
+    <app-sidenav
+      [isCollapsed]="isSidenavCollapsed"
+      (collapsedChange)="isSidenavCollapsed = $event"
+    ></app-sidenav>
+  </div>
+
+  <main class="management-layout__content report-content">
+    <section class="management-hero">
+      <div>
+        <p class="management-hero__eyebrow">Gestionale</p>
+        <h1>Report clienti e incassi</h1>
+        <p class="management-hero__copy" *ngIf="reportData">
+          Panorama su categorie prodotto, metodi di pagamento, trend settimanale e frequenza clienti.
+          Periodo analizzato: {{ reportData.range.start }} - {{ reportData.range.end }}
+        </p>
+      </div>
+
+      <div class="management-hero__stats">
+        <div class="management-hero__badge management-hero__badge--soft">
+          <span>Periodo</span>
+          <strong>{{ selectedPeriod }}g</strong>
+        </div>
+        <div class="management-hero__badge management-hero__badge--soft" *ngIf="reportData">
+          <span>Incasso</span>
+          <strong>{{ formatCurrency(reportData.summary.totalRevenue) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="report-toolbar">
+      <button
+        type="button"
+        class="report-filter"
+        *ngFor="let period of periods"
+        [class.is-active]="selectedPeriod === period"
+        (click)="selectPeriod(period)"
+      >
+        {{ period }} giorni
+      </button>
+    </section>
+
+    <p class="report-state" *ngIf="loading">Caricamento report...</p>
+    <p class="report-state report-state--error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <ng-container *ngIf="!loading && reportData">
+      <section class="management-stats">
+        <article class="management-stat-card">
+          <div class="management-stat-card__top">
+            <p>Incasso periodo</p>
+          </div>
+          <strong>{{ formatCurrency(reportData.summary.totalRevenue) }}</strong>
+          <span class="management-stat-card__trend">Vendite registrate</span>
+        </article>
+        <article class="management-stat-card">
+          <div class="management-stat-card__top">
+            <p>Ticket medio</p>
+          </div>
+          <strong>{{ formatCurrency(reportData.summary.averageTicket) }}</strong>
+          <span class="management-stat-card__trend">Media per vendita</span>
+        </article>
+        <article class="management-stat-card">
+          <div class="management-stat-card__top">
+            <p>Prodotti venduti</p>
+          </div>
+          <strong>{{ reportData.summary.totalProductsSold }}</strong>
+          <span class="management-stat-card__trend">Quantita' retail</span>
+        </article>
+        <article class="management-stat-card">
+          <div class="management-stat-card__top">
+            <p>Appuntamenti completati</p>
+          </div>
+          <strong>{{ reportData.summary.totalCompletedAppointments }}</strong>
+          <span class="management-stat-card__trend">Ultimo periodo</span>
+        </article>
+      </section>
+
+      <section class="report-grid">
+        <article class="management-panel report-panel">
+          <div class="management-panel__head">
+            <span>Categorie</span>
+            <h2>Prodotti piu' comprati</h2>
+          </div>
+          <p class="report-panel__copy">Incassi dei prodotti raggruppati per categoria.</p>
+          <div class="report-chart">
+            <canvas #categoryChart></canvas>
+          </div>
+        </article>
+
+        <article class="management-panel report-panel">
+          <div class="management-panel__head">
+            <span>Pagamenti</span>
+            <h2>Carta vs contanti</h2>
+          </div>
+          <p class="report-panel__copy">
+            Carta {{ cardPercentage }} ({{ formatCurrency(reportData.payments.card) }}) ·
+            Contanti {{ cashPercentage }} ({{ formatCurrency(reportData.payments.cash) }})
+          </p>
+          <div class="report-chart">
+            <canvas #paymentsChart></canvas>
+          </div>
+        </article>
+
+        <article class="management-panel report-panel report-panel--wide">
+          <div class="management-panel__head">
+            <span>Trend</span>
+            <h2>Crescita o decrescita settimanale</h2>
+          </div>
+          <p class="report-panel__copy">Ogni punto rappresenta l'incasso complessivo di una settimana.</p>
+          <div class="report-chart report-chart--wide">
+            <canvas #trendChart></canvas>
+          </div>
+        </article>
+
+        <article class="management-panel report-panel report-panel--wide">
+          <div class="management-panel__head">
+            <span>Frequenza</span>
+            <h2>Clienti e sconti suggeriti</h2>
+          </div>
+          <p class="report-panel__copy">
+            Frequenza = appuntamenti completati in un anno / 12. Se la frequenza e' almeno 1, cresce anche lo sconto.
+          </p>
+
+          <div class="report-table" *ngIf="customerFrequencyRows.length > 0; else noCustomers">
+            <div class="report-table__head">
+              <span>Cliente</span>
+              <span>Appuntamenti anno</span>
+              <span>Frequenza mensile</span>
+              <span>Sconto</span>
+            </div>
+
+            <div class="report-table__row" *ngFor="let row of customerFrequencyRows">
+              <span>{{ row.name }}</span>
+              <span>{{ row.appointments }}</span>
+              <span>{{ row.monthlyFrequency }}</span>
+              <span>{{ row.discount }}%</span>
+            </div>
+          </div>
+
+          <ng-template #noCustomers>
+            <p class="report-state">Nessun cliente con appuntamenti completati nell'ultimo anno.</p>
+          </ng-template>
+        </article>
+      </section>
+    </ng-container>
+  </main>
+</div>

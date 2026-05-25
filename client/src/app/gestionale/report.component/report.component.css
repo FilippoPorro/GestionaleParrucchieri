@@ -1,0 +1,495 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
+}
+
+.management-layout {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.management-layout__toggle {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  z-index: 40;
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(212, 176, 106, 0.28);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: left 0.28s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.management-layout__toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(242, 209, 139, 0.52);
+}
+
+.management-layout__toggle-shell {
+  width: 20px;
+  height: 18px;
+  display: inline-grid;
+  grid-template-columns: 6px 1fr;
+  gap: 4px;
+  align-items: stretch;
+  transition: transform 0.28s ease;
+}
+
+.management-layout__toggle.is-collapsed .management-layout__toggle-shell {
+  transform: scaleX(-1);
+}
+
+.management-layout__toggle-pane {
+  display: block;
+  border-radius: 999px;
+}
+
+.management-layout__toggle-pane--rail {
+  background: linear-gradient(180deg, #f2d18b, #be8640);
+}
+
+.management-layout__toggle-pane--body {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.management-layout__sidebar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 320px;
+  height: 100vh;
+  min-height: 0;
+  z-index: 30;
+  transition: transform 0.34s ease, opacity 0.24s ease, visibility 0s linear 0s;
+}
+
+.management-layout.is-sidenav-collapsed .management-layout__sidebar {
+  transform: translateX(calc(-100% - 20px));
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.34s ease, opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+
+.management-layout:not(.is-sidenav-collapsed) .management-layout__toggle {
+  left: 286px;
+}
+
+.management-layout__content {
+  height: 100vh;
+  min-height: 0;
+  overflow: auto;
+  margin-left: 320px;
+  padding: 34px;
+  color: #f8f1e7;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 176, 106, 0.34) transparent;
+  transition: margin-left 0.34s ease, padding-left 0.28s ease;
+}
+
+.management-layout.is-sidenav-collapsed .management-layout__content {
+  margin-left: 0;
+  padding-left: 92px;
+}
+
+.management-layout__content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.management-layout__content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(212, 176, 106, 0.34);
+}
+
+.management-hero,
+.management-stat-card,
+.management-panel {
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.66);
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.18);
+}
+
+.management-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  min-height: 204px;
+  background:
+    linear-gradient(100deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.74) 58%, rgba(0, 0, 0, 0.52) 100%) !important;
+}
+
+.management-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(242, 209, 139, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 44%);
+  opacity: 0.72;
+}
+
+.management-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.management-hero__eyebrow,
+.management-panel__head span {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 226, 175, 0.72);
+}
+
+.management-hero h1,
+.management-panel__head h2 {
+  margin: 0;
+}
+
+.management-hero h1 {
+  max-width: 760px;
+  font-size: clamp(2.4rem, 4.2vw, 4.6rem);
+  line-height: 1.04;
+  font-weight: 800;
+}
+
+.management-hero__copy {
+  max-width: 860px;
+  margin: 14px 0 0;
+  color: rgba(248, 241, 231, 0.72);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.management-hero__stats {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  flex: 0 0 auto;
+}
+
+.management-hero__badge {
+  min-width: 148px;
+  min-height: 100px;
+  padding: 15px 16px;
+  border-radius: 8px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  text-align: right;
+  border: 1px solid rgba(242, 209, 139, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.58);
+  color: #fff0cd;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 14px 26px rgba(0, 0, 0, 0.28);
+}
+
+.management-hero__badge span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.management-hero__badge strong {
+  color: #fff3d2;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.report-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.report-filter {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(212, 176, 106, 0.24);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff2d4;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.report-filter:hover {
+  transform: translateY(-1px);
+  border-color: rgba(242, 209, 139, 0.5);
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.report-filter.is-active {
+  border-color: rgba(242, 209, 139, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.58);
+  color: #f2d18b;
+}
+
+.report-state {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.14);
+  background: rgba(0, 0, 0, 0.66);
+  color: rgba(248, 241, 231, 0.76);
+}
+
+.report-state--error {
+  color: #ff9d95;
+}
+
+.management-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.management-stat-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 148px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-color: rgba(212, 176, 106, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(0, 0, 0, 0.58);
+}
+
+.management-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, #f2d18b, rgba(190, 134, 64, 0.22));
+}
+
+.management-stat-card::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  bottom: -40px;
+  width: 118px;
+  height: 118px;
+  border: 1px solid rgba(242, 209, 139, 0.1);
+  border-radius: 50%;
+}
+
+.management-stat-card__top {
+  position: relative;
+  z-index: 1;
+}
+
+.management-stat-card p {
+  margin: 0;
+  color: rgba(248, 241, 231, 0.76);
+  font-size: 14px;
+}
+
+.management-stat-card strong {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 10px;
+  color: #fff4df;
+  font-size: clamp(1.8rem, 2.4vw, 2.45rem);
+}
+
+.management-stat-card__trend {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(248, 241, 231, 0.66);
+  font-size: 12px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.management-panel {
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    rgba(0, 0, 0, 0.62);
+}
+
+.management-panel__head {
+  margin-bottom: 10px;
+}
+
+.management-panel__head h2 {
+  font-size: clamp(2rem, 2.55vw, 2.6rem);
+  line-height: 1;
+}
+
+.report-panel__copy {
+  margin: 0;
+  color: rgba(248, 241, 231, 0.72);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.report-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.report-chart {
+  height: 320px;
+  margin-top: 18px;
+}
+
+.report-chart--wide {
+  height: 360px;
+}
+
+.report-table {
+  margin-top: 18px;
+  border: 1px solid rgba(212, 176, 106, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.24);
+}
+
+.report-table__head,
+.report-table__row {
+  display: grid;
+  grid-template-columns: 2.4fr 1fr 1fr 0.8fr;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.report-table__head {
+  background: rgba(0, 0, 0, 0.78);
+  color: #f2d18b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.report-table__row {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #fff8ec;
+}
+
+@media (max-width: 1200px) {
+  .management-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .management-layout,
+  .management-layout__content,
+  :host {
+    height: auto;
+    overflow: visible;
+  }
+
+  .management-layout__toggle {
+    position: sticky;
+    top: 16px;
+    left: 16px;
+    margin: 16px 0 0 16px;
+  }
+
+  .management-layout:not(.is-sidenav-collapsed) .management-layout__toggle {
+    left: 16px;
+  }
+
+  .management-layout__sidebar {
+    position: relative;
+    inset: auto;
+    width: auto;
+    height: auto;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .management-layout.is-sidenav-collapsed .management-layout__sidebar {
+    display: none;
+  }
+
+  .management-layout__content,
+  .management-layout.is-sidenav-collapsed .management-layout__content {
+    margin-left: 0;
+    padding: 18px;
+  }
+
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-panel--wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .management-hero,
+  .management-hero__stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .management-hero,
+  .management-panel,
+  .management-stat-card {
+    padding: 18px;
+  }
+
+  .management-hero__badge {
+    width: 100%;
+    text-align: left;
+  }
+
+  .management-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .report-table__head,
+  .report-table__row {
+    grid-template-columns: 1.5fr 1fr 1fr 0.9fr;
+    font-size: 13px;
+  }
+}
