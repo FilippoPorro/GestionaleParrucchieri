@@ -26,7 +26,7 @@
         <p class="management-hero__eyebrow">Gestionale</p>
         <h1>Report clienti e incassi</h1>
         <p class="management-hero__copy" *ngIf="reportData">
-          Panorama su categorie prodotto, metodi di pagamento, trend settimanale e frequenza clienti.
+          Panorama su categorie prodotto, metodi di pagamento, andamento settimanale e frequenza clienti.
           Periodo analizzato: {{ reportData.range.start }} - {{ reportData.range.end }}
         </p>
       </div>
@@ -79,7 +79,7 @@
             <p>Prodotti venduti</p>
           </div>
           <strong>{{ reportData.summary.totalProductsSold }}</strong>
-          <span class="management-stat-card__trend">Quantita' retail</span>
+          <span class="management-stat-card__trend">Quantita' venduta al banco</span>
         </article>
         <article class="management-stat-card">
           <div class="management-stat-card__top">
@@ -118,7 +118,7 @@
 
         <article class="management-panel report-panel report-panel--wide">
           <div class="management-panel__head">
-            <span>Trend</span>
+            <span>Andamento</span>
             <h2>Crescita o decrescita settimanale</h2>
           </div>
           <p class="report-panel__copy">Ogni punto rappresenta l'incasso complessivo di una settimana.</p>

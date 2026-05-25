@@ -171,7 +171,7 @@
                     </div>
                 </div>
 
-                <div class="form-group mb-3" *ngIf="auth.isAdmin()">
+                <div class="form-group mb-3" *ngIf="auth.isTitolare()">
                     <label class="form-label">Ruolo</label>
                     <select [(ngModel)]="userData.ruolo" name="ruolo" class="clean-input"
                         style="background-color: var(--input-bg);">

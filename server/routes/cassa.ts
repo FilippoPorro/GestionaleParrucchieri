@@ -259,7 +259,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
     ] = await Promise.all([
       db
         .from("appuntamentiservizi")
-        .select("idAppuntamento, idServizio")
+        .select("idAppuntamento, idServizio, prezzoPersonalizzato, durataPersonalizzata")
         .in("idAppuntamento", appointmentIds),
       db
         .from("utenti")
@@ -272,7 +272,21 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
     ]);
 
     if (relationsResult.error) {
-      throw relationsResult.error;
+      if (!String(relationsResult.error.message || "").toLowerCase().includes("prezzopersonalizzato")) {
+        throw relationsResult.error;
+      }
+
+      const fallbackRelationsResult = await db
+        .from("appuntamentiservizi")
+        .select("idAppuntamento, idServizio")
+        .in("idAppuntamento", appointmentIds);
+
+      if (fallbackRelationsResult.error) {
+        throw fallbackRelationsResult.error;
+      }
+
+      relationsResult.data = fallbackRelationsResult.data as any;
+      relationsResult.error = null;
     }
 
     if (clientiResult.error) {
@@ -326,7 +340,9 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
       current.push({
         idServizio: Number(service.idServizio),
         nome: String(service.nome || "Servizio"),
-        prezzo: Number(service.prezzo || 0)
+        prezzo: relation.prezzoPersonalizzato != null
+          ? Number(relation.prezzoPersonalizzato || 0)
+          : Number(service.prezzo || 0)
       });
       servicesByAppointmentId.set(appointmentId, current);
     });

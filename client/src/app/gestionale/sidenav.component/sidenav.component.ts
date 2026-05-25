@@ -10,7 +10,7 @@ interface SideNavItem {
   href: string;
   description: string;
   badge?: string;
-  adminOnly?: boolean;
+  titolareOnly?: boolean;
 }
 
 interface SideNavSection {
@@ -90,7 +90,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
         {
           label: 'Appuntamenti',
           href: '/gestionale/appuntamenti',
-          description: 'Agenda, conferme e check-in',
+          description: 'Agenda, conferme e accoglienza',
         },
         {
           label: 'Cassa',
@@ -105,13 +105,13 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
       ]
     },
     {
-      title: 'Business',
+      title: 'Attivita',
       items: [
         {
           label: 'Report',
           href: '/gestionale/report',
-          description: 'Vendite, performance e KPI',
-          adminOnly: true,
+          description: 'Vendite, rendimento e indicatori',
+          titolareOnly: true,
         },
         {
           label: 'Magazzino',
@@ -134,10 +134,10 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
       title: 'Configurazione',
       items: [
         {
-          label: 'Staff',
+          label: 'Personale',
           href: '/gestionale/staff',
           description: 'Operatori e permessi',
-          adminOnly: true,
+          titolareOnly: true,
         },
         {
           label: 'Promozioni',
@@ -230,7 +230,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
 
   get accountRoleLabel(): string {
     const role = this.currentUser?.ruolo || 'utente';
-    return role === 'admin' ? 'Admin' : role === 'operatore' ? 'Operatore' : role;
+    return role === 'titolare' ? 'Titolare' : role === 'operatore' ? 'Operatore' : role;
   }
 
   changeAccount(): void {
@@ -243,7 +243,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
     return this.allSections
       .map((section) => ({
         ...section,
-        items: section.items.filter((item) => !item.adminOnly || this.auth.isAdmin())
+        items: section.items.filter((item) => !item.titolareOnly || this.auth.isTitolare())
       }))
       .filter((section) => section.items.length > 0);
   }

@@ -17,7 +17,7 @@ import { authGuard } from './guards/auth.guard';
 import { PrenotaAppuntamentoComponent } from './features/prenota-appuntamento.component/prenota-appuntamento.component';
 import { paymentSuccessGuard } from './guards/payment-success.guard';
 import { registerGuard } from './guards/register.guard';
-import { adminManagementGuard, managementGuard } from './guards/management.guard';
+import { titolareManagementGuard, managementGuard } from './guards/management.guard';
 import { HomeComponent } from './gestionale/home.component/home.component';
 import { AppuntamentiGestionaleComponent } from './gestionale/appuntamenti-gestionale.component/appuntamenti-gestionale.component';
 import { CassaComponent } from './gestionale/cassa.component/cassa.component';
@@ -52,14 +52,14 @@ export const routes: Routes = [
     { path: 'gestionale/prenotazione', component: PrenotaAppuntamentoGestionaleComponent, canActivate: [managementGuard] },
     { path: 'gestionale/cassa', component: CassaComponent, canActivate: [managementGuard] },
     { path: 'gestionale/clienti', component: ClientiComponent, canActivate: [managementGuard] },
-    { path: 'gestionale/staff', component: StaffComponent, canActivate: [adminManagementGuard] },
+    { path: 'gestionale/staff', component: StaffComponent, canActivate: [titolareManagementGuard] },
     { path: 'gestionale/servizi', component: ServiziComponent, canActivate: [managementGuard] },
     { path: 'gestionale/magazzino', component: MagazzinoComponent, canActivate: [managementGuard] },
     { path: 'gestionale/fornitori', component: FornitoriComponent, canActivate: [managementGuard] },
     {
         path: 'gestionale/report',
         component: ReportComponent,
-        canActivate: [adminManagementGuard],
+        canActivate: [titolareManagementGuard],
     },
     {
         path: 'gestionale/promozioni',

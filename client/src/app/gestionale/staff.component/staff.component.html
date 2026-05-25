@@ -24,20 +24,20 @@
     <section class="management-hero">
       <div>
         <p class="management-hero__eyebrow">Gestionale</p>
-        <h1>Staff</h1>
+        <h1>Personale</h1>
         <p class="management-hero__copy">
-          Operatori, admin e disponibilita operative raccolti in una vista unica.
+          Operatori, titolari e disponibilita operative raccolti in una vista unica.
         </p>
       </div>
 
       <div class="management-hero__stats">
         <div class="management-hero__badge">
-          <span>Staff</span>
+          <span>Personale</span>
           <strong>{{ staff.length }}</strong>
         </div>
         <div class="management-hero__badge management-hero__badge--soft">
-          <span>Admin</span>
-          <strong>{{ adminCount }}</strong>
+          <span>Titolari</span>
+          <strong>{{ titolariCount }}</strong>
         </div>
         <div class="management-hero__badge management-hero__badge--muted">
           <span>Operatori</span>
@@ -71,10 +71,10 @@
       <article class="customers-card customers-card--table">
         <div class="customers-card__head">
           <div>
-            <p class="customers-card__eyebrow">Database</p>
-            <h2>Admin e operatori</h2>
+            <p class="customers-card__eyebrow">Archivio</p>
+            <h2>Titolari e operatori</h2>
           </div>
-          <button type="button" class="customers-icon-button" (click)="loadStaff()" [disabled]="isLoadingStaff" title="Aggiorna staff">
+          <button type="button" class="customers-icon-button" (click)="loadStaff()" [disabled]="isLoadingStaff" title="Aggiorna personale">
             <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
             <span>{{ isLoadingStaff ? 'Carico' : 'Aggiorna' }}</span>
           </button>
@@ -95,15 +95,15 @@
 
         <div *ngIf="isLoadingStaff" class="customers-empty-state">
           <span class="customers-loader" aria-hidden="true"></span>
-          Sto caricando lo staff dal database...
+          Sto caricando il personale dall'archivio...
         </div>
 
         <div *ngIf="!isLoadingStaff && staff.length === 0" class="customers-empty-state">
-          Nessun admin o operatore presente nel database.
+          Nessun titolare o operatore presente nel database.
         </div>
 
         <div *ngIf="!isLoadingStaff && staff.length > 0 && filteredStaff.length === 0" class="customers-empty-state">
-          Nessun membro dello staff corrisponde alla ricerca.
+          Nessuna persona corrisponde alla ricerca.
         </div>
 
         <div *ngIf="!isLoadingStaff && filteredStaff.length > 0" class="customers-table-wrap">
@@ -111,7 +111,7 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Staff</th>
+                <th>Personale</th>
                 <th>Contatti</th>
                 <th>Data nascita</th>
                 <th>Ruolo</th>
@@ -139,7 +139,7 @@
                 </td>
                 <td class="customers-cell-date">{{ formatDate(utente.data_nascita) }}</td>
                 <td>
-                  <span class="customers-role-badge staff-role-badge" [class.staff-role-badge--admin]="utente.ruolo === 'admin'">
+                  <span class="customers-role-badge staff-role-badge" [class.staff-role-badge--titolare]="utente.ruolo === 'titolare'">
                     {{ utente.ruolo || 'operatore' }}
                   </span>
                 </td>
@@ -181,7 +181,7 @@
 
         <div class="staff-calendar-meta">
           <div class="appointments-calendar-meta-item">
-            <span class="appointments-calendar-operator-label">Staff selezionato</span>
+            <span class="appointments-calendar-operator-label">Persona selezionata</span>
             <strong class="appointments-calendar-operator-value">{{ selectedOperatorLabel }}</strong>
           </div>
           <div class="appointments-calendar-meta-item">

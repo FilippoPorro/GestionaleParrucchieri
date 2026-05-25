@@ -383,6 +383,19 @@ export class CassaComponent implements OnInit {
     this.clearMessages();
   }
 
+  onItemPriceChange(index: number): void {
+    const item = this.receiptItems[index];
+
+    if (!item) {
+      return;
+    }
+
+    const price = Number(item.prezzoUnitario);
+    item.prezzoUnitario = Number.isFinite(price) && price >= 0 ? price : 0;
+    this.saveReceiptDraft();
+    this.clearMessages();
+  }
+
   get subtotal(): number {
     return this.receiptItems.reduce((sum, item) => sum + (item.prezzoUnitario * item.quantita), 0);
   }
@@ -419,7 +432,7 @@ export class CassaComponent implements OnInit {
 
   get selectedClienteChoiceLabel(): string {
     if (!this.selectedClienteId) {
-      return 'Cliente Generico (Occasionale)';
+      return 'Cliente occasionale';
     }
 
     const cliente = this.clienti.find(c => c.idUtente === Number(this.selectedClienteId));
@@ -463,13 +476,13 @@ export class CassaComponent implements OnInit {
       case 'waiting':
         return 'Carta attesa sul terminale.';
       case 'reading':
-        return 'Lettura del chip o del contactless in corso.';
+        return 'Lettura del chip o del pagamento senza contatto in corso.';
       case 'authorizing':
         return 'Richiesta autorizzazione alla banca.';
       case 'approved':
         return 'Transazione autorizzata, sto registrando la vendita.';
       default:
-        return 'Terminale in standby per pagamento carta.';
+        return 'Terminale in attesa del pagamento carta.';
     }
   }
 
@@ -734,7 +747,7 @@ export class CassaComponent implements OnInit {
     const steps: Array<{ step: PosSimulationStep; message: string; delay: number }> = [
       {
         step: 'waiting',
-        message: 'POS pronto: appoggia, inserisci o striscia la carta.',
+        message: 'Terminale pronto: appoggia, inserisci o striscia la carta.',
         delay: 0
       },
       {

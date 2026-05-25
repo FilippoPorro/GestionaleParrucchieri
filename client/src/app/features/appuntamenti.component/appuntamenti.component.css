@@ -938,12 +938,12 @@
   background: transparent !important;
   opacity: 1 !important;
   pointer-events: auto !important;
-  cursor: not-allowed !important;
+  cursor: auto !important;
 }
 
 :host ::ng-deep .fc-bg-event.invalid-slot-background.is-past-slot {
   background: rgba(170, 170, 170, 0.2) !important;
-  cursor: not-allowed !important;
+  cursor: auto !important;
 }
 
 :host ::ng-deep .fc-col-header-cell-cushion {

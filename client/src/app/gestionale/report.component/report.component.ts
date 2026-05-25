@@ -311,7 +311,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
                 }
 
                 const deltaLabel = point.delta >= 0 ? `+${this.formatCurrency(point.delta)}` : this.formatCurrency(point.delta);
-                return `Incasso ${this.formatCurrency(point.value)} | Delta ${deltaLabel}`;
+                return `Incasso ${this.formatCurrency(point.value)} | Variazione ${deltaLabel}`;
               }
             }
           },
@@ -325,7 +325,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
               color: 'rgba(248, 241, 231, 0.72)',
               callback: (value) => {
                 const index = Number(value) - 1;
-                return index >= 0 ? `Set ${Number(value)}` : '';
+                return index >= 0 ? `Sett. ${Number(value)}` : '';
               }
             },
             grid: {

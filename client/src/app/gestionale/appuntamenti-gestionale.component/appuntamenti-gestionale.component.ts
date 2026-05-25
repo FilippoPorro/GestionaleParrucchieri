@@ -38,6 +38,7 @@ interface AppointmentEditForm {
   dataOraInizio: string;
   dataOraFine: string;
   idServizio: number | null;
+  durataPersonalizzata: number | null;
 }
 
 @Component({
@@ -101,12 +102,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   appointmentEditForm: AppointmentEditForm = {
     dataOraInizio: '',
     dataOraFine: '',
-    idServizio: null
+    idServizio: null,
+    durataPersonalizzata: null
   };
   private originalAppointmentEditForm: AppointmentEditForm = {
     dataOraInizio: '',
     dataOraFine: '',
-    idServizio: null
+    idServizio: null,
+    durataPersonalizzata: null
   };
   editStartDate = '';
   editStartTime = '';
@@ -129,6 +132,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private calendarScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private editDatePickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarMessageTimeout: ReturnType<typeof setTimeout> | null = null;
+  private calendarDayRolloverTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarResizeObserver: ResizeObserver | null = null;
   private availabilityMaskEvents: EventInput[] = [];
   private loadedAppointments: Appuntamento[] = [];
@@ -218,6 +222,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.syncCalendarResponsiveMode();
     this.calendarDatePickerValue = this.formatDateForInput(this.initialCalendarDate);
     this.syncCalendarPickerMonth(this.initialCalendarDate);
+    this.scheduleCalendarDayRollover();
 
     forkJoin({
       operatori: this.utentiService.getOperatori(),
@@ -267,6 +272,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       this.editDatePickerCloseTimeout = null;
     }
 
+    this.clearCalendarDayRollover();
     this.clearCalendarMessageTimer();
 
     if (this.calendarResizeObserver) {
@@ -970,12 +976,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.appointmentEditForm = {
       dataOraInizio: this.normalizeDateTimeForCalendar(appointment.dataOraInizio),
       dataOraFine: this.normalizeDateTimeForCalendar(appointment.dataOraFine),
-      idServizio: appointment.idServizio ?? null
+      idServizio: appointment.idServizio ?? null,
+      durataPersonalizzata: this.getInitialAppointmentDuration(appointment)
     };
     this.originalAppointmentEditForm = {
       dataOraInizio: this.appointmentEditForm.dataOraInizio,
       dataOraFine: this.appointmentEditForm.dataOraFine,
-      idServizio: this.appointmentEditForm.idServizio
+      idServizio: this.appointmentEditForm.idServizio,
+      durataPersonalizzata: this.appointmentEditForm.durataPersonalizzata
     };
     this.syncEditStartPartsFromForm();
     this.closeEditDatePicker(true);
@@ -1021,12 +1029,14 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       this.appointmentEditForm = {
         dataOraInizio: '',
         dataOraFine: '',
-        idServizio: null
+        idServizio: null,
+        durataPersonalizzata: null
       };
       this.originalAppointmentEditForm = {
         dataOraInizio: '',
         dataOraFine: '',
-        idServizio: null
+        idServizio: null,
+        durataPersonalizzata: null
       };
       this.editStartDate = '';
       this.editStartTime = '';
@@ -1072,7 +1082,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.appointmentEditForm = {
       dataOraInizio: this.originalAppointmentEditForm.dataOraInizio,
       dataOraFine: this.originalAppointmentEditForm.dataOraFine,
-      idServizio: this.originalAppointmentEditForm.idServizio
+      idServizio: this.originalAppointmentEditForm.idServizio,
+      durataPersonalizzata: this.originalAppointmentEditForm.durataPersonalizzata
     };
     this.syncEditStartPartsFromForm();
     this.closeEditDatePicker(true);
@@ -1090,6 +1101,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   onEditServiceChange(): void {
     this.appointmentActionError = '';
+    this.syncEditDurationWithSelectedService();
     this.refreshEditEndFromSelectedService();
     this.forceViewRefresh();
   }
@@ -1098,12 +1110,23 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     this.applyEditStartParts();
   }
 
+  onEditDurationChange(): void {
+    this.appointmentActionError = '';
+    const duration = Number(this.appointmentEditForm.durataPersonalizzata);
+    this.appointmentEditForm.durataPersonalizzata = Number.isFinite(duration) && duration > 0
+      ? Math.trunc(duration)
+      : null;
+    this.refreshEditEndFromSelectedService();
+    this.forceViewRefresh();
+  }
+
   selectEditService(service: Servizio): void {
     if (!this.canEditServiceInCurrentSlot(service)) {
       return;
     }
 
     this.appointmentEditForm.idServizio = service.idServizio;
+    this.appointmentEditForm.durataPersonalizzata = Number(service.durata || 0) || null;
     this.closeEditServicesPicker();
     this.onEditServiceChange();
   }
@@ -1170,7 +1193,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     const hasRealChanges =
       this.appointmentEditForm.dataOraInizio !== this.originalAppointmentEditForm.dataOraInizio ||
       this.appointmentEditForm.dataOraFine !== this.originalAppointmentEditForm.dataOraFine ||
-      this.appointmentEditForm.idServizio !== this.originalAppointmentEditForm.idServizio;
+      this.appointmentEditForm.idServizio !== this.originalAppointmentEditForm.idServizio ||
+      this.appointmentEditForm.durataPersonalizzata !== this.originalAppointmentEditForm.durataPersonalizzata;
 
     if (!hasRealChanges) {
       this.appointmentActionError = 'Non ci sono modifiche da salvare.';
@@ -1186,6 +1210,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       dataOraInizio: this.appointmentEditForm.dataOraInizio,
       dataOraFine: this.appointmentEditForm.dataOraFine,
       idServizio: range.service.idServizio,
+      durataPersonalizzata: this.appointmentEditForm.durataPersonalizzata,
       note: range.service.nome
     }).subscribe({
       next: () => {
@@ -1363,8 +1388,9 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return endValue;
     }
 
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
     const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + 30);
+    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
 
     return end < minimumEnd ? this.toLocalDateTimeString(minimumEnd) : endValue;
   }
@@ -1399,15 +1425,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return endValue;
     }
 
-    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
-
-    if (durationMinutes >= this.minimumAppointmentDurationMinutes) {
-      return endValue;
-    }
-
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return this.toLocalDateTimeInput(minimumEnd.toISOString());
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
+    const roundedEnd = new Date(start);
+    roundedEnd.setMinutes(roundedEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
+    return this.toLocalDateTimeInput(roundedEnd.toISOString());
   }
 
   private toLocalDateTimeInput(value: string): string {
@@ -1588,6 +1609,12 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   getSelectedAppointmentDurationLabel(): string {
+    const customDuration = Number(this.selectedAppointment?.durataPersonalizzata);
+
+    if (Number.isFinite(customDuration) && customDuration > 0) {
+      return this.formatDurationLabel(Math.trunc(customDuration));
+    }
+
     const range = this.getSelectedAppointmentDisplayRange();
 
     if (!range) {
@@ -1745,11 +1772,17 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
           const firstAvailableService = services.find((service) => this.canEditServiceInCurrentSlot(service));
 
           this.appointmentEditForm.idServizio = matchedService?.idServizio ?? firstAvailableService?.idServizio ?? null;
+          const customDuration = Number(this.selectedAppointment?.durataPersonalizzata);
+          const initialServiceDuration = Number((matchedService ?? firstAvailableService)?.durata || 0);
+          this.appointmentEditForm.durataPersonalizzata = Number.isFinite(customDuration) && customDuration > 0
+            ? Math.trunc(customDuration)
+            : (initialServiceDuration || null);
           this.refreshEditEndFromSelectedService();
           this.originalAppointmentEditForm = {
             dataOraInizio: this.appointmentEditForm.dataOraInizio,
             dataOraFine: this.appointmentEditForm.dataOraFine,
-            idServizio: this.appointmentEditForm.idServizio
+            idServizio: this.appointmentEditForm.idServizio,
+            durataPersonalizzata: this.appointmentEditForm.durataPersonalizzata
           };
           this.isEditFormLoading = false;
           this.forceViewRefresh();
@@ -1793,12 +1826,6 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return;
     }
 
-    if (!this.canEditServiceInCurrentSlot(selectedService)) {
-      this.appointmentEditForm.idServizio = null;
-      this.appointmentEditForm.dataOraFine = '';
-      return;
-    }
-
     this.appointmentEditForm.dataOraFine = this.toLocalDateTimeInput(range.end.toISOString());
   }
 
@@ -1824,19 +1851,75 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   private buildEditedRangeFromService(service: Servizio): { start: Date; end: Date; calendarHoldEnd: Date } | null {
     const start = new Date(this.appointmentEditForm.dataOraInizio);
-    const durationMinutes = Number(service.durata || 0);
+    const durationMinutes = this.getEditServiceDuration(service);
 
     if (Number.isNaN(start.getTime()) || !Number.isFinite(durationMinutes) || durationMinutes <= 0) {
       return null;
     }
 
     const end = new Date(start);
-    end.setMinutes(end.getMinutes() + durationMinutes);
+    end.setMinutes(end.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
 
-    const calendarHoldEnd = new Date(start);
-    calendarHoldEnd.setMinutes(calendarHoldEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
+    return { start, end, calendarHoldEnd: end };
+  }
 
-    return { start, end, calendarHoldEnd: end < calendarHoldEnd ? calendarHoldEnd : end };
+  private getEditServiceDuration(service: Servizio): number {
+    if (service.idServizio === this.appointmentEditForm.idServizio) {
+      const customDuration = Number(this.appointmentEditForm.durataPersonalizzata);
+
+      if (Number.isFinite(customDuration) && customDuration > 0) {
+        return customDuration;
+      }
+    }
+
+    return Number(service.durata || 0);
+  }
+
+  private syncEditDurationWithSelectedService(): void {
+    if (!this.appointmentEditForm.idServizio) {
+      this.appointmentEditForm.durataPersonalizzata = null;
+      return;
+    }
+
+    const currentDuration = Number(this.appointmentEditForm.durataPersonalizzata);
+
+    if (Number.isFinite(currentDuration) && currentDuration > 0) {
+      this.appointmentEditForm.durataPersonalizzata = Math.trunc(currentDuration);
+      return;
+    }
+
+    const selectedService = this.editableServices.find(
+      (service) => service.idServizio === this.appointmentEditForm.idServizio
+    );
+
+    this.appointmentEditForm.durataPersonalizzata = selectedService
+      ? Number(selectedService.durata || 0) || null
+      : null;
+  }
+
+  private roundDurationToCalendarBlock(durationMinutes: number): number {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return this.minimumAppointmentDurationMinutes;
+    }
+
+    return Math.ceil(durationMinutes / this.minimumAppointmentDurationMinutes) * this.minimumAppointmentDurationMinutes;
+  }
+
+  private getInitialAppointmentDuration(appointment: Appuntamento): number | null {
+    const customDuration = Number(appointment.durataPersonalizzata);
+
+    if (Number.isFinite(customDuration) && customDuration > 0) {
+      return Math.trunc(customDuration);
+    }
+
+    const start = new Date(appointment.dataOraInizio);
+    const end = new Date(appointment.dataOraFine);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return null;
+    }
+
+    return Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
   }
 
   private isWithinOpeningHoursRange(start: Date, end: Date): boolean {
@@ -1892,9 +1975,10 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   }
 
   private getMinimumAppointmentEnd(start: Date, end: Date): Date {
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return end < minimumEnd ? minimumEnd : end;
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
+    const roundedEnd = new Date(start);
+    roundedEnd.setMinutes(roundedEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
+    return roundedEnd;
   }
 
   private isEditedRangeInFuture(start: Date): boolean {
@@ -2576,7 +2660,11 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }
 
     const date = this.parseInputDate(savedDate);
-    return date && !Number.isNaN(date.getTime()) ? date : null;
+    if (!date || Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return this.startOfDay(date) < this.startOfDay(new Date()) ? null : date;
   }
 
   private persistCalendarState(arg: { start: Date; view?: { type?: string } }): void {
@@ -2601,6 +2689,29 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
   private getResponsiveToolbarRight(): string {
     return this.isMobileCalendar ? 'operatorDay' : 'timeGridWeek,operatorDay';
+  }
+
+  private scheduleCalendarDayRollover(): void {
+    this.clearCalendarDayRollover();
+    this.calendarDayRolloverTimeout = setTimeout(() => {
+      this.goToToday();
+      this.loadAppointments();
+      this.scheduleCalendarDayRollover();
+    }, this.getMillisecondsUntilNextDay());
+  }
+
+  private clearCalendarDayRollover(): void {
+    if (this.calendarDayRolloverTimeout) {
+      clearTimeout(this.calendarDayRolloverTimeout);
+      this.calendarDayRolloverTimeout = null;
+    }
+  }
+
+  private getMillisecondsUntilNextDay(now = new Date()): number {
+    const next = this.startOfDay(now);
+    next.setDate(next.getDate() + 1);
+
+    return Math.max(next.getTime() - now.getTime() + 1000, 1000);
   }
 
   private getOperatorDayViewsOption(): CalendarOptions['views'] {

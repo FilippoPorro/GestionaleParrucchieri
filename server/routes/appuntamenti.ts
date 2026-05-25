@@ -22,6 +22,13 @@ interface Appuntamento {
   servizioNome?: string | null;
 }
 
+function isMissingAppointmentServiceOverrideColumnError(error: any): boolean {
+  const combined = `${error?.message ?? ""} ${error?.details ?? ""} ${error?.hint ?? ""}`.toLowerCase();
+  return combined.includes("prezzopersonalizzato") ||
+    combined.includes("duratapersonalizzata") ||
+    combined.includes("schema cache");
+}
+
 const router = Router();
 
 function normalizeEndDateTime(dataOraInizio: string, dataOraFine: string): string {
@@ -34,11 +41,11 @@ function normalizeEndDateTime(dataOraInizio: string, dataOraFine: string): strin
 }
 
 function isStaffRole(ruolo: unknown): boolean {
-  return ruolo === "admin" || ruolo === "operatore";
+  return ruolo === "titolare" || ruolo === "operatore";
 }
 
-function isAdminRole(ruolo: unknown): boolean {
-  return ruolo === "admin";
+function isTitolareRole(ruolo: unknown): boolean {
+  return ruolo === "titolare";
 }
 
 function isAppointmentConflictError(error: any): boolean {
@@ -137,6 +144,8 @@ async function createAppointmentFallback(payload: {
   idCliente: number | null;
   idOperatore: number;
   idServizio?: number | null;
+  prezzoPersonalizzato?: number | null;
+  durataPersonalizzata?: number | null;
   dataOraInizio: string;
   dataOraFine: string;
   stato?: string | null;
@@ -192,12 +201,32 @@ async function createAppointmentFallback(payload: {
   }
 
   if (payload.idServizio) {
-    const { error: relationError } = await db
+    const relationPayload: Record<string, number | null> = {
+      idAppuntamento: appointment.idAppuntamento,
+      idServizio: payload.idServizio
+    };
+
+    if (payload.prezzoPersonalizzato != null) {
+      relationPayload.prezzoPersonalizzato = payload.prezzoPersonalizzato;
+    }
+
+    if (payload.durataPersonalizzata != null) {
+      relationPayload.durataPersonalizzata = payload.durataPersonalizzata;
+    }
+
+    let { error: relationError } = await db
       .from("appuntamentiservizi")
-      .insert({
-        idAppuntamento: appointment.idAppuntamento,
-        idServizio: payload.idServizio
-      });
+      .insert(relationPayload);
+
+    if (relationError && isMissingAppointmentServiceOverrideColumnError(relationError)) {
+      const retry = await db
+        .from("appuntamentiservizi")
+        .insert({
+          idAppuntamento: appointment.idAppuntamento,
+          idServizio: payload.idServizio
+        });
+      relationError = retry.error;
+    }
 
     if (relationError) {
       await db
@@ -272,6 +301,35 @@ async function createBlankStaffSlot(payload: {
   };
 }
 
+async function updateAppointmentServiceOverrides(
+  idAppuntamento: number,
+  prezzoPersonalizzato?: number | null,
+  durataPersonalizzata?: number | null
+): Promise<void> {
+  if (prezzoPersonalizzato == null && durataPersonalizzata == null) {
+    return;
+  }
+
+  const payload: Record<string, number | null> = {};
+
+  if (prezzoPersonalizzato != null) {
+    payload.prezzoPersonalizzato = prezzoPersonalizzato;
+  }
+
+  if (durataPersonalizzata != null) {
+    payload.durataPersonalizzata = durataPersonalizzata;
+  }
+
+  const { error } = await db
+    .from("appuntamentiservizi")
+    .update(payload)
+    .eq("idAppuntamento", idAppuntamento);
+
+  if (error && !isMissingAppointmentServiceOverrideColumnError(error)) {
+    throw error;
+  }
+}
+
 router.get("/count", async (req: Request, res: Response) => {
   try {
     const data = (req.query.data as string)?.trim();
@@ -323,13 +381,26 @@ router.get("/", async (req: Request, res: Response) => {
       return res.json({ appuntamenti: appointments });
     }
 
-    const { data: relations, error: relationsError } = await db
+    let { data: relations, error: relationsError } = await db
       .from("appuntamentiservizi")
-      .select("idAppuntamento, idServizio")
+      .select("idAppuntamento, idServizio, durataPersonalizzata")
       .in("idAppuntamento", appointmentIds);
 
     if (relationsError) {
-      throw relationsError;
+      if (!isMissingAppointmentServiceOverrideColumnError(relationsError)) {
+        throw relationsError;
+      }
+
+      const fallbackRelations = await db
+        .from("appuntamentiservizi")
+        .select("idAppuntamento, idServizio")
+        .in("idAppuntamento", appointmentIds);
+
+      if (fallbackRelations.error) {
+        throw fallbackRelations.error;
+      }
+
+      relations = fallbackRelations.data as any;
     }
 
     const serviceIds = Array.from(
@@ -353,23 +424,25 @@ router.get("/", async (req: Request, res: Response) => {
       });
     }
 
-    const relationByAppointmentId = new Map<number, number>();
+    const relationByAppointmentId = new Map<number, any>();
     (relations || []).forEach((relation: any) => {
       const appointmentId = Number(relation.idAppuntamento);
       const serviceId = Number(relation.idServizio);
 
       if (Number.isFinite(appointmentId) && Number.isFinite(serviceId)) {
-        relationByAppointmentId.set(appointmentId, serviceId);
+        relationByAppointmentId.set(appointmentId, relation);
       }
     });
 
     const appointmentsWithServices = appointments.map((appointment) => {
-      const serviceId = relationByAppointmentId.get(appointment.idAppuntamento) ?? null;
+      const relation = relationByAppointmentId.get(appointment.idAppuntamento);
+      const serviceId = relation ? Number(relation.idServizio) : null;
 
       return {
         ...appointment,
         idServizio: serviceId,
-        servizioNome: serviceId ? servicesById.get(serviceId) ?? null : appointment.note
+        servizioNome: serviceId ? servicesById.get(serviceId) ?? null : appointment.note,
+        durataPersonalizzata: relation?.durataPersonalizzata != null ? Number(relation.durataPersonalizzata) : null
       };
     });
 
@@ -391,7 +464,9 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
       dataOraInizio,
       dataOraFine,
       stato,
-      note
+      note,
+      prezzoPersonalizzato,
+      durataPersonalizzata
     } = req.body;
 
     if (!authenticatedUserId) {
@@ -474,6 +549,8 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
           idCliente,
           idOperatore,
           idServizio: idServizio || null,
+          prezzoPersonalizzato: Number.isFinite(Number(prezzoPersonalizzato)) ? Number(prezzoPersonalizzato) : null,
+          durataPersonalizzata: Number.isFinite(Number(durataPersonalizzata)) ? Number(durataPersonalizzata) : null,
           dataOraInizio,
           dataOraFine: normalizedEndDateTime,
           stato: stato || "prenotato",
@@ -498,6 +575,12 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
         message: "L'operatore non e disponibile per tutta la durata del servizio selezionato"
       });
     }
+
+    await updateAppointmentServiceOverrides(
+      Number((data as any).idAppuntamento),
+      Number.isFinite(Number(prezzoPersonalizzato)) ? Number(prezzoPersonalizzato) : null,
+      Number.isFinite(Number(durataPersonalizzata)) ? Number(durataPersonalizzata) : null
+    );
 
     try {
       await sendAppointmentConfirmationEmail({
@@ -529,8 +612,8 @@ router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
     );
     const note = req.body?.note ? String(req.body.note).trim() : null;
 
-    if (!isAdminRole(userRole)) {
-      return res.status(403).json({ message: "Solo gli admin possono riservare slot vuoti" });
+    if (!isTitolareRole(userRole)) {
+      return res.status(403).json({ message: "Solo i titolari possono riservare slot vuoti" });
     }
 
     if (!Number.isFinite(idOperatore) || idOperatore <= 0 || !dataOraInizio || !dataOraFine) {
@@ -543,7 +626,7 @@ router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
       .from("utenti")
       .select("idUtente, ruolo")
       .eq("idUtente", idOperatore)
-      .in("ruolo", ["admin", "operatore"])
+      .in("ruolo", ["titolare", "operatore"])
       .maybeSingle();
 
     if (operatoreError) {
@@ -623,6 +706,10 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
     const nextEnd = req.body?.dataOraFine || existingAppointment.dataOraFine;
     const hasServiceInPayload = Object.prototype.hasOwnProperty.call(req.body ?? {}, "idServizio");
     const nextServiceId = hasServiceInPayload ? Number(req.body?.idServizio) : null;
+    const requestedDuration = Number(req.body?.durataPersonalizzata);
+    const durataPersonalizzata = Number.isFinite(requestedDuration) && requestedDuration > 0
+      ? Math.trunc(requestedDuration)
+      : null;
     const normalizedEndDateTime = normalizeEndDateTime(nextStart, nextEnd);
     const { data, error: updateAppointmentError } = await db
       .rpc("update_appuntamento_sicuro", {
@@ -665,6 +752,14 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
       if (reminderResetError) {
         console.error("Errore reset reminder appuntamento:", reminderResetError);
       }
+    }
+
+    if (hasServiceInPayload || Object.prototype.hasOwnProperty.call(req.body ?? {}, "durataPersonalizzata")) {
+      await updateAppointmentServiceOverrides(
+        idAppuntamento,
+        null,
+        durataPersonalizzata
+      );
     }
 
     try {

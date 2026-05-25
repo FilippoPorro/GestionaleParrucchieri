@@ -130,7 +130,7 @@
                   (ngModelChange)="onServiceSearchChange()"
                   (click)="toggleServiceDropdownFromClick($event)"
                   (blur)="toggleServiceDropdown(false)"
-                  placeholder="Selezione servizio..."
+                  placeholder="Seleziona servizio..."
                 />
                 <div class="cash-search-dropdown" *ngIf="showServiceDropdown">
                   <div class="cash-search-dropdown-empty" *ngIf="filteredServizi.length === 0">
@@ -162,7 +162,7 @@
                   (ngModelChange)="onProductSearchChange()"
                   (click)="toggleProductDropdownFromClick($event)"
                   (blur)="toggleProductDropdown(false)"
-                  placeholder="Selezione prodotto..."
+                  placeholder="Seleziona prodotto..."
                 />
                 <div class="cash-search-dropdown" *ngIf="showProductDropdown">
                   <div class="cash-search-dropdown-empty" *ngIf="filteredProdotti.length === 0">
@@ -202,8 +202,8 @@
           <div class="cash-receipt-list" *ngIf="receiptItems.length > 0">
             <div class="cash-receipt-list__head" aria-hidden="true">
               <span>Articolo</span>
-              <span>Quantita</span>
-              <span>Totale</span>
+              <span>Quantità</span>
+              <span>Prezzo</span>
             </div>
 
             <div class="cash-receipt-item" *ngFor="let item of receiptItems; let i = index" [title]="item.nome">
@@ -217,7 +217,19 @@
                   <span class="cash-receipt-item__qty-val">{{ item.quantita }}</span>
                   <button type="button" class="cash-receipt-item__qty-btn" (click)="increaseItemQty(i)">+</button>
                 </div>
-                <span class="cash-receipt-item__price">€ {{ (item.prezzoUnitario * item.quantita) | number:'1.2-2' }}</span>
+                <label class="cash-receipt-item__unit-price">
+                  <span>&euro;</span>
+                  <input
+                    type="number"
+                    [(ngModel)]="item.prezzoUnitario"
+                    [name]="'prezzoUnitario' + i"
+                    min="0"
+                    step="0.01"
+                    inputmode="decimal"
+                    (ngModelChange)="onItemPriceChange(i)"
+                    aria-label="Prezzo unitario"
+                  />
+                </label>
                 <button type="button" class="cash-receipt-item__delete" (click)="removeReceiptItem(i)" title="Rimuovi">
                   <i class="bi bi-trash3" aria-hidden="true"></i>
                 </button>
@@ -339,7 +351,7 @@
                   [class.is-selected]="!selectedClienteId"
                   (mousedown)="selectCliente(null)"
                 >
-                  <span>Cliente Generico (Occasionale)</span>
+                  <span>Cliente occasionale</span>
                 </button>
                 <button
                   type="button"

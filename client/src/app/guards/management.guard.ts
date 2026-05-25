@@ -26,7 +26,7 @@ export const managementGuard: CanActivateFn = (_route, state) => {
   return false;
 };
 
-export const adminManagementGuard: CanActivateFn = (route, state) => {
+export const titolareManagementGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
@@ -42,7 +42,7 @@ export const adminManagementGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  if (auth.isAdmin()) {
+  if (auth.isTitolare()) {
     return true;
   }
 

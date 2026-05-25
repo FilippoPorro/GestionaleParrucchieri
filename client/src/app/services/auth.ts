@@ -56,9 +56,9 @@ export class AuthService {
     }
   });
 
-  isAdmin = computed(() => this.userRole() === 'admin');
+  isTitolare = computed(() => this.userRole() === 'titolare');
 
-  isOperatore = computed(() => this.userRole() === 'operatore' || this.userRole() === 'admin');
+  isOperatore = computed(() => this.userRole() === 'operatore' || this.userRole() === 'titolare');
 
   currentUser = computed<AuthUserSummary | null>(() => this.getUserSummaryFromToken());
 

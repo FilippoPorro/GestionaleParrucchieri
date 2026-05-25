@@ -596,7 +596,7 @@
 :host ::ng-deep .fc-bg-event.invalid-slot-background {
   opacity: 1 !important;
   pointer-events: auto !important;
-  cursor: not-allowed !important;
+  cursor: auto !important;
 }
 
 :host ::ng-deep .fc-bg-event.invalid-slot-background.is-past-slot {
@@ -1139,6 +1139,12 @@
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(212, 176, 106, 0.16) !important;
   box-shadow: none !important;
+}
+
+.appointment-edit-field-hint {
+  color: rgba(255, 244, 211, 0.62);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .appointment-services-picker,

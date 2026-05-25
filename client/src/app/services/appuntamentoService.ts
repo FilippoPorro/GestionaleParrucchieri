@@ -11,6 +11,8 @@ export interface CreaAppuntamentoPayload {
   idServizio: number | null;
   dataOraInizio: string;
   dataOraFine: string;
+  prezzoPersonalizzato?: number | null;
+  durataPersonalizzata?: number | null;
   note?: string | null;
 }
 
@@ -25,6 +27,7 @@ export interface AggiornaAppuntamentoPayload {
   dataOraInizio: string;
   dataOraFine: string;
   idServizio?: number | null;
+  durataPersonalizzata?: number | null;
   note?: string | null;
   stato?: string;
 }

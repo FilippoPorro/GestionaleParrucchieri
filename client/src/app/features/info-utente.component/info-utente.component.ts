@@ -158,7 +158,7 @@ export class InfoUtenteComponent implements OnInit {
 
   get isManagementUser(): boolean {
     const role = String(this.user?.ruolo ?? '').trim().toLowerCase();
-    return role === 'operatore' || role === 'admin';
+    return role === 'operatore' || role === 'titolare';
   }
 
   get accessModeLabel(): string {

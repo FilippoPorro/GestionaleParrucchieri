@@ -23,7 +23,7 @@
             {{
               isManagementBooking
                 ? 'Completa cliente, operatore, servizio e orario prima di salvare la prenotazione.'
-                : 'Lo slot selezionato arriva dalla schermata appuntamenti. Qui puoi solo rifinire i dettagli finali.'
+                : 'La fascia oraria selezionata arriva dalla schermata appuntamenti. Qui puoi solo rifinire i dettagli finali.'
             }}
           </p>
         </div>
@@ -53,7 +53,7 @@
               <strong class="booking-summary-value">{{ summaryStartDateLabel }}</strong>
               <span class="booking-summary-meta">{{ summaryStartTimeLabel }}</span>
             } @else {
-              <strong class="booking-summary-value">Seleziona dallo slot scelto</strong>
+              <strong class="booking-summary-value">Seleziona dalla fascia scelta</strong>
             }
           </div>
 
@@ -142,13 +142,27 @@
 
               <div class="booking-dropdown-panel" [class.open]="isOperatoreOpen">
                 <div class="booking-dropdown-panel-inner">
+                  <div class="booking-dropdown-search">
+                    <input
+                      type="text"
+                      name="operatoreSearch"
+                      [(ngModel)]="operatoreSearchTerm"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Cerca operatore"
+                      autocomplete="off"
+                      [disabled]="isSubmitting"
+                    />
+                  </div>
                   <ul class="booking-dropdown-list" role="listbox" aria-label="Seleziona operatore">
                     <li
-                      *ngFor="let op of operatori"
+                      *ngFor="let op of filteredOperatori"
                       (click)="selectOperatore(op.idUtente)"
                       [class.active]="form.idOperatore === op.idUtente"
                     >
                       {{ op.nome }} {{ op.cognome }}
+                    </li>
+                    <li *ngIf="filteredOperatori.length === 0" class="booking-dropdown-empty">
+                      Nessun operatore trovato
                     </li>
                   </ul>
                 </div>
@@ -169,7 +183,7 @@
                 [attr.aria-expanded]="isServizioOpen"
               >
                 <span class="booking-dropdown-trigger-text">
-                  <span class="booking-trigger-kicker">Disponibili nello slot</span>
+                  <span class="booking-trigger-kicker">Disponibili nella fascia scelta</span>
                   <span class="booking-trigger-value">{{ servizioTriggerLabel }}</span>
                 </span>
                 <span class="booking-dropdown-chevron"></span>
@@ -177,6 +191,17 @@
 
               <div class="booking-dropdown-panel" [class.open]="isServizioOpen">
                 <div class="booking-dropdown-panel-inner">
+                  <div class="booking-dropdown-search">
+                    <input
+                      type="text"
+                      name="servizioSearch"
+                      [(ngModel)]="serviceSearchTerm"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Cerca servizio, categoria o descrizione"
+                      autocomplete="off"
+                      [disabled]="isSubmitting"
+                    />
+                  </div>
                   <ul class="booking-dropdown-list" role="listbox" aria-label="Seleziona servizio">
                     <li
                       *ngFor="let ser of filteredServizi"
@@ -212,6 +237,38 @@
               <i class="bi bi-clock booking-readonly-icon" aria-hidden="true"></i>
               <span class="booking-readonly-value">{{ endTimeDisplayLabel }}</span>
             </div>
+          </div>
+
+          <div class="form-group form-group-separated">
+            <label>Prezzo servizio</label>
+            <input
+              type="number"
+              name="prezzoPersonalizzato"
+              [(ngModel)]="form.prezzoPersonalizzato"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              [disabled]="isLoadingData || isSubmitting || !form.idServizio"
+              (ngModelChange)="onCustomServiceValueChange()"
+              placeholder="Prezzo personalizzato"
+            />
+            <small class="booking-field-hint">Listino: {{ selectedServiceBasePriceLabel }}</small>
+          </div>
+
+          <div class="form-group form-group-separated">
+            <label>Durata servizio</label>
+            <input
+              type="number"
+              name="durataPersonalizzata"
+              [(ngModel)]="form.durataPersonalizzata"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              [disabled]="isLoadingData || isSubmitting || !form.idServizio"
+              (ngModelChange)="onCustomServiceValueChange()"
+              placeholder="Durata in minuti"
+            />
+            <small class="booking-field-hint">Listino: {{ selectedServiceBaseDurationLabel }}</small>
           </div>
         </div>
 

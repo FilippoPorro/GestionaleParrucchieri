@@ -48,6 +48,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
   private readonly contentScrollRestoreDelays = [0, 50, 150, 350, 700, 1100];
   private contentScrollTimeouts: ReturnType<typeof setTimeout>[] = [];
   private contentScrollFrameIds: number[] = [];
+  private dashboardRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
   private contentResizeObserver?: ResizeObserver;
   private isRestoringContentScroll = true;
 
@@ -56,8 +57,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
     {
       title: 'Caricamento promemoria',
       detail: 'Sto preparando appuntamenti, clienti in arrivo e controlli rapidi.',
-      meta: 'Dashboard live',
-      badge: 'Live',
+      meta: 'Dashboard in tempo reale',
+      badge: 'Ora',
       route: '/gestionale/appuntamenti',
       icon: 'bi-arrow-repeat',
       tone: 'quiet'
@@ -72,7 +73,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
     { label: 'Appuntamenti oggi', value: '-', trend: 'calcolo dal calendario' },
     { label: 'Incasso registrato', value: '-', trend: 'pagamenti di oggi' },
     { label: 'Incasso previsto', value: '-', trend: 'servizi prenotati oggi' },
-    { label: 'Prodotti da riordinare', value: '-', trend: 'attenzione stock' },
+    { label: 'Prodotti da riordinare', value: '-', trend: 'attenzione scorte' },
     { label: 'Clienti in salone', value: '-', trend: 'fascia oraria corrente' }
   ];
 
@@ -82,6 +83,19 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
   }
 
   ngOnInit(): void {
+    this.loadDashboardStats();
+  }
+
+  ngOnDestroy(): void {
+    this.clearDashboardRefreshTimeout();
+    this.clearContentScrollTimeouts();
+    this.clearContentScrollAnimationFrames();
+    this.contentResizeObserver?.disconnect();
+    this.contentResizeObserver = undefined;
+    this.persistContentScrollPosition();
+  }
+
+  private loadDashboardStats(): void {
     this.dashboardService.getStats().subscribe({
       next: (dashboardStats) => {
         const slotStart = this.formatTime(dashboardStats.slotCorrente.inizio);
@@ -117,19 +131,36 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
         this.quickReminders = this.buildQuickReminders(dashboardStats);
         this.cdr.detectChanges();
         this.scheduleContentScrollRestore();
+        this.scheduleNextDashboardRefresh();
       },
       error: (error) => {
         console.error('Errore nel recupero delle statistiche dashboard:', error);
+        this.scheduleNextDashboardRefresh();
       }
     });
   }
 
-  ngOnDestroy(): void {
-    this.clearContentScrollTimeouts();
-    this.clearContentScrollAnimationFrames();
-    this.contentResizeObserver?.disconnect();
-    this.contentResizeObserver = undefined;
-    this.persistContentScrollPosition();
+  private scheduleNextDashboardRefresh(): void {
+    this.clearDashboardRefreshTimeout();
+    this.dashboardRefreshTimeout = setTimeout(() => {
+      this.loadDashboardStats();
+    }, this.getMillisecondsUntilNextHalfHour());
+  }
+
+  private clearDashboardRefreshTimeout(): void {
+    if (this.dashboardRefreshTimeout) {
+      clearTimeout(this.dashboardRefreshTimeout);
+      this.dashboardRefreshTimeout = null;
+    }
+  }
+
+  private getMillisecondsUntilNextHalfHour(now = new Date()): number {
+    const next = new Date(now);
+    const nextMinutes = now.getMinutes() < 30 ? 30 : 60;
+
+    next.setMinutes(nextMinutes, 0, 0);
+
+    return Math.max(next.getTime() - now.getTime(), 1000);
   }
 
   @HostListener('window:beforeunload')
@@ -292,7 +323,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
       title: product.nome,
       detail: 'Prodotto sotto soglia da controllare in magazzino.',
       meta: `${product.quantita} pezzi rimasti`,
-      badge: 'Stock',
+      badge: 'Scorte',
       route: '/gestionale/magazzino',
       queryParams: { prodotto: product.idProdotto, edit: 1 },
       icon: 'bi-box-seam',
@@ -321,7 +352,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
       {
         title: 'Nessuna urgenza adesso',
         detail: 'Non risultano clienti in arrivo nelle prossime ore o prodotti critici.',
-        meta: dashboardStats.slotCorrente.inizio ? `${this.formatTime(dashboardStats.slotCorrente.inizio)}-${this.formatTime(dashboardStats.slotCorrente.fine)}` : 'Live',
+        meta: dashboardStats.slotCorrente.inizio ? `${this.formatTime(dashboardStats.slotCorrente.inizio)}-${this.formatTime(dashboardStats.slotCorrente.fine)}` : 'Ora',
         badge: 'Ok',
         route: '/gestionale/appuntamenti',
         icon: 'bi-check2-circle',
@@ -333,7 +364,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
   readonly focusCards: DashboardActionCard[] = [
     {
       title: 'Agenda del giorno',
-      text: 'Vista rapida degli slot, ritardi e conferme prenotazione da gestire in reception.',
+      text: 'Vista rapida delle fasce orarie, ritardi e conferme prenotazione da gestire al banco.',
       ctaLabel: 'Apri agenda',
       route: '/gestionale/appuntamenti',
       icon: 'bi-calendar2-week'
@@ -347,7 +378,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
     },
     {
       title: 'Magazzino attivo',
-      text: 'Monitoraggio prodotti professionali, vendita retail e soglie minime di riordino.',
+      text: 'Monitoraggio prodotti professionali, vendita al banco e soglie minime di riordino.',
       ctaLabel: 'Controlla magazzino',
       route: '/gestionale/magazzino',
       icon: 'bi-box-seam'

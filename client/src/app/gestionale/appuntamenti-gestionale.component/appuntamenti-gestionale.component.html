@@ -417,6 +417,26 @@
       </label>
 
       <label class="appointment-detail-field">
+        <span>Durata servizio</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-hourglass-split"></i>
+          <input
+            type="number"
+            [(ngModel)]="appointmentEditForm.durataPersonalizzata"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            [disabled]="isEditFormLoading || !appointmentEditForm.idServizio"
+            (ngModelChange)="onEditDurationChange()"
+            placeholder="Durata in minuti"
+          />
+        </div>
+        <small class="appointment-edit-field-hint">
+          Il calendario occupa blocchi da 30 minuti: 40 minuti occupano 1 ora.
+        </small>
+      </label>
+
+      <label class="appointment-detail-field">
         <span>Data e ora fine (calcolata)</span>
         <div class="appointment-field-control with-icon">
           <i class="bi bi-calendar-date"></i>
@@ -461,7 +481,7 @@
         (click)="saveAppointmentEdit()"
       >
         <i class="bi bi-check2-circle"></i>
-        {{ isAppointmentActionLoading ? 'Salvataggio modifica...' : 'Salva modifiche' }}
+        Salva
       </button>
 
       <button

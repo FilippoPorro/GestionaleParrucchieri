@@ -46,7 +46,9 @@ CREATE TABLE `appuntamenti` (
 CREATE TABLE `appuntamentiservizi` (
   `id` int(11) NOT NULL,
   `idAppuntamento` int(11) NOT NULL,
-  `idServizio` int(11) NOT NULL
+  `idServizio` int(11) NOT NULL,
+  `prezzoPersonalizzato` decimal(10,2) DEFAULT NULL,
+  `durataPersonalizzata` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -147,7 +149,7 @@ CREATE TABLE `utenti` (
   `password` varchar(255) NOT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `data_nascita` date DEFAULT NULL,
-  `ruolo` enum('cliente','operatore','admin','salone') NOT NULL,
+  `ruolo` enum('cliente','operatore','titolare','salone') NOT NULL,
   `photoURL` text DEFAULT NULL,
   `resetPasswordToken` varchar(255) DEFAULT NULL,
   `resetPasswordExpires` datetime DEFAULT NULL,
@@ -159,7 +161,7 @@ CREATE TABLE `utenti` (
 --
 
 INSERT INTO `utenti` (`idUtente`, `nome`, `cognome`, `email`, `password`, `telefono`, `data_nascita`, `ruolo`, `photoURL`, `resetPasswordToken`, `resetPasswordExpires`, `mustChangePassword`) VALUES
-(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'admin', NULL, NULL, NULL, 0);
+(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'titolare', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 

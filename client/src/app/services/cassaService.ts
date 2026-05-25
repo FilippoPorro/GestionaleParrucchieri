@@ -19,6 +19,7 @@ export interface AppuntamentoDaIncassare {
     idServizio: number;
     nome: string;
     prezzo: number;
+    durataPersonalizzata?: number | null;
   }>;
 }
 

@@ -951,7 +951,7 @@
   top: -10px;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 118px 104px 34px;
+  grid-template-columns: minmax(0, 1fr) 118px 108px 34px;
   gap: 12px;
   align-items: center;
   padding: 6px 12px 10px;
@@ -965,6 +965,14 @@
 }
 
 .cash-receipt-list__head span:nth-child(2),
+.cash-receipt-list__head span:nth-child(3) {
+  justify-self: stretch;
+}
+
+.cash-receipt-list__head span:nth-child(2) {
+  text-align: center;
+}
+
 .cash-receipt-list__head span:nth-child(3) {
   text-align: right;
 }
@@ -1021,7 +1029,7 @@
 
 .cash-receipt-item__actions {
   display: grid;
-  grid-template-columns: 118px 104px 34px;
+  grid-template-columns: 118px 108px 34px;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
@@ -1065,6 +1073,41 @@
   text-align: center;
   font-weight: 700;
   color: #fff8ec;
+}
+
+.cash-receipt-item__unit-price {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.16);
+  background: rgba(0, 0, 0, 0.24);
+  color: #f2d18b;
+  font-weight: 800;
+}
+
+.cash-receipt-item__unit-price input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #fff8ec;
+  font: inherit;
+  text-align: right;
+}
+
+.cash-receipt-item__unit-price input::-webkit-outer-spin-button,
+.cash-receipt-item__unit-price input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.cash-receipt-item__unit-price input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .cash-receipt-item__price {
@@ -1332,6 +1375,8 @@
 .cash-search-select-container {
   position: relative;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   cursor: pointer;
 }
 
@@ -1360,6 +1405,9 @@
 }
 
 .cash-choice-trigger {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: 9px 38px 9px 12px;
   display: flex;
@@ -1367,10 +1415,14 @@
   justify-content: flex-start;
   text-align: left;
   background-image: none;
+  overflow: hidden;
 }
 
 .cash-choice-trigger span {
+  display: block;
+  flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   color: #fff8ec;
   font-size: 15px;
   font-weight: 600;

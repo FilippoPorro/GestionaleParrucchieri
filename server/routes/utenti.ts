@@ -126,7 +126,7 @@ async function getClientiFromUtentiTable(): Promise<Utente[]> {
   const clienti = (data || [])
     .map((row: any) => normalizeClienteRow(row, "utenti"))
     .filter((row: Utente | null): row is Utente => row !== null)
-    .filter((row) => !["operatore", "admin", "salone"].includes(String(row.ruolo || "").toLowerCase()));
+    .filter((row) => !["operatore", "titolare", "salone"].includes(String(row.ruolo || "").toLowerCase()));
 
   return sortClienti(clienti);
 }
@@ -410,7 +410,7 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
 
     const cliente = normalizeClienteRow(data, "utenti");
 
-    if (!cliente || ["operatore", "admin", "salone"].includes(String(cliente.ruolo || "").toLowerCase())) {
+    if (!cliente || ["operatore", "titolare", "salone"].includes(String(cliente.ruolo || "").toLowerCase())) {
       return res.status(404).json({ message: "Cliente non trovato" });
     }
 
@@ -462,7 +462,7 @@ router.delete("/clienti/:id", async (req: Request, res: Response) => {
 
     const ruolo = String((existingCliente as any)?.ruolo ?? "").toLowerCase();
 
-    if (!existingCliente || ["operatore", "admin", "salone"].includes(ruolo)) {
+    if (!existingCliente || ["operatore", "titolare", "salone"].includes(ruolo)) {
       return res.status(404).json({ message: "Cliente non trovato" });
     }
 
@@ -493,7 +493,7 @@ router.get("/operatori", async (_req: Request, res: Response) => {
     const { data, error } = await db
       .from("utenti")
       .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
-      .in("ruolo", ["operatore", "admin"])
+      .in("ruolo", ["operatore", "titolare"])
       .order("cognome", { ascending: true })
       .order("nome", { ascending: true });
 

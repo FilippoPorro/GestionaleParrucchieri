@@ -191,10 +191,19 @@ router.get("/stats", async (_req: Request, res: Response) => {
     let incassoPrevistoAppuntamenti = 0;
 
     if (appointmentIds.length > 0) {
-      const { data: relations, error: relationsError } = await db
+      let { data: relations, error: relationsError }: { data: any[] | null; error: any } = await db
         .from("appuntamentiservizi")
-        .select("idAppuntamento, idServizio")
+        .select("idAppuntamento, idServizio, prezzoPersonalizzato")
         .in("idAppuntamento", appointmentIds);
+
+      if (relationsError && String(relationsError.message || "").toLowerCase().includes("prezzopersonalizzato")) {
+        const fallbackRelations = await db
+          .from("appuntamentiservizi")
+          .select("idAppuntamento, idServizio")
+          .in("idAppuntamento", appointmentIds);
+        relations = fallbackRelations.data;
+        relationsError = fallbackRelations.error;
+      }
 
       if (relationsError) {
         throw relationsError;
@@ -220,7 +229,14 @@ router.get("/stats", async (_req: Request, res: Response) => {
         });
 
         incassoPrevistoAppuntamenti = (relations || []).reduce(
-          (totale: number, relation: any) => totale + (pricesByServiceId.get(Number(relation.idServizio)) || 0),
+          (totale: number, relation: any) => {
+            const customPrice = Number(relation.prezzoPersonalizzato);
+            return totale + (
+              Number.isFinite(customPrice)
+                ? customPrice
+                : pricesByServiceId.get(Number(relation.idServizio)) || 0
+            );
+          },
           0
         );
       }

@@ -481,15 +481,10 @@ export class AppuntamentiComponent implements OnInit {
       return endValue;
     }
 
-    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
-
-    if (durationMinutes >= this.minimumAppointmentDurationMinutes) {
-      return endValue;
-    }
-
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return this.toLocalDateTimeInput(minimumEnd.toISOString());
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
+    const roundedEnd = new Date(start);
+    roundedEnd.setMinutes(roundedEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
+    return this.toLocalDateTimeInput(roundedEnd.toISOString());
   }
 
   private isCustomerOwnAppointment(appointmentCustomerId: number | null | undefined): boolean {
@@ -497,7 +492,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    if (this.user.ruolo === 'admin' || this.user.ruolo === 'operatore') {
+    if (this.user.ruolo === 'titolare' || this.user.ruolo === 'operatore') {
       return true;
     }
 
@@ -837,7 +832,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    if (this.user.ruolo === 'admin' || this.user.ruolo === 'operatore') {
+    if (this.user.ruolo === 'titolare' || this.user.ruolo === 'operatore') {
       return true;
     }
 
@@ -853,7 +848,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    if (this.user.ruolo === 'admin' || this.user.ruolo === 'operatore') {
+    if (this.user.ruolo === 'titolare' || this.user.ruolo === 'operatore') {
       return true;
     }
 
@@ -861,7 +856,7 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private canCurrentUserSeePermissionLabel(): boolean {
-    return this.user?.ruolo === 'admin' || this.user?.ruolo === 'operatore';
+    return this.user?.ruolo === 'titolare' || this.user?.ruolo === 'operatore';
   }
 
   get canDeleteSelectedAppointment(): boolean {
@@ -1039,12 +1034,9 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     const end = new Date(start);
-    end.setMinutes(end.getMinutes() + durationMinutes);
+    end.setMinutes(end.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
 
-    const calendarHoldEnd = new Date(start);
-    calendarHoldEnd.setMinutes(calendarHoldEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-
-    return { start, end, calendarHoldEnd: end < calendarHoldEnd ? calendarHoldEnd : end };
+    return { start, end, calendarHoldEnd: end };
   }
 
   private isWithinOpeningHoursRange(start: Date, end: Date): boolean {
@@ -1216,9 +1208,18 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private getMinimumAppointmentEnd(start: Date, end: Date): Date {
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return end < minimumEnd ? minimumEnd : end;
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
+    const roundedEnd = new Date(start);
+    roundedEnd.setMinutes(roundedEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
+    return roundedEnd;
+  }
+
+  private roundDurationToCalendarBlock(durationMinutes: number): number {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return this.minimumAppointmentDurationMinutes;
+    }
+
+    return Math.ceil(durationMinutes / this.minimumAppointmentDurationMinutes) * this.minimumAppointmentDurationMinutes;
   }
 
   private canModifyAppointment(appointment: Appuntamento): boolean {

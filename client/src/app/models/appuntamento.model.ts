@@ -8,4 +8,5 @@ export interface Appuntamento {
     note: string | null;
     idServizio?: number | null;
     servizioNome?: string | null;
+    durataPersonalizzata?: number | null;
   }

@@ -112,6 +112,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   private calendarPickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private appointmentDetailCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  private calendarDayRolloverTimeout: ReturnType<typeof setTimeout> | null = null;
   private visibleRangeStart: Date | null = null;
   private visibleRangeEnd: Date | null = null;
   private calendarTitleElement: HTMLElement | null = null;
@@ -194,6 +195,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.calendarDatePickerValue = this.formatDateForInput(new Date());
     this.minDate = this.formatDateForInput(new Date());
     this.syncCalendarPickerMonth(new Date());
+    this.scheduleCalendarDayRollover();
     this.loadStaff();
   }
 
@@ -219,6 +221,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       clearTimeout(this.appointmentDetailCloseTimeout);
       this.appointmentDetailCloseTimeout = null;
     }
+
+    this.clearCalendarDayRollover();
   }
 
   @HostListener('document:click', ['$event'])
@@ -262,8 +266,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     );
   }
 
-  get adminCount(): number {
-    return this.staff.filter((utente) => this.normalizeRole(utente.ruolo) === 'admin').length;
+  get titolariCount(): number {
+    return this.staff.filter((utente) => this.normalizeRole(utente.ruolo) === 'titolare').length;
   }
 
   get operatoriCount(): number {
@@ -496,13 +500,13 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   openPermissionModal(start: Date, end: Date): void {
-    if (!this.authService.isAdmin()) {
-      this.showFeedback('Solo gli admin possono aggiungere un permesso.', 'error', 'Permesso negato');
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono aggiungere un permesso.', 'error', 'Permesso negato');
       return;
     }
 
     if (!this.selectedOperator) {
-      this.showFeedback('Seleziona una persona dello staff prima di aggiungere un permesso.', 'error', 'Staff non selezionato');
+      this.showFeedback('Seleziona una persona del personale prima di aggiungere un permesso.', 'error', 'Persona non selezionata');
       return;
     }
 
@@ -553,13 +557,13 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   openFerieModal(): void {
-    if (!this.authService.isAdmin()) {
-      this.showFeedback('Solo gli admin possono aggiungere le ferie.', 'error', 'Permesso negato');
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono aggiungere le ferie.', 'error', 'Permesso negato');
       return;
     }
 
     if (!this.selectedOperator) {
-      this.showFeedback('Seleziona una persona dello staff prima di aggiungere le ferie.', 'error', 'Staff non selezionato');
+      this.showFeedback('Seleziona una persona del personale prima di aggiungere le ferie.', 'error', 'Persona non selezionata');
       return;
     }
 
@@ -629,13 +633,13 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private createEmptySlots(slots: { start: Date; end: Date }[], note: string | null = null, onSuccess?: () => void): void {
-    if (!this.authService.isAdmin()) {
-      this.showFeedback('Solo gli admin possono aggiungere uno spazio vuoto.', 'error', 'Permesso negato');
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono aggiungere uno spazio vuoto.', 'error', 'Permesso negato');
       return;
     }
 
     if (!this.selectedOperator) {
-      this.showFeedback('Seleziona una persona dello staff prima di aggiungere un permesso.', 'error', 'Staff non selezionato');
+      this.showFeedback('Seleziona una persona del personale prima di aggiungere un permesso.', 'error', 'Persona non selezionata');
       return;
     }
 
@@ -1156,6 +1160,44 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private getResponsiveToolbarRight(): string {
     return this.isMobileCalendar ? '' : 'timeGridWeek,timeGridDay';
+  }
+
+  private scheduleCalendarDayRollover(): void {
+    this.clearCalendarDayRollover();
+    this.calendarDayRolloverTimeout = setTimeout(() => {
+      const todayValue = this.formatDateForInput(new Date());
+      const calendarApi = this.calendarComponent?.getApi();
+
+      this.calendarDatePickerValue = todayValue;
+      this.minDate = todayValue;
+      this.syncCalendarPickerMonth(new Date());
+
+      if (calendarApi) {
+        calendarApi.gotoDate(todayValue);
+
+        if (this.isMobileCalendar) {
+          calendarApi.changeView('timeGridDay', todayValue);
+        }
+      }
+
+      this.loadAppointments();
+      this.scheduleCalendarDayRollover();
+      this.refreshView();
+    }, this.getMillisecondsUntilNextDay());
+  }
+
+  private clearCalendarDayRollover(): void {
+    if (this.calendarDayRolloverTimeout) {
+      clearTimeout(this.calendarDayRolloverTimeout);
+      this.calendarDayRolloverTimeout = null;
+    }
+  }
+
+  private getMillisecondsUntilNextDay(now = new Date()): number {
+    const next = this.startOfDay(now);
+    next.setDate(next.getDate() + 1);
+
+    return Math.max(next.getTime() - now.getTime() + 1000, 1000);
   }
 
   private syncDatePickerValue(fallbackDate: Date): void {

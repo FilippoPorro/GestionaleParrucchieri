@@ -47,6 +47,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
   isSubmitting = false;
   serviceSearchTerm = '';
   clienteSearchTerm = '';
+  operatoreSearchTerm = '';
   isOperatoreOpen = false;
   isServizioOpen = false;
   isClienteOpen = false;
@@ -80,7 +81,9 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     idOperatore: null as number | null,
     idServizio: null as number | null,
     dataOraInizio: '',
-    dataOraFine: ''
+    dataOraFine: '',
+    prezzoPersonalizzato: null as number | null,
+    durataPersonalizzata: null as number | null
   };
 
   // Custom Date Picker properties
@@ -163,6 +166,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
 
   onOperatoreChange(): void {
     this.isOperatoreOpen = false;
+    this.resetOperatoreSearchTerm();
     this.loadServiziDisponibili();
   }
 
@@ -175,7 +179,12 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     if (this.isOperatoreOpen) {
       this.isServizioOpen = false;
       this.isClienteOpen = false;
+      this.resetServiceSearchTerm();
+      this.resetClienteSearchTerm();
+      return;
     }
+
+    this.resetOperatoreSearchTerm();
   }
 
   toggleClienteDropdown(): void {
@@ -187,6 +196,8 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     if (this.isClienteOpen) {
       this.isOperatoreOpen = false;
       this.isServizioOpen = false;
+      this.resetOperatoreSearchTerm();
+      this.resetServiceSearchTerm();
       return;
     }
 
@@ -202,6 +213,8 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     if (this.isServizioOpen) {
       this.isOperatoreOpen = false;
       this.isClienteOpen = false;
+      this.resetOperatoreSearchTerm();
+      this.resetClienteSearchTerm();
       return;
     }
 
@@ -219,6 +232,9 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
       event.preventDefault();
       this.isServizioOpen = true;
       this.isOperatoreOpen = false;
+      this.isClienteOpen = false;
+      this.resetOperatoreSearchTerm();
+      this.resetClienteSearchTerm();
       return;
     }
 
@@ -229,15 +245,16 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     event.preventDefault();
     this.isServizioOpen = true;
     this.isOperatoreOpen = false;
-    const nextSearchTerm = event.key.trim().toLowerCase();
+    this.isClienteOpen = false;
+    this.resetOperatoreSearchTerm();
+    this.resetClienteSearchTerm();
+    const nextSearchTerm = this.normalizeSearchTerm(event.key);
 
     if (!nextSearchTerm) {
       return;
     }
 
-    const hasMatchingServices = this.servizi.some((servizio) =>
-      servizio.nome.toLowerCase().startsWith(nextSearchTerm)
-    );
+    const hasMatchingServices = this.servizi.some((servizio) => this.doesServizioMatchSearch(servizio, nextSearchTerm));
 
     if (hasMatchingServices) {
       this.serviceSearchTerm = nextSearchTerm;
@@ -275,6 +292,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     }
 
     this.form.idServizio = idServizio;
+    this.syncCustomServiceValues(servizio);
     this.isServizioOpen = false;
     this.resetServiceSearchTerm();
     this.onServizioChange();
@@ -305,15 +323,31 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
   }
 
   get filteredServizi(): Servizio[] {
-    const search = this.serviceSearchTerm.trim().toLowerCase();
+    const search = this.normalizeSearchTerm(this.serviceSearchTerm);
 
     if (!search) {
       return this.servizi;
     }
 
-    return this.servizi.filter((servizio) =>
-      servizio.nome.toLowerCase().startsWith(search)
-    );
+    return this.servizi.filter((servizio) => this.doesServizioMatchSearch(servizio, search));
+  }
+
+  get filteredOperatori(): Utente[] {
+    const search = this.normalizeSearchTerm(this.operatoreSearchTerm);
+
+    if (!search) {
+      return this.operatori;
+    }
+
+    return this.operatori.filter((operatore) => {
+      const nomeCompleto = this.normalizeSearchTerm(`${operatore.nome} ${operatore.cognome}`);
+      const cognomeNome = this.normalizeSearchTerm(`${operatore.cognome} ${operatore.nome}`);
+      const email = this.normalizeSearchTerm(operatore.email ?? '');
+
+      return nomeCompleto.includes(search) ||
+        cognomeNome.includes(search) ||
+        email.includes(search);
+    });
   }
 
   get filteredClienti(): Utente[] {
@@ -341,11 +375,11 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
   get summaryStartDateLabel(): string {
     const value = this.form.dataOraInizio;
     if (!value) {
-      return 'Seleziona dallo slot scelto';
+      return 'Seleziona dalla fascia scelta';
     }
 
     const [datePart] = value.split('T');
-    return datePart || 'Seleziona dallo slot scelto';
+    return datePart || 'Seleziona dalla fascia scelta';
   }
 
   get summaryStartTimeLabel(): string {
@@ -386,6 +420,16 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     return this.summaryEndTimeLabel || 'Calcolata automaticamente';
   }
 
+  get selectedServiceBasePriceLabel(): string {
+    const servizio = this.getSelectedService();
+    return servizio ? `${Number(servizio.prezzo || 0).toFixed(2)} EUR` : '-';
+  }
+
+  get selectedServiceBaseDurationLabel(): string {
+    const servizio = this.getSelectedService();
+    return servizio?.durata ? `${servizio.durata} min` : '-';
+  }
+
   get isLoginAlert(): boolean {
     return this.bookingAlertTitle === 'Login richiesto';
   }
@@ -401,6 +445,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
       this.isCustomDatePickerOpen = false;
       this.resetServiceSearchTerm();
       this.resetClienteSearchTerm();
+      this.resetOperatoreSearchTerm();
     }
   }
 
@@ -502,6 +547,9 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
       this.isOperatoreOpen = false;
       this.isServizioOpen = false;
       this.isClienteOpen = false;
+      this.resetOperatoreSearchTerm();
+      this.resetServiceSearchTerm();
+      this.resetClienteSearchTerm();
       this.initCustomDatePicker();
     }
   }
@@ -595,6 +643,15 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
 
     if (validationMessage) {
       this.showBookingAlert(validationMessage, 'error');
+      return;
+    }
+
+    const selectedService = this.getSelectedService();
+    if (selectedService && !this.isServiceAvailableForSelectedSlot(selectedService)) {
+      this.showBookingAlert(
+        'Questa durata crea una sovrapposizione con un altro appuntamento. Modifica la durata o scegli un altro orario.',
+        'error'
+      );
       return;
     }
 
@@ -760,19 +817,34 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
 
     if (!end) return;
 
+    this.form.dataOraFine = this.formatTime(end);
+
     if (!this.isServiceAvailableForSelectedSlot(servizio)) {
-      this.form.idServizio = null;
-      this.form.dataOraFine = '';
       this.availabilityMessage =
-        'Questo servizio non puo essere prenotato in questo slot perche l\'operatore ha gia un altro appuntamento in sovrapposizione.';
+        'Questa durata crea una sovrapposizione con un altro appuntamento. Modifica la durata o scegli un altro orario.';
       this.cdr.detectChanges();
       return;
     }
 
     this.availabilityMessage = '';
-    this.form.dataOraFine = this.formatTime(end);
 
     this.cdr.detectChanges();
+  }
+
+  onCustomServiceValueChange(): void {
+    if (!this.form.idServizio) {
+      return;
+    }
+
+    const prezzo = Number(this.form.prezzoPersonalizzato);
+    this.form.prezzoPersonalizzato = Number.isFinite(prezzo) && prezzo >= 0 ? prezzo : null;
+
+    const durata = Number(this.form.durataPersonalizzata);
+    this.form.durataPersonalizzata = Number.isFinite(durata) && durata > 0 ? Math.trunc(durata) : null;
+
+    if (this.form.dataOraInizio) {
+      this.onServizioChange();
+    }
   }
 
   private loadServiziDisponibili(): void {
@@ -819,6 +891,14 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
         }
 
         this.selectedServizioFromQuery = null;
+
+        const selectedService = this.getSelectedService();
+        if (selectedService) {
+          this.syncCustomServiceValues(selectedService);
+        } else {
+          this.form.prezzoPersonalizzato = null;
+          this.form.durataPersonalizzata = null;
+        }
 
         if (this.form.dataOraInizio && this.form.idServizio) {
           this.onServizioChange();
@@ -898,14 +978,35 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     }
 
     const end = new Date(start);
-    const durationMinutes = Number(servizio.durata || 0);
+    const durationMinutes = this.getSelectedServiceDuration(servizio);
 
     if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
       return null;
     }
 
-    end.setMinutes(end.getMinutes() + durationMinutes);
+    end.setMinutes(end.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
     return end;
+  }
+
+  private getSelectedService(): Servizio | undefined {
+    return this.servizi.find((servizio) => servizio.idServizio === this.form.idServizio);
+  }
+
+  private syncCustomServiceValues(servizio: Servizio): void {
+    this.form.prezzoPersonalizzato = Number(servizio.prezzo || 0);
+    this.form.durataPersonalizzata = Number(servizio.durata || 0) || null;
+  }
+
+  private getSelectedServiceDuration(servizio: Servizio): number {
+    if (servizio.idServizio === this.form.idServizio) {
+      const customDuration = Number(this.form.durataPersonalizzata);
+
+      if (Number.isFinite(customDuration) && customDuration > 0) {
+        return customDuration;
+      }
+    }
+
+    return Number(servizio.durata || 0);
   }
 
   private calculateServiceCalendarHoldEnd(servizio: Servizio): Date | null {
@@ -916,15 +1017,22 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
       return null;
     }
 
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return actualEnd < minimumEnd ? minimumEnd : actualEnd;
+    return actualEnd;
   }
 
   private getMinimumAppointmentEnd(start: Date, end: Date): Date {
-    const minimumEnd = new Date(start);
-    minimumEnd.setMinutes(minimumEnd.getMinutes() + this.minimumAppointmentDurationMinutes);
-    return end < minimumEnd ? minimumEnd : end;
+    const durationMinutes = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 60000));
+    const roundedEnd = new Date(start);
+    roundedEnd.setMinutes(roundedEnd.getMinutes() + this.roundDurationToCalendarBlock(durationMinutes));
+    return roundedEnd;
+  }
+
+  private roundDurationToCalendarBlock(durationMinutes: number): number {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return this.minimumAppointmentDurationMinutes;
+    }
+
+    return Math.ceil(durationMinutes / this.minimumAppointmentDurationMinutes) * this.minimumAppointmentDurationMinutes;
   }
 
   private getNormalizedEndDate(): Date | null {
@@ -966,6 +1074,23 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
 
   private resetClienteSearchTerm(): void {
     this.clienteSearchTerm = '';
+  }
+
+  private resetOperatoreSearchTerm(): void {
+    this.operatoreSearchTerm = '';
+  }
+
+  private doesServizioMatchSearch(servizio: Servizio, search: string): boolean {
+    const searchableValues = [
+      servizio.nome,
+      servizio.categoria,
+      servizio.sottocategoria,
+      servizio.descrizione
+    ];
+
+    return searchableValues.some((value) =>
+      this.normalizeSearchTerm(value ?? '').includes(search)
+    );
   }
 
   private normalizeSearchTerm(value: string): string {
