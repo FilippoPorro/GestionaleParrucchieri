@@ -39,6 +39,14 @@ const allowedFrontendOrigins = (
   .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
+function isAllowedFrontendOrigin(origin: string): boolean {
+  const normalizedOrigin = origin.replace(/\/+$/, "");
+
+  return allowedFrontendOrigins.includes(normalizedOrigin) ||
+    normalizedOrigin === "http://localhost:4200" ||
+    /^https:\/\/gestionale-parrucchieri-[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin);
+}
+
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
   api_key: process.env.CLOUDINARY_API_KEY as string,
@@ -54,7 +62,7 @@ app.use("/", express.static("./static"));
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedFrontendOrigins.includes(origin.replace(/\/+$/, ""))) {
+      if (!origin || isAllowedFrontendOrigin(origin)) {
         return callback(null, true);
       }
 

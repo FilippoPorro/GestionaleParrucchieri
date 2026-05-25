@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://gestionaleparrucchieri.onrender.com',
-  apiUrl: 'https://gestionaleparrucchieri.onrender.com/api'
+  apiBaseUrl: 'http://localhost:3000',
+  apiUrl: 'http://localhost:3000/api'
 };
