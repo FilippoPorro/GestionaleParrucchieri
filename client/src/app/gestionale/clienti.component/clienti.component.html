@@ -175,9 +175,9 @@
               {{
                 isCreateMode
                   ? 'Inserisci nuovo cliente'
-                  : selectedCliente
-                    ? 'Modifica cliente selezionato'
-                    : 'Seleziona un cliente da modificare'
+                    : selectedCliente
+                      ? 'Modifica cliente selezionato'
+                    : 'Seleziona una scheda da modificare'
               }}
             </h2>
           </div>
@@ -256,7 +256,7 @@
                 <input [(ngModel)]="newCliente.cognome" name="newCognome" type="text" required />
               </label>
 
-              <label class="customers-field customers-create-field customers-create-field--wide">
+              <label class="customers-field customers-create-field customers-create-field--full">
                 <span>Email</span>
                 <input [(ngModel)]="newCliente.email" name="newEmail" type="email" required />
               </label>
@@ -352,7 +352,7 @@
                 </div>
               </div>
 
-              <label class="customers-field customers-create-field customers-create-field--half">
+              <label class="customers-field customers-create-field customers-create-field--full">
                 <span>Ruolo</span>
                 <input [ngModel]="newCliente.ruolo" name="newRuolo" type="text" readonly />
               </label>
@@ -367,7 +367,7 @@
           <div class="customers-editor-actions">
             <button type="submit" class="customers-button customers-button--save" [disabled]="isCreating || !isNewClienteValid">
               <i class="bi bi-check2" aria-hidden="true"></i>
-              {{ isCreating ? 'Inserimento...' : 'Inserisci cliente' }}
+              Inserisci
             </button>
             <button type="button" class="customers-button customers-button--ghost" (click)="cancelCreateCliente()" [disabled]="isCreating">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -377,8 +377,8 @@
         </form>
 
         <div *ngIf="!isCreateMode && (!selectedCliente || !draftCliente)" class="customers-empty-state customers-empty-state--editor">
-          <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
-          Seleziona un cliente dalla tabella per modificarlo oppure crea una nuova anagrafica.
+              <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+          Seleziona una scheda dalla tabella per modificarla oppure crea una nuova anagrafica.
         </div>
 
         <form
@@ -428,7 +428,7 @@
                 <input [(ngModel)]="draftCliente.cognome" name="cognome" type="text" required />
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--wide">
+              <label class="customers-field customers-edit-field customers-edit-field--full">
                 <span>Email</span>
                 <input [(ngModel)]="draftCliente.email" name="email" type="email" required />
               </label>
@@ -454,7 +454,7 @@
                 <input [(ngModel)]="draftCliente.data_nascita" name="data_nascita" type="date" />
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+              <label class="customers-field customers-edit-field customers-edit-field--full">
                 <span>Ruolo</span>
                 <input [ngModel]="draftCliente.ruolo || 'cliente'" name="ruolo" type="text" readonly />
               </label>

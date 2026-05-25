@@ -153,14 +153,12 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  border: 1px solid rgba(242, 209, 139, 0.28);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
-    rgba(0, 0, 0, 0.62);
-  color: #f2d18b;
+  border: 1px solid rgba(255, 226, 175, 0.42);
+  background: linear-gradient(135deg, #f6dfad, #d4a35f 55%, #9f6530);
+  color: #201207;
   font-size: 13px;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 
 .management-sidenav__account-copy {

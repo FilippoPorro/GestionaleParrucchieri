@@ -298,6 +298,14 @@ body {
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
+.management-layout .services-avatar,
+.management-layout .customers-avatar {
+  border-color: rgba(255, 226, 175, 0.42) !important;
+  background: linear-gradient(135deg, #f6dfad, #d4a35f 55%, #9f6530) !important;
+  color: #201207 !important;
+  font-weight: 900 !important;
+}
+
 .management-layout .services-empty-state,
 .management-layout .customers-empty-state,
 .management-layout .cash-empty-receipt,

@@ -117,7 +117,6 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
           label: 'Magazzino',
           href: '/gestionale/magazzino',
           description: 'Scorte, movimenti e riordino',
-          badge: 'Stock',
         },
         {
           label: 'Servizi',

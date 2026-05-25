@@ -77,21 +77,87 @@
             />
           </label>
 
-          <label class="services-filter">
+          <div
+            class="services-filter services-filter--custom"
+            [class.is-open]="openFilterDropdown === 'categoria'"
+            (click)="$event.stopPropagation()"
+          >
             <span>Categoria</span>
-            <select [ngModel]="selectedCategoriaFilter" (ngModelChange)="onCategoriaFilterChange($event)" name="categoriaFilter">
-              <option value="">Tutte le categorie</option>
-              <option *ngFor="let categoria of categorieDisponibili" [value]="categoria">{{ categoria }}</option>
-            </select>
-          </label>
+            <button
+              type="button"
+              class="services-filter-trigger"
+              (click)="toggleFilterDropdown('categoria', $event)"
+              [attr.aria-expanded]="openFilterDropdown === 'categoria'"
+              aria-haspopup="listbox"
+            >
+              <span>{{ categoriaFilterLabel }}</span>
+              <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div *ngIf="openFilterDropdown === 'categoria'" class="services-filter-menu" role="listbox">
+              <button
+                type="button"
+                class="services-filter-option"
+                [class.is-selected]="!selectedCategoriaFilter"
+                (click)="selectCategoriaFilter('', $event)"
+                role="option"
+                [attr.aria-selected]="!selectedCategoriaFilter"
+              >
+                Tutte le categorie
+              </button>
+              <button
+                type="button"
+                class="services-filter-option"
+                *ngFor="let categoria of categorieDisponibili"
+                [class.is-selected]="selectedCategoriaFilter === categoria"
+                (click)="selectCategoriaFilter(categoria, $event)"
+                role="option"
+                [attr.aria-selected]="selectedCategoriaFilter === categoria"
+              >
+                {{ categoria }}
+              </button>
+            </div>
+          </div>
 
-          <label class="services-filter">
+          <div
+            class="services-filter services-filter--custom"
+            [class.is-open]="openFilterDropdown === 'marca'"
+            (click)="$event.stopPropagation()"
+          >
             <span>Marca</span>
-            <select [ngModel]="selectedMarcaFilter" (ngModelChange)="onMarcaFilterChange($event)" name="marcaFilter">
-              <option value="">Tutte le marche</option>
-              <option *ngFor="let marca of marcheDisponibili" [value]="marca">{{ marca }}</option>
-            </select>
-          </label>
+            <button
+              type="button"
+              class="services-filter-trigger"
+              (click)="toggleFilterDropdown('marca', $event)"
+              [attr.aria-expanded]="openFilterDropdown === 'marca'"
+              aria-haspopup="listbox"
+            >
+              <span>{{ marcaFilterLabel }}</span>
+              <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div *ngIf="openFilterDropdown === 'marca'" class="services-filter-menu" role="listbox">
+              <button
+                type="button"
+                class="services-filter-option"
+                [class.is-selected]="!selectedMarcaFilter"
+                (click)="selectMarcaFilter('', $event)"
+                role="option"
+                [attr.aria-selected]="!selectedMarcaFilter"
+              >
+                Tutte le marche
+              </button>
+              <button
+                type="button"
+                class="services-filter-option"
+                *ngFor="let marca of marcheDisponibili"
+                [class.is-selected]="selectedMarcaFilter === marca"
+                (click)="selectMarcaFilter(marca, $event)"
+                role="option"
+                [attr.aria-selected]="selectedMarcaFilter === marca"
+              >
+                {{ marca }}
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
@@ -145,11 +211,12 @@
           <table class="services-table services-table--products">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>ID prodotto</th>
                 <th>Prodotto</th>
                 <th>Categoria</th>
                 <th>Prezzi</th>
                 <th>Giacenza</th>
+                <th>Formato</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -158,29 +225,36 @@
                 *ngFor="let prodotto of paginatedProdotti"
                 [class.is-selected]="selectedProdotto?.idProdotto === prodotto.idProdotto"
               >
-                <td class="services-cell-id" data-label="ID">#{{ prodotto.idProdotto }}</td>
+                <td class="services-cell-id product-cell-id" data-label="ID prodotto">#{{ prodotto.idProdotto }}</td>
                 <td class="services-cell-primary" data-label="Prodotto">
                   <button type="button" class="services-person" (click)="selectProdotto(prodotto)">
-                    <span class="services-avatar">
-                      {{ getInitials(prodotto) }}
+                    <span class="services-avatar product-photo">
+                      <img
+                        *ngIf="prodotto.foto"
+                        [src]="prodotto.foto || ''"
+                        [alt]="prodotto.nome"
+                        loading="lazy"
+                      />
+                      <i *ngIf="!prodotto.foto" class="bi bi-image" aria-hidden="true"></i>
                     </span>
                     <span>
                       <strong>{{ prodotto.nome }}</strong>
-                      <small>{{ prodotto.marca || prodotto.formato || 'Prodotto magazzino' }}</small>
+                      <small>{{ prodotto.marca || 'Marca non specificata' }}</small>
                     </span>
                   </button>
                 </td>
                 <td class="services-cell-contact" data-label="Categoria">
                   <span class="services-cell-email">{{ prodotto.categoria || '-' }}</span>
-                  <span class="services-cell-phone">{{ prodotto.marca || 'Marca non specificata' }}</span>
                 </td>
                 <td class="services-cell-contact" data-label="Prezzi">
                   <span class="services-cell-email">Vendita {{ prodotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
                   <span class="services-cell-phone">Acquisto {{ prodotto.prezzoAcquisto | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
                 </td>
-                <td class="services-cell-date" data-label="Giacenza">
-                  {{ prodotto.qta }}
-                  <span class="services-cell-phone">{{ prodotto.formato || 'Formato non specificato' }}</span>
+                <td class="services-cell-date product-stock-cell" data-label="Giacenza">
+                  <strong>{{ prodotto.qta }}</strong>
+                </td>
+                <td class="services-cell-contact product-format-cell" data-label="Formato">
+                  <span class="services-cell-email">{{ prodotto.formato || '-' }}</span>
                 </td>
                 <td class="services-actions-cell" data-label="Azioni">
                   <div class="services-actions" aria-label="Azioni prodotto">
@@ -227,11 +301,12 @@
           <table class="services-table services-table--products">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>ID prodotto</th>
                 <th>Prodotto</th>
                 <th>Categoria</th>
                 <th>Prezzi</th>
                 <th>Giacenza</th>
+                <th>Formato</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -240,29 +315,36 @@
                 *ngFor="let prodotto of prodottiDaRiordinare"
                 [class.is-selected]="selectedProdotto?.idProdotto === prodotto.idProdotto"
               >
-                <td class="services-cell-id" data-label="ID">#{{ prodotto.idProdotto }}</td>
+                <td class="services-cell-id product-cell-id" data-label="ID prodotto">#{{ prodotto.idProdotto }}</td>
                 <td class="services-cell-primary" data-label="Prodotto">
                   <button type="button" class="services-person" (click)="selectProdotto(prodotto, true)">
-                    <span class="services-avatar">
-                      {{ getInitials(prodotto) }}
+                    <span class="services-avatar product-photo">
+                      <img
+                        *ngIf="prodotto.foto"
+                        [src]="prodotto.foto || ''"
+                        [alt]="prodotto.nome"
+                        loading="lazy"
+                      />
+                      <i *ngIf="!prodotto.foto" class="bi bi-image" aria-hidden="true"></i>
                     </span>
                     <span>
                       <strong>{{ prodotto.nome }}</strong>
-                      <small>{{ prodotto.marca || prodotto.formato || 'Prodotto magazzino' }}</small>
+                      <small>{{ prodotto.marca || 'Marca non specificata' }}</small>
                     </span>
                   </button>
                 </td>
                 <td class="services-cell-contact" data-label="Categoria">
                   <span class="services-cell-email">{{ prodotto.categoria || '-' }}</span>
-                  <span class="services-cell-phone">{{ prodotto.marca || 'Marca non specificata' }}</span>
                 </td>
                 <td class="services-cell-contact" data-label="Prezzi">
                   <span class="services-cell-email">Vendita {{ prodotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
                   <span class="services-cell-phone">Acquisto {{ prodotto.prezzoAcquisto | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</span>
                 </td>
-                <td class="services-cell-date" data-label="Giacenza">
-                  {{ prodotto.qta }}
-                  <span class="services-cell-phone">{{ prodotto.formato || 'Formato non specificato' }}</span>
+                <td class="services-cell-date product-stock-cell" data-label="Giacenza">
+                  <strong>{{ prodotto.qta }}</strong>
+                </td>
+                <td class="services-cell-contact product-format-cell" data-label="Formato">
+                  <span class="services-cell-email">{{ prodotto.formato || '-' }}</span>
                 </td>
                 <td class="services-actions-cell" data-label="Azioni">
                   <div class="services-actions" aria-label="Azioni prodotto da riordinare">
@@ -287,10 +369,10 @@
             <h2>
               {{
                 isCreateMode
-                  ? 'Inserisci nuovo prodotto'
+                  ? 'Nuova scheda magazzino'
                   : selectedProdotto
-                    ? 'Modifica prodotto selezionato'
-                    : 'Seleziona un prodotto da modificare'
+                    ? 'Modifica scheda selezionata'
+                    : 'Seleziona una scheda da modificare'
               }}
             </h2>
           </div>
@@ -344,7 +426,7 @@
                 </span>
                 <span class="services-profile-tag" [class.is-muted]="newProdotto.qta === null">
                   <i class="bi bi-box-seam" aria-hidden="true"></i>
-                  Qta: {{ newProdotto.qta !== null ? newProdotto.qta : 'Da specificare' }}
+                  Giacenza: {{ newProdotto.qta !== null ? newProdotto.qta : 'Da specificare' }}
                 </span>
               </div>
             </div>
@@ -353,7 +435,7 @@
           <div class="services-create-shell">
             <div class="services-form__grid services-form__grid--create">
               <label class="services-field services-create-field services-create-field--wide">
-                <span>Nome Prodotto</span>
+                <span>Nome</span>
                 <input [(ngModel)]="newProdotto.nome" name="newNome" type="text" required />
               </label>
 
@@ -378,7 +460,7 @@
               </label>
 
               <label class="services-field services-create-field services-create-field--half">
-                <span>Quantita</span>
+                <span>Giacenza</span>
                 <input [(ngModel)]="newProdotto.qta" name="newQta" type="number" step="1" min="0" required />
               </label>
 
@@ -397,7 +479,7 @@
           <div class="services-editor-actions">
             <button type="submit" class="services-button services-button--save" [disabled]="isCreating || !isNewProdottoValid">
               <i class="bi bi-check2" aria-hidden="true"></i>
-              {{ isCreating ? 'Inserimento...' : 'Inserisci prodotto' }}
+              Inserisci
             </button>
             <button type="button" class="services-button services-button--ghost" (click)="cancelCreateProdotto()" [disabled]="isCreating">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -408,7 +490,7 @@
 
         <div *ngIf="!isCreateMode && (!selectedProdotto || !draftProdotto)" class="services-empty-state services-empty-state--editor">
           <i class="bi bi-box-seam" aria-hidden="true"></i>
-          Seleziona un prodotto dalla tabella per modificarlo oppure creane uno nuovo.
+          Seleziona una scheda dalla tabella per modificarla oppure creane una nuova.
         </div>
 
         <form *ngIf="!isCreateMode && selectedProdotto && draftProdotto" class="services-form services-form--edit services-panel-form" [class.is-closing]="isEditClosing" (ngSubmit)="saveProdotto()">
@@ -435,7 +517,7 @@
           <div class="services-create-shell">
             <div class="services-form__grid services-form__grid--create">
               <label class="services-field services-edit-field services-edit-field--wide">
-                <span>Nome Prodotto</span>
+                <span>Nome</span>
                 <input [(ngModel)]="draftProdotto.nome" name="nome" type="text" required />
               </label>
 
@@ -460,7 +542,7 @@
               </label>
 
               <label class="services-field services-edit-field services-edit-field--half">
-                <span>Quantita</span>
+                <span>Giacenza</span>
                 <input [(ngModel)]="draftProdotto.qta" name="qta" type="number" step="1" min="0" required />
               </label>
 

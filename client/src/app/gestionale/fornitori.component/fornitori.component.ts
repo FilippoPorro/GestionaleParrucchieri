@@ -19,7 +19,7 @@ interface FornitoreFormDraft {
   standalone: true,
   imports: [CommonModule, FormsModule, SidenavComponent, IntlTelInputComponent],
   templateUrl: './fornitori.component.html',
-  styleUrl: '../clienti.component/clienti.component.css',
+  styleUrl: './fornitori.component.css',
 })
 export class FornitoriComponent implements OnInit, OnDestroy {
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;

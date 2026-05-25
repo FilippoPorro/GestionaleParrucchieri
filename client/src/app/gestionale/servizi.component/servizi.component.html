@@ -279,13 +279,13 @@
           <div class="services-create-shell">
             <div class="services-form__grid services-form__grid--create">
               <label class="services-field services-create-field services-create-field--wide">
-                <span>Nome Servizio</span>
+                <span>Nome</span>
                 <input [(ngModel)]="newServizio.nome" name="newNome" type="text" required />
               </label>
 
               <label class="services-field services-create-field services-create-field--wide">
                 <span>Descrizione</span>
-                <textarea [(ngModel)]="newServizio.descrizione" name="newDescrizione" rows="3" style="width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 10px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+                <textarea [(ngModel)]="newServizio.descrizione" name="newDescrizione" rows="3"></textarea>
               </label>
 
               <label class="services-field services-create-field services-create-field--half">
@@ -310,16 +310,16 @@
 
               <label class="services-field services-create-field services-create-field--half">
                 <span>Tipo Prenotazione</span>
-                <select [(ngModel)]="newServizio.tipoPrenotazione" name="newTipoPrenotazione" style="width: 100%; height: 46px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 0 14px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; cursor: pointer;">
+                <select [(ngModel)]="newServizio.tipoPrenotazione" name="newTipoPrenotazione">
                   <option value="sito">Sito (Prenotazione online)</option>
                   <option value="telefono">Telefono (Solo chiamata)</option>
                   <option value="consulenza">Consulenza (Pre-approvazione)</option>
                 </select>
               </label>
 
-              <label class="services-field services-create-field services-create-field--half" style="display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; min-height: 46px;">
-                <input [(ngModel)]="newServizio.visualizzazioneSito" name="newVisualizzazioneSito" type="checkbox" style="width: 20px; height: 20px; accent-color: #be8640; cursor: pointer;" />
-                <span style="margin: 0;">Visibile sul sito web pubblico</span>
+              <label class="services-field services-create-field services-create-field--half services-check-field">
+                <input [(ngModel)]="newServizio.visualizzazioneSito" name="newVisualizzazioneSito" type="checkbox" />
+                <span>Visibile sul sito web pubblico</span>
               </label>
             </div>
           </div>
@@ -327,7 +327,7 @@
           <div class="services-editor-actions">
             <button type="submit" class="services-button services-button--save" [disabled]="isCreating || !isNewServizioValid">
               <i class="bi bi-check2" aria-hidden="true"></i>
-              {{ isCreating ? 'Inserimento...' : 'Inserisci servizio' }}
+              Inserisci
             </button>
             <button type="button" class="services-button services-button--ghost" (click)="cancelCreateServizio()" [disabled]="isCreating">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -370,13 +370,13 @@
           <div class="services-create-shell">
             <div class="services-form__grid services-form__grid--create">
               <label class="services-field services-edit-field services-edit-field--wide">
-                <span>Nome Servizio</span>
+                <span>Nome</span>
                 <input [(ngModel)]="draftServizio.nome" name="nome" type="text" required />
               </label>
 
               <label class="services-field services-edit-field services-edit-field--wide">
                 <span>Descrizione</span>
-                <textarea [(ngModel)]="draftServizio.descrizione" name="descrizione" rows="3" style="width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 10px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; resize: vertical;"></textarea>
+                <textarea [(ngModel)]="draftServizio.descrizione" name="descrizione" rows="3"></textarea>
               </label>
 
               <label class="services-field services-edit-field services-edit-field--half">
@@ -401,16 +401,16 @@
 
               <label class="services-field services-edit-field services-edit-field--half">
                 <span>Tipo Prenotazione</span>
-                <select [(ngModel)]="draftServizio.tipoPrenotazione" name="tipoPrenotazione" style="width: 100%; height: 46px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(10, 8, 6, 0.5); color: #fff7e8; padding: 0 14px; font-family: inherit; font-size: inherit; outline: none; box-sizing: border-box; cursor: pointer;">
+                <select [(ngModel)]="draftServizio.tipoPrenotazione" name="tipoPrenotazione">
                   <option value="sito">Sito (Prenotazione online)</option>
                   <option value="telefono">Telefono (Solo chiamata)</option>
                   <option value="consulenza">Consulenza (Pre-approvazione)</option>
                 </select>
               </label>
 
-              <label class="services-field services-edit-field services-edit-field--half" style="display: flex; flex-direction: row; align-items: center; gap: 12px; cursor: pointer; min-height: 46px;">
-                <input [(ngModel)]="draftServizio.visualizzazioneSito" name="visualizzazioneSito" type="checkbox" style="width: 20px; height: 20px; accent-color: #be8640; cursor: pointer;" />
-                <span style="margin: 0;">Visibile sul sito web pubblico</span>
+              <label class="services-field services-edit-field services-edit-field--half services-check-field">
+                <input [(ngModel)]="draftServizio.visualizzazioneSito" name="visualizzazioneSito" type="checkbox" />
+                <span>Visibile sul sito web pubblico</span>
               </label>
             </div>
           </div>

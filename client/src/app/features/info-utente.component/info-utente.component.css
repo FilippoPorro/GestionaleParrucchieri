@@ -407,13 +407,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.05), transparent 22%),
-    linear-gradient(145deg, rgba(27, 24, 21, 0.96), rgba(8, 8, 8, 0.98));
-  border: 1px solid rgba(212, 176, 106, 0.24);
-  color: var(--gold-soft);
+  background: linear-gradient(135deg, #f6dfad, #d4a35f 55%, #9f6530);
+  border: 1px solid rgba(255, 226, 175, 0.42);
+  color: #201207;
   font-size: 34px;
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: 0.04em;
   box-shadow: var(--shadow-lg);
 }
 

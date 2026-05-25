@@ -1586,6 +1586,149 @@
   margin-left: auto;
 }
 
+.services-card--editor {
+  border-color: rgba(242, 209, 139, 0.2);
+  background:
+    linear-gradient(180deg, rgba(16, 12, 9, 0.88), rgba(8, 7, 6, 0.72)),
+    rgba(0, 0, 0, 0.62);
+}
+
+.services-card--editor .services-card__head {
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(242, 209, 139, 0.14);
+}
+
+.services-card--editor .services-card__head h2 {
+  color: #fff8ec;
+  font-size: clamp(28px, 3.3vw, 46px);
+  line-height: 1.04;
+}
+
+.services-card--editor .services-panel-form {
+  gap: 18px;
+}
+
+.services-card--editor .services-create-header {
+  align-items: center;
+  padding: 20px 22px;
+  border-color: rgba(242, 209, 139, 0.28);
+  background:
+    linear-gradient(90deg, rgba(242, 209, 139, 0.14), rgba(242, 209, 139, 0.035) 58%, transparent),
+    rgba(14, 10, 8, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.services-card--editor .services-create-header > div > strong {
+  color: #fff8ec;
+  font-size: 21px;
+  line-height: 1.18;
+}
+
+.services-card--editor .services-create-header > div > span {
+  color: rgba(255, 248, 236, 0.72);
+  font-size: 14px;
+}
+
+.services-card--editor .services-profile-tags {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.services-card--editor .services-profile-tag {
+  justify-content: flex-start;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-color: rgba(242, 209, 139, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014)),
+    rgba(8, 6, 5, 0.55);
+  color: rgba(255, 248, 236, 0.84);
+  font-size: 13px;
+}
+
+.services-card--editor .services-create-shell {
+  padding: 18px;
+  border: 1px solid rgba(242, 209, 139, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.services-card--editor .services-form--create .services-form__grid--create,
+.services-card--editor .services-form--edit .services-form__grid--create {
+  gap: 18px 20px;
+}
+
+.services-card--editor .services-form--create .services-create-field--wide,
+.services-card--editor .services-form--edit .services-edit-field--wide {
+  grid-column: 1 / -1;
+}
+
+.services-card--editor .services-field span {
+  color: rgba(255, 226, 175, 0.86);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.services-card--editor .services-field input,
+.services-card--editor .services-field textarea,
+.services-card--editor .services-field select {
+  min-height: 54px;
+  border-color: rgba(242, 209, 139, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    rgba(5, 4, 3, 0.68);
+  color: #fff8ec;
+  font-size: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.services-card--editor .services-field textarea {
+  min-height: 118px;
+  resize: vertical;
+}
+
+.services-card--editor .services-check-field {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  padding: 12px 14px;
+  border: 1px solid rgba(242, 209, 139, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    rgba(5, 4, 3, 0.68);
+  cursor: pointer;
+}
+
+.services-card--editor .services-check-field input {
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: #be8640;
+  cursor: pointer;
+}
+
+.services-card--editor .services-check-field span {
+  margin: 0;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.services-card--editor .services-editor-actions {
+  justify-content: flex-end;
+}
+
+.services-card--editor .services-editor-actions .services-button {
+  flex: 0 1 190px;
+  min-width: 170px;
+}
+
 .services-role-badge {
   display: inline-flex;
   align-items: center;

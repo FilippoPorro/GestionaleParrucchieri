@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { timeout } from 'rxjs/operators';
@@ -40,6 +40,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedCategoriaFilter = '';
   selectedMarcaFilter = '';
+  openFilterDropdown: 'categoria' | 'marca' | null = null;
   currentPage = 1;
   readonly pageSize = 10;
   isLoading = true;
@@ -110,6 +111,14 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     return this.getUniqueValues(this.prodotti.map((prodotto) => prodotto.marca));
   }
 
+  get categoriaFilterLabel(): string {
+    return this.selectedCategoriaFilter || 'Tutte le categorie';
+  }
+
+  get marcaFilterLabel(): string {
+    return this.selectedMarcaFilter || 'Tutte le marche';
+  }
+
   get prodottiInEsaurimento(): number {
     return this.prodotti.filter((prodotto) => Number(prodotto.qta) < 5).length;
   }
@@ -175,6 +184,28 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     this.isSidenavCollapsed = !this.isSidenavCollapsed;
   }
 
+  @HostListener('document:click')
+  closeFilterDropdowns(): void {
+    this.openFilterDropdown = null;
+  }
+
+  toggleFilterDropdown(dropdown: 'categoria' | 'marca', event: MouseEvent): void {
+    event.stopPropagation();
+    this.openFilterDropdown = this.openFilterDropdown === dropdown ? null : dropdown;
+  }
+
+  selectCategoriaFilter(value: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.onCategoriaFilterChange(value);
+    this.openFilterDropdown = null;
+  }
+
+  selectMarcaFilter(value: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.onMarcaFilterChange(value);
+    this.openFilterDropdown = null;
+  }
+
   onSearchTermChange(term: string): void {
     this.searchTerm = term;
     this.currentPage = 1;
@@ -193,6 +224,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
   resetFilters(): void {
     this.selectedCategoriaFilter = '';
     this.selectedMarcaFilter = '';
+    this.openFilterDropdown = null;
     this.currentPage = 1;
   }
 
