@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ServiziService } from '../../services/servizio';
 import { Servizio } from '../../models/servizio.model';
 import { forkJoin } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 interface OpeningInterval {
   start: string;
@@ -57,7 +58,7 @@ export class AppuntamentiComponent implements OnInit {
   private readonly mobileBreakpoint = 768;
   private readonly minimumAppointmentDurationMinutes = 30;
 
-  private api = 'http://localhost:3000/api/auth';
+  private api = `${environment.apiUrl}/auth`;
   private readonly openingSchedule: Record<number, DailySchedule> = {
     0: { name: 'Domenica', intervals: [] },
     1: { name: 'Lunedi', intervals: [] },

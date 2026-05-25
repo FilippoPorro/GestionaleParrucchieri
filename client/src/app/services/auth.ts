@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ProdottoService } from './prodotto';
+import { environment } from '../../environments/environment';
 
 interface LoginResponse {
   token: string;
@@ -32,7 +33,7 @@ export interface AuthUserSummary {
   providedIn: 'root',
 })
 export class AuthService {
-  private api = 'http://localhost:3000/api/auth';
+  private api = `${environment.apiUrl}/auth`;
   private readonly TOKEN_KEY = 'login_token';
 
   private _token = signal<string | null>(this.getStoredToken());

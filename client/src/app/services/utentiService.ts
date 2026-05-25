@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Utente } from '../models/utente.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,7 @@ import { Utente } from '../models/utente.model';
 
 export class UtentiService {
   constructor(private http: HttpClient) {}
-  private api = 'http://localhost:3000/api/utenti';
+  private api = `${environment.apiUrl}/utenti`;
 
   private normalizeUtentiResponse(response: Utente[] | { clienti?: Utente[]; operatori?: Utente[] }): Utente[] {
     if (Array.isArray(response)) {

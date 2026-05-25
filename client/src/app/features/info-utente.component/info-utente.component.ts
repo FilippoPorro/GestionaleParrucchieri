@@ -13,6 +13,7 @@ import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
 
 import { AuthService } from '../../services/auth';
 import { NavbarComponent } from '../navbar.component/navbar.component';
+import { environment } from '../../../environments/environment';
 
 interface UserProfile {
   idUtente: number;
@@ -54,7 +55,7 @@ interface CalendarPickerDay {
   styleUrls: ['./info-utente.component.css']
 })
 export class InfoUtenteComponent implements OnInit {
-  private api = 'http://localhost:3000/api/auth';
+  private api = `${environment.apiUrl}/auth`;
   private changePasswordMessageTimeout: ReturnType<typeof setTimeout> | null = null;
   private changePasswordMessageHideTimeout: ReturnType<typeof setTimeout> | null = null;
   private birthDatePickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;

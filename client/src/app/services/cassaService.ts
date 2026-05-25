@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AppuntamentoDaIncassare {
   idAppuntamento: number;
@@ -25,7 +26,7 @@ export interface AppuntamentoDaIncassare {
   providedIn: 'root'
 })
 export class CassaService {
-  private api = 'http://localhost:3000/api/cassa';
+  private api = `${environment.apiUrl}/cassa`;
 
   constructor(private http: HttpClient) {}
 

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Appuntamento } from '../models/appuntamento.model';
+import { environment } from '../../environments/environment';
 
 export interface CreaAppuntamentoPayload {
   idCliente?: number | null;
@@ -32,7 +33,7 @@ export interface AggiornaAppuntamentoPayload {
   providedIn: 'root',
 })
 export class AppuntamentoService {
-  private api = 'http://localhost:3000/api/appuntamenti';
+  private api = `${environment.apiUrl}/appuntamenti`;
 
   constructor(private http: HttpClient) {}
 

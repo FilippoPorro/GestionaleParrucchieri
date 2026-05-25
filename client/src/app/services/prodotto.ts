@@ -2,6 +2,7 @@ import { Injectable, signal, WritableSignal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface Prodotto {
   idProdotto: number;
@@ -51,9 +52,9 @@ export class ProdottoService {
   private _cartRemainingSeconds: WritableSignal<number> = signal(0);
   cartRemainingSeconds = this._cartRemainingSeconds.asReadonly();
 
-  private apiUrl = 'http://localhost:3000/api/prodotti';
-  private apiBaseUrl = 'http://localhost:3000';
-  private cartApiUrl = 'http://localhost:3000/api/cart';
+  private apiUrl = `${environment.apiUrl}/prodotti`;
+  private apiBaseUrl = environment.apiBaseUrl;
+  private cartApiUrl = `${environment.apiUrl}/cart`;
 
   constructor(private http: HttpClient) {
     this.loadCart();
@@ -422,7 +423,7 @@ export class ProdottoService {
   }
 
   updateStock(cartItems: Prodotto[]) {
-    return this.http.post('http://localhost:3000/api/products/update-stock', cartItems);
+    return this.http.post(`${environment.apiUrl}/products/update-stock`, cartItems);
   }
 
   completeCheckout(
@@ -430,7 +431,7 @@ export class ProdottoService {
     total: number,
     customer: CheckoutCustomerData
   ) {
-    return this.http.post('http://localhost:3000/api/checkout/complete', {
+    return this.http.post(`${environment.apiUrl}/checkout/complete`, {
       cartId: this.getCartId(),
       cartItems,
       total,

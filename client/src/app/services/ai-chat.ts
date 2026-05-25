@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -28,14 +29,14 @@ export interface ProductCard {
 
 @Injectable({ providedIn: 'root' })
 export class AiChatService {
-  private apiBaseUrl = 'http://localhost:3000';
+  private apiBaseUrl = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
 
   async send(messages: ChatMessage[]): Promise<{ reply: string; services: ServiceCard[]; products: ProductCard[] }> {
     const request = firstValueFrom(
       this.http.post<{ reply?: string; services?: ServiceCard[]; products?: ProductCard[] }>(
-        'http://localhost:3000/api/chat',
+        `${environment.apiUrl}/chat`,
         { messages }
       )
     );

@@ -11,6 +11,7 @@ import { CheckoutCustomerData, Prodotto } from '../../services/prodotto';
 import { ProdottoService } from '../../services/prodotto';
 import { LockerService, LockerOption } from '../../services/locker';
 import { ChangeDetectorRef } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
@@ -28,7 +29,7 @@ L.Icon.Default.mergeOptions({
   styleUrl: './payment.component.css',
 })
 export class PaymentComponent implements OnInit, AfterViewChecked {
-  private authApi = 'http://localhost:3000/api/auth';
+  private authApi = `${environment.apiUrl}/auth`;
 
   cartItems: Prodotto[] = [];
   totalQuantity: number = 0;

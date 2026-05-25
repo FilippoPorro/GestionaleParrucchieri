@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Fornitore } from '../models/fornitore.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FornitoriService {
-  private api = 'http://localhost:3000/api/fornitori';
+  private api = `${environment.apiUrl}/fornitori`;
 
   constructor(private http: HttpClient) {}
 

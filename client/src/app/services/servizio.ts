@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Servizio } from '../models/servizio.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ServiziService {
   cart: WritableSignal<Servizio[]> = signal([]);
-  private apiUrl = 'http://localhost:3000/api/servizi';
+  private apiUrl = `${environment.apiUrl}/servizi`;
 
   constructor(private http: HttpClient) { }
 
