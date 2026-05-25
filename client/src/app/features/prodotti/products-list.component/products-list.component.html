@@ -14,8 +14,8 @@
       </p>
     </div>
 
-    @if (productsMD | async; as products) {
-      @if (products.length == 0) {
+    @if (productsLoaded) {
+      @if (allProducts.length == 0) {
         <div class="products-empty">
           <div class="products-empty-title">Nessun prodotto disponibile</div>
           <div class="products-empty-text">
@@ -84,9 +84,9 @@
           </div>
         </div>
 
-        @if (getFilteredProducts(products).length > 0) {
+        @if (getFilteredProducts(allProducts).length > 0) {
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 products-grid">
-            @for (product of getFilteredProducts(products); track product.idProdotto) {
+            @for (product of getFilteredProducts(allProducts); track product.idProdotto) {
                 <div class="col">
                   <app-product-card [product]="product" (addProductToCart)="onAddToCart($event)">
                   </app-product-card>

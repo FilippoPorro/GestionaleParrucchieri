@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
 import { NavbarComponent } from '../../navbar.component/navbar.component';
@@ -30,8 +30,8 @@ import { ProdottoService } from '../../../services/prodotto';
   styleUrls: ['./products-list.component.css']
 })
 export class ProductsListComponent implements OnInit, OnDestroy {
-  productsMD!: Observable<Prodotto[]>;
   allProducts: Prodotto[] = [];
+  productsLoaded = false;
 
   selectedCategory: string = 'all';
   searchTerm: string = '';
@@ -48,7 +48,9 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   private alertTimeout: ReturnType<typeof setTimeout> | null = null;
   private removeAlertTimeout: ReturnType<typeof setTimeout> | null = null;
   private productsSub?: Subscription;
+  private productsRefreshInterval: ReturnType<typeof setInterval> | null = null;
   private pendingCartProductIds = new Set<number>();
+  private readonly productsRefreshIntervalMs = 3000;
 
   constructor(
     private prodottiService: ProdottoService,
@@ -58,12 +60,8 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.productsMD = this.prodottiService.getProdotti();
-    this.productsSub = this.productsMD.subscribe(products => {
-      this.allProducts = products;
-      this.categories = [...new Set(products.map(p => p.categoria))];
-      this.forceUiUpdate();
-    });
+    this.loadProducts();
+    this.productsRefreshInterval = setInterval(() => this.loadProducts(), this.productsRefreshIntervalMs);
   }
 
   ngOnDestroy(): void {
@@ -78,6 +76,25 @@ export class ProductsListComponent implements OnInit, OnDestroy {
     if (this.productsSub) {
       this.productsSub.unsubscribe();
     }
+
+    if (this.productsRefreshInterval) {
+      clearInterval(this.productsRefreshInterval);
+    }
+  }
+
+  private loadProducts(): void {
+    this.productsSub?.unsubscribe();
+    this.productsSub = this.prodottiService.getProdotti().subscribe({
+      next: (products) => {
+        this.productsLoaded = true;
+        this.allProducts = products;
+        this.categories = [...new Set(products.map(p => p.categoria))];
+        this.forceUiUpdate();
+      },
+      error: () => {
+        this.productsLoaded = true;
+      }
+    });
   }
 
   private forceUiUpdate(): void {
@@ -162,6 +179,7 @@ export class ProductsListComponent implements OnInit, OnDestroy {
     this.prodottiService.addProductToCart(product).subscribe({
       next: () => {
         this.pendingCartProductIds.delete(product.idProdotto);
+        this.loadProducts();
         this.showAddedToCartAlert(product);
       },
       error: (err) => {
