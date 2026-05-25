@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://gestionale-parrucchieri-seven.vercel.app/',
+  apiBaseUrl: 'https://gestionaleparrucchieri.onrender.com',
   apiUrl: 'https://gestionaleparrucchieri.onrender.com/api'
 };

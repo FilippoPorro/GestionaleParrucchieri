@@ -29,6 +29,16 @@ connectDatabase().then(() => {
 });
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+const allowedFrontendOrigins = (
+  process.env.FRONTEND_URLS ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:4200"
+)
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
   api_key: process.env.CLOUDINARY_API_KEY as string,
@@ -43,7 +53,13 @@ app.use("/", express.static("./static"));
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:4200",
+    origin: (origin, callback) => {
+      if (!origin || allowedFrontendOrigins.includes(origin.replace(/\/+$/, ""))) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS origin non consentita: ${origin}`));
+    },
     credentials: true,
   })
 );
