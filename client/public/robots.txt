@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://sito-parrucchieri-seven.vercel.app/sitemap.xml
+Sitemap: https://sito-parrucchieri-seven.vercel.app/sitemap.txt
