@@ -59,6 +59,14 @@ app.use("/", (req, res, next) => {
 
 app.use("/", express.static("./static"));
 
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "gestionale-parrucchieri-api",
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(
   cors({
     origin: (origin, callback) => {
