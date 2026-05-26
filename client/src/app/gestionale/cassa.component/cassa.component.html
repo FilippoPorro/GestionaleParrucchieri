@@ -215,7 +215,13 @@
                 <div class="cash-receipt-item__qty">
                   <button type="button" class="cash-receipt-item__qty-btn" (click)="decreaseItemQty(i)">-</button>
                   <span class="cash-receipt-item__qty-val">{{ item.quantita }}</span>
-                  <button type="button" class="cash-receipt-item__qty-btn" (click)="increaseItemQty(i)">+</button>
+                  <button
+                    type="button"
+                    class="cash-receipt-item__qty-btn"
+                    (click)="increaseItemQty(i)"
+                    [disabled]="item.tipo === 'servizio'"
+                    [title]="item.tipo === 'servizio' ? 'I servizi restano a quantita 1' : 'Aumenta quantita'"
+                  >+</button>
                 </div>
                 <label class="cash-receipt-item__unit-price">
                   <span>&euro;</span>

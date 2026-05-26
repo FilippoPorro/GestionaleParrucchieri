@@ -187,7 +187,13 @@ export class CassaComponent implements OnInit {
 
     const existing = this.receiptItems.find(item => item.tipo === 'servizio' && item.id === servId);
     if (existing) {
-      existing.quantita++;
+      existing.quantita = 1;
+      this.selectedServizioId = null;
+      this.serviceSearchQuery = '';
+      this.errorMessage = 'Questo servizio e gia presente nello scontrino: la quantita resta 1.';
+      this.successMessage = '';
+      this.saveReceiptDraft();
+      return;
     } else {
       this.receiptItems.push({
         id: serv.idServizio,
@@ -361,6 +367,18 @@ export class CassaComponent implements OnInit {
 
   increaseItemQty(index: number): void {
     const item = this.receiptItems[index];
+    if (!item) {
+      return;
+    }
+
+    if (item.tipo === 'servizio') {
+      item.quantita = 1;
+      this.errorMessage = 'La quantita dei servizi resta sempre 1.';
+      this.successMessage = '';
+      this.saveReceiptDraft();
+      return;
+    }
+
     if (item.tipo === 'prodotto') {
       const prod = this.prodotti.find(p => p.idProdotto === item.id);
       if (prod && item.quantita >= prod.qta) {
@@ -520,6 +538,10 @@ export class CassaComponent implements OnInit {
           typeof item.prezzoUnitario === 'number' &&
           typeof item.quantita === 'number'
         )
+          .map(item => ({
+            ...item,
+            quantita: item.tipo === 'servizio' ? 1 : Math.max(1, Math.floor(item.quantita))
+          }))
         : [];
 
       if (receiptItems.length === 0) {
