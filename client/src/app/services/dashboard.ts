@@ -62,6 +62,50 @@ export interface ReportCustomerFrequencyDatum {
   discount: number;
 }
 
+export interface ReportCustomerSegmentDatum {
+  label: string;
+  customers: number;
+  appointments: number;
+  averageSpend: number;
+  revenue: number;
+}
+
+export interface ReportAgeDistributionDatum {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ReportServiceDatum {
+  label: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface ReportBusiestDayDatum {
+  label: string;
+  appointments: number;
+  revenue: number;
+  drivingSegment: string;
+  drivingSegmentCount: number;
+  drivingSegmentPercentage: number;
+}
+
+export interface ReportOperatorPerformanceDatum {
+  operatorId: number;
+  name: string;
+  tasks: number;
+  revenue: number;
+}
+
+export interface ReportTopProductDatum {
+  id: number;
+  label: string;
+  quantity: number;
+  revenue: number;
+  percentage: number;
+}
+
 export interface ReportData {
   range: {
     days: number;
@@ -87,6 +131,25 @@ export interface ReportData {
   };
   customers: {
     frequency: ReportCustomerFrequencyDatum[];
+    total: number;
+    classifiedTotal: number;
+    segments: ReportCustomerSegmentDatum[];
+    averageAge: number;
+    ageDistribution: ReportAgeDistributionDatum[];
+  };
+  services: {
+    byType: ReportServiceDatum[];
+  };
+  traffic: {
+    busiestDays: ReportBusiestDayDatum[];
+  };
+  operators: {
+    performance: ReportOperatorPerformanceDatum[];
+  };
+  retail: {
+    revenue: number;
+    percentageOnSales: number;
+    topProducts: ReportTopProductDatum[];
   };
 }
 

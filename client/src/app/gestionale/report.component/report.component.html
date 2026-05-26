@@ -26,7 +26,7 @@
         <p class="management-hero__eyebrow">Gestionale</p>
         <h1>Report clienti e incassi</h1>
         <p class="management-hero__copy" *ngIf="reportData">
-          Panorama su categorie prodotto, metodi di pagamento, andamento settimanale e frequenza clienti.
+          Panorama su clienti, frequenza, servizi, operatori, vendite prodotto, pagamenti e andamento settimanale.
           Periodo analizzato: {{ reportData.range.start }} - {{ reportData.range.end }}
         </p>
       </div>
@@ -76,10 +76,10 @@
         </article>
         <article class="management-stat-card">
           <div class="management-stat-card__top">
-            <p>Prodotti venduti</p>
+            <p>Clienti analizzati</p>
           </div>
-          <strong>{{ reportData.summary.totalProductsSold }}</strong>
-          <span class="management-stat-card__trend">Quantita' venduta al banco</span>
+          <strong>{{ reportData.customers.total }}</strong>
+          <span class="management-stat-card__trend">Con appuntamenti completati nell'anno</span>
         </article>
         <article class="management-stat-card">
           <div class="management-stat-card__top">
@@ -87,6 +87,18 @@
           </div>
           <strong>{{ reportData.summary.totalCompletedAppointments }}</strong>
           <span class="management-stat-card__trend">Ultimo periodo</span>
+        </article>
+      </section>
+
+      <section class="management-stats management-stats--segments">
+        <article class="management-stat-card" *ngFor="let segment of customerSegments">
+          <div class="management-stat-card__top">
+            <p>{{ formatSegmentLabel(segment.label) }}</p>
+          </div>
+          <strong>{{ segment.customers }}</strong>
+          <span class="management-stat-card__trend">
+            Passaggi {{ segment.appointments }} · Spesa media {{ formatCurrency(segment.averageSpend) }}
+          </span>
         </article>
       </section>
 
@@ -154,6 +166,123 @@
 
           <ng-template #noCustomers>
             <p class="report-state">Nessun cliente con appuntamenti completati nell'ultimo anno.</p>
+          </ng-template>
+        </article>
+
+        <article class="management-panel report-panel">
+          <div class="management-panel__head">
+            <span>Eta'</span>
+            <h2>Eta' media e distribuzione</h2>
+          </div>
+          <p class="report-panel__copy">
+            Eta' media clientela: <strong>{{ reportData.customers.averageAge }}</strong> anni.
+          </p>
+          <div class="report-table report-table--age" *ngIf="reportData.customers.ageDistribution.length > 0; else noAgeData">
+            <div class="report-table__head">
+              <span>Fascia eta'</span>
+              <span>Clienti</span>
+              <span>Percentuale</span>
+            </div>
+            <div class="report-table__row" *ngFor="let row of reportData.customers.ageDistribution">
+              <span>{{ row.label }}</span>
+              <span>{{ row.count }}</span>
+              <span>{{ row.percentage }}%</span>
+            </div>
+          </div>
+          <ng-template #noAgeData>
+            <p class="report-state">Nessun dato anagrafico disponibile.</p>
+          </ng-template>
+        </article>
+
+        <article class="management-panel report-panel">
+          <div class="management-panel__head">
+            <span>Affluenza</span>
+            <h2>Giorni piu' forti</h2>
+          </div>
+          <div class="report-list" *ngIf="busiestDays.length > 0; else noTraffic">
+            <div class="report-list__row report-list__row--stack" *ngFor="let day of busiestDays">
+              <span>{{ day.label }}</span>
+              <strong>{{ day.appointments }} passaggi</strong>
+              <span>
+                Trainato da {{ formatSegmentLabel(day.drivingSegment) }} ({{ day.drivingSegmentPercentage }}%) ·
+                {{ formatCurrency(day.revenue) }}
+              </span>
+            </div>
+          </div>
+          <ng-template #noTraffic>
+            <p class="report-state">Nessun appuntamento completato nel periodo.</p>
+          </ng-template>
+        </article>
+
+        <article class="management-panel report-panel report-panel--wide">
+          <div class="management-panel__head">
+            <span>Servizi</span>
+            <h2>Tagli, pieghe, colori, schiariture e altri servizi</h2>
+          </div>
+          <div class="report-table report-table--services" *ngIf="topServices.length > 0; else noServices">
+            <div class="report-table__head">
+              <span>Servizio</span>
+              <span>Quantita'</span>
+              <span>Fatturato</span>
+            </div>
+            <div class="report-table__row" *ngFor="let row of topServices">
+              <span>{{ row.label }}</span>
+              <span>{{ row.quantity }}</span>
+              <span>{{ formatCurrency(row.revenue) }}</span>
+            </div>
+          </div>
+          <ng-template #noServices>
+            <p class="report-state">Nessun servizio completato nel periodo.</p>
+          </ng-template>
+        </article>
+
+        <article class="management-panel report-panel report-panel--wide">
+          <div class="management-panel__head">
+            <span>Operatori</span>
+            <h2>Fatturato e mansioni per operatore</h2>
+          </div>
+          <div class="report-table report-table--operators" *ngIf="operatorPerformance.length > 0; else noOperators">
+            <div class="report-table__head">
+              <span>Operatore</span>
+              <span>Mansioni</span>
+              <span>Fatturato</span>
+            </div>
+            <div class="report-table__row" *ngFor="let row of operatorPerformance">
+              <span>{{ row.name }}</span>
+              <span>{{ row.tasks }}</span>
+              <span>{{ formatCurrency(row.revenue) }}</span>
+            </div>
+          </div>
+          <ng-template #noOperators>
+            <p class="report-state">Nessuna performance operatore disponibile.</p>
+          </ng-template>
+        </article>
+
+        <article class="management-panel report-panel report-panel--wide">
+          <div class="management-panel__head">
+            <span>Vendita</span>
+            <h2>Fatturato prodotti e prodotti con piu' peso</h2>
+          </div>
+          <p class="report-panel__copy">
+            Fatturato vendita prodotti: {{ formatCurrency(reportData.retail.revenue) }} · Incide per
+            {{ reportData.retail.percentageOnSales }}% sulle vendite registrate.
+          </p>
+          <div class="report-table report-table--products" *ngIf="topProducts.length > 0; else noProducts">
+            <div class="report-table__head">
+              <span>Prodotto</span>
+              <span>Quantita'</span>
+              <span>Fatturato</span>
+              <span>Peso</span>
+            </div>
+            <div class="report-table__row" *ngFor="let row of topProducts">
+              <span>{{ row.label }}</span>
+              <span>{{ row.quantity }}</span>
+              <span>{{ formatCurrency(row.revenue) }}</span>
+              <span>{{ row.percentage }}%</span>
+            </div>
+          </div>
+          <ng-template #noProducts>
+            <p class="report-state">Nessun prodotto venduto nel periodo.</p>
           </ng-template>
         </article>
       </section>

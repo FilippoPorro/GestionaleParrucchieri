@@ -411,6 +411,15 @@
   color: #fff8ec;
 }
 
+.report-table--age .report-table__head,
+.report-table--age .report-table__row,
+.report-table--services .report-table__head,
+.report-table--services .report-table__row,
+.report-table--operators .report-table__head,
+.report-table--operators .report-table__row {
+  grid-template-columns: 1.8fr 1fr 1fr;
+}
+
 @media (max-width: 1200px) {
   .management-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -12,7 +12,10 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import {
   DashboardService,
+  ReportBusiestDayDatum,
   ReportCustomerFrequencyDatum,
+  ReportCustomerSegmentDatum,
+  ReportOperatorPerformanceDatum,
   ReportData
 } from '../../services/dashboard';
 
@@ -79,6 +82,43 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get customerFrequencyRows(): ReportCustomerFrequencyDatum[] {
     return this.reportData?.customers.frequency || [];
+  }
+
+  get customerSegments(): ReportCustomerSegmentDatum[] {
+    return this.reportData?.customers.segments || [];
+  }
+
+  get busiestDays(): ReportBusiestDayDatum[] {
+    return this.reportData?.traffic.busiestDays || [];
+  }
+
+  get operatorPerformance(): ReportOperatorPerformanceDatum[] {
+    return this.reportData?.operators.performance || [];
+  }
+
+  get topServices() {
+    return this.reportData?.services.byType.slice(0, 12) || [];
+  }
+
+  get topProducts() {
+    return this.reportData?.retail.topProducts.slice(0, 10) || [];
+  }
+
+  get serviceRevenue(): number {
+    return this.operatorPerformance.reduce((sum, operator) => sum + operator.revenue, 0);
+  }
+
+  formatSegmentLabel(label: string): string {
+    switch (label) {
+      case 'donna':
+        return 'Donne';
+      case 'uomo':
+        return 'Uomini';
+      case 'bambino':
+        return 'Bambini';
+      default:
+        return label;
+    }
   }
 
   get cardPercentage(): string {
