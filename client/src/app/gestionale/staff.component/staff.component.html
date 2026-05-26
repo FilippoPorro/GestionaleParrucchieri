@@ -133,7 +133,7 @@
                     </span>
                   </button>
                 </td>
-                <td>
+                <td class="customers-cell-contact">
                   <span class="customers-cell-email">{{ utente.email || '-' }}</span>
                   <span class="customers-cell-phone">{{ utente.telefono || 'Telefono non inserito' }}</span>
                 </td>
@@ -143,10 +143,12 @@
                     {{ utente.ruolo || 'operatore' }}
                   </span>
                 </td>
-                <td class="customers-actions">
-                  <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
-                    <i class="bi bi-calendar3" aria-hidden="true"></i>
-                  </button>
+                <td class="customers-actions-cell">
+                  <div class="customers-actions" aria-label="Agenda personale">
+                    <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
+                      <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>

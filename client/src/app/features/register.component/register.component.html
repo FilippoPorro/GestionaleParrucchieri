@@ -31,7 +31,7 @@
             <div class="login-header-top">
                 <button type="button" class="back-button" (click)="goBack()">
                     <span class="back-icon" aria-hidden="true">←</span>
-                    <span>Torna al login</span>
+                    <span>{{ isManagementRegistration ? 'Torna indietro' : 'Torna al login' }}</span>
                 </button>
             </div>
 
@@ -143,18 +143,26 @@
                                         <i class="bi bi-chevron-left"></i>
                                     </button>
 
-                                    <strong class="register-date-picker-month">{{ birthDatePickerMonthLabel }}</strong>
+                                    <button
+                                        type="button"
+                                        class="register-date-picker-current"
+                                        [class.is-active]="birthDatePickerMode === 'years'"
+                                        (click)="toggleBirthDatePickerYears()"
+                                        aria-label="Scegli anno">
+                                        <strong class="register-date-picker-month">{{ birthDatePickerMonthLabel }}</strong>
+                                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                    </button>
 
                                     <button type="button" class="register-date-picker-nav" (click)="nextBirthDatePickerMonth()">
                                         <i class="bi bi-chevron-right"></i>
                                     </button>
                                 </div>
 
-                                <div class="register-date-picker-weekdays">
+                                <div *ngIf="birthDatePickerMode === 'days'" class="register-date-picker-weekdays">
                                     <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
                                 </div>
 
-                                <div class="register-date-picker-grid">
+                                <div *ngIf="birthDatePickerMode === 'days'" class="register-date-picker-grid">
                                     <button
                                         *ngFor="let day of birthDatePickerDays"
                                         type="button"
@@ -164,6 +172,17 @@
                                         [class.is-selected]="day.isSelected"
                                         (click)="selectBirthDatePickerDay(day)">
                                         {{ day.label }}
+                                    </button>
+                                </div>
+
+                                <div *ngIf="birthDatePickerMode === 'years'" class="register-date-picker-years">
+                                    <button
+                                        *ngFor="let year of birthDatePickerYears"
+                                        type="button"
+                                        class="register-date-picker-year-option"
+                                        [class.is-selected]="year === birthDatePickerYear"
+                                        (click)="selectBirthDatePickerYear(year)">
+                                        {{ year }}
                                     </button>
                                 </div>
                             </div>
@@ -185,7 +204,7 @@
                     {{ isLoading ? 'Creazione...' : isSuccess ? 'Account creato con successo' : 'Crea account' }}
                 </button>
 
-                <a routerLink="/login" class="btn secondary-login-btn mt-2">
+                <a *ngIf="!isManagementRegistration" routerLink="/login" class="btn secondary-login-btn mt-2">
                     Hai già un account? Accedi
                 </a>
 

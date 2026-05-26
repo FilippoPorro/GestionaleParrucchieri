@@ -14,6 +14,7 @@ import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
 import { AuthService } from '../../services/auth';
 import { NavbarComponent } from '../navbar.component/navbar.component';
 import { environment } from '../../../environments/environment';
+import { PersonalAppointmentsCalendarComponent } from '../personal-appointments-calendar.component/personal-appointments-calendar.component';
 
 interface UserProfile {
   idUtente: number;
@@ -49,7 +50,8 @@ interface CalendarPickerDay {
     FormsModule,
     NavbarComponent,
     RouterLink,
-    IntlTelInputComponent
+    IntlTelInputComponent,
+    PersonalAppointmentsCalendarComponent
   ],
   templateUrl: './info-utente.component.html',
   styleUrls: ['./info-utente.component.css']
@@ -71,6 +73,7 @@ export class InfoUtenteComponent implements OnInit {
   isLoading = true;
   isSaving = false;
   isEditMode = false;
+  showPersonalCalendar = false;
 
   errorMessage = '';
   successMessage = '';
@@ -159,6 +162,15 @@ export class InfoUtenteComponent implements OnInit {
   get isManagementUser(): boolean {
     const role = String(this.user?.ruolo ?? '').trim().toLowerCase();
     return role === 'operatore' || role === 'titolare';
+  }
+
+  togglePersonalCalendar(): void {
+    if (!this.isManagementUser) {
+      return;
+    }
+
+    this.showPersonalCalendar = !this.showPersonalCalendar;
+    this.cdr.detectChanges();
   }
 
   get accessModeLabel(): string {

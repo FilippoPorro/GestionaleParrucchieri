@@ -1,7 +1,7 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ChangeDetectorRef } from '@angular/core';
 import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
@@ -39,14 +39,17 @@ export class RegisterComponent implements OnInit {
   isLoading = false;
   isSuccess = false;
   isPhoneValid = false;
+  isManagementRegistration = false;
   alertMessage: string | null = null;
   alertType: 'success' | 'error' | 'warning' = 'error';
   birthDatePickerOpen = false;
   birthDatePickerClosing = false;
+  birthDatePickerMode: 'days' | 'years' = 'days';
   birthDatePickerMonth = new Date();
   birthDatePickerDays: CalendarPickerDay[] = [];
+  birthDatePickerYears = this.buildBirthDatePickerYears();
   readonly calendarPickerWeekdays = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'];
-  readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
+  readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', { month: 'long' });
   private birthDatePickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
   initTelOptions = {
@@ -74,10 +77,12 @@ export class RegisterComponent implements OnInit {
     autoPlaceholder: 'polite' as const
   };
 
-  constructor(public auth: AuthService, private router: Router,
+  constructor(public auth: AuthService, private router: Router, private route: ActivatedRoute,
     private cdr: ChangeDetectorRef) { }
 
   ngOnInit(): void {
+    this.isManagementRegistration =
+      this.route.snapshot.queryParamMap.get('from') === 'management' || !!this.auth.getToken();
     this.syncBirthDatePickerMonth(this.parseInputDate(this.userData.data_nascita) ?? new Date());
   }
 
@@ -205,6 +210,11 @@ export class RegisterComponent implements OnInit {
   }
 
   goBack() {
+    if (this.isManagementRegistration) {
+      this.router.navigate(['/account']);
+      return;
+    }
+
     this.router.navigate(['/login']);
   }
 
@@ -224,7 +234,12 @@ export class RegisterComponent implements OnInit {
 
   get birthDatePickerMonthLabel(): string {
     const label = this.calendarPickerMonthFormatter.format(this.birthDatePickerMonth);
-    return label.charAt(0).toUpperCase() + label.slice(1);
+    const month = label.charAt(0).toUpperCase() + label.slice(1);
+    return `${month} ${this.birthDatePickerYear}`;
+  }
+
+  get birthDatePickerYear(): number {
+    return this.birthDatePickerMonth.getFullYear();
   }
 
   toggleBirthDatePicker(): void {
@@ -233,18 +248,24 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
-    if (this.birthDatePickerCloseTimeout) {
-      clearTimeout(this.birthDatePickerCloseTimeout);
-      this.birthDatePickerCloseTimeout = null;
-    }
-
+    this.clearBirthDatePickerTimer();
     this.birthDatePickerClosing = false;
     this.birthDatePickerOpen = true;
+    this.birthDatePickerMode = 'days';
     this.syncBirthDatePickerMonth(this.parseInputDate(this.userData.data_nascita) ?? new Date());
   }
 
-  closeBirthDatePicker(): void {
-    if (!this.birthDatePickerOpen || this.birthDatePickerClosing) {
+  closeBirthDatePicker(immediate = false): void {
+    if (!this.birthDatePickerOpen && !this.birthDatePickerClosing) {
+      return;
+    }
+
+    this.clearBirthDatePickerTimer();
+
+    if (immediate) {
+      this.birthDatePickerOpen = false;
+      this.birthDatePickerClosing = false;
+      this.birthDatePickerMode = 'days';
       return;
     }
 
@@ -252,9 +273,14 @@ export class RegisterComponent implements OnInit {
     this.birthDatePickerCloseTimeout = setTimeout(() => {
       this.birthDatePickerOpen = false;
       this.birthDatePickerClosing = false;
+      this.birthDatePickerMode = 'days';
       this.birthDatePickerCloseTimeout = null;
       this.cdr.detectChanges();
     }, 180);
+  }
+
+  toggleBirthDatePickerYears(): void {
+    this.birthDatePickerMode = this.birthDatePickerMode === 'years' ? 'days' : 'years';
   }
 
   previousBirthDatePickerMonth(): void {
@@ -269,6 +295,19 @@ export class RegisterComponent implements OnInit {
     this.syncBirthDatePickerMonth(next);
   }
 
+  selectBirthDatePickerYear(year: number | string): void {
+    const parsedYear = Number(year);
+
+    if (!Number.isFinite(parsedYear)) {
+      return;
+    }
+
+    const next = new Date(this.birthDatePickerMonth);
+    next.setFullYear(parsedYear, next.getMonth(), 1);
+    this.syncBirthDatePickerMonth(next);
+    this.birthDatePickerMode = 'days';
+  }
+
   selectBirthDatePickerDay(day: CalendarPickerDay): void {
     this.userData.data_nascita = this.formatDateForInput(day.date);
     this.syncBirthDatePickerMonth(day.date);
@@ -281,6 +320,24 @@ export class RegisterComponent implements OnInit {
 
     if (!target?.closest('.birthdate-picker')) {
       this.closeBirthDatePicker();
+    }
+  }
+
+  private buildBirthDatePickerYears(): number[] {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+
+    for (let year = currentYear; year >= 1900; year--) {
+      years.push(year);
+    }
+
+    return years;
+  }
+
+  private clearBirthDatePickerTimer(): void {
+    if (this.birthDatePickerCloseTimeout) {
+      clearTimeout(this.birthDatePickerCloseTimeout);
+      this.birthDatePickerCloseTimeout = null;
     }
   }
 

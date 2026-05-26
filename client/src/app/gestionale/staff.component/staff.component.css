@@ -7,6 +7,11 @@
   table-layout: fixed;
 }
 
+.staff-table th,
+.staff-table td {
+  vertical-align: middle;
+}
+
 .staff-table th:first-child,
 .staff-table td:first-child {
   width: 92px;
@@ -15,6 +20,11 @@
 .staff-table th:nth-child(2),
 .staff-table td:nth-child(2) {
   width: 30%;
+}
+
+.staff-table th:nth-child(3),
+.staff-table td:nth-child(3) {
+  width: 28%;
 }
 
 .staff-table th:nth-child(4),
@@ -28,6 +38,10 @@
 .staff-table td:last-child {
   width: 92px;
   text-align: center;
+}
+
+.staff-table .customers-actions {
+  justify-content: center;
 }
 
 .staff-calendar-card {

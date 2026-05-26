@@ -202,6 +202,12 @@
   font-weight: 700;
 }
 
+button.profile-meta-pill,
+button.info-chip {
+  font: inherit;
+  cursor: pointer;
+}
+
 .profile-meta-pill,
 .info-chip {
   padding: 8px 13px;
@@ -209,6 +215,28 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.035);
   color: #f8f0e1;
+}
+
+.profile-role-toggle {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.profile-role-toggle:hover,
+.profile-role-toggle.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(245, 204, 112, 0.6);
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.26), rgba(212, 176, 106, 0.11)),
+    rgba(255, 255, 255, 0.04);
+  color: #fff6df;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 221, 0.14),
+    0 12px 24px rgba(0, 0, 0, 0.16);
 }
 
 .profile-meta-pill.accent,
@@ -336,6 +364,15 @@
 .profile-stage {
   display: grid;
   gap: 26px;
+}
+
+.profile-calendar-embed {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  border-radius: 14px;
+  overflow: visible;
+  background: transparent;
 }
 
 .identity-panel {

@@ -16,7 +16,18 @@
         </p>
 
         <div class="profile-meta-row" *ngIf="user && !isLoading">
-          <span class="profile-meta-pill">{{ user.ruolo || 'Cliente' }}</span>
+          <button
+            *ngIf="isManagementUser; else readonlyHeroRole"
+            type="button"
+            class="profile-meta-pill profile-role-toggle"
+            [class.is-active]="showPersonalCalendar"
+            (click)="togglePersonalCalendar()"
+          >
+            {{ user.ruolo || 'Cliente' }}
+          </button>
+          <ng-template #readonlyHeroRole>
+            <span class="profile-meta-pill">{{ user.ruolo || 'Cliente' }}</span>
+          </ng-template>
           <span class="profile-meta-pill accent" *ngIf="user.photoURL">Account Google collegato</span>
           <span class="profile-meta-pill soft" *ngIf="passwordRequired">Password da impostare</span>
         </div>
@@ -87,7 +98,18 @@
                   <p class="identity-email">{{ user.email || '-' }}</p>
 
                   <div class="identity-chips">
-                    <span class="info-chip">{{ user.ruolo || 'Cliente' }}</span>
+                    <button
+                      *ngIf="isManagementUser; else readonlyIdentityRole"
+                      type="button"
+                      class="info-chip profile-role-toggle"
+                      [class.is-active]="showPersonalCalendar"
+                      (click)="togglePersonalCalendar()"
+                    >
+                      {{ user.ruolo || 'Cliente' }}
+                    </button>
+                    <ng-template #readonlyIdentityRole>
+                      <span class="info-chip">{{ user.ruolo || 'Cliente' }}</span>
+                    </ng-template>
                     <span class="info-chip subtle" *ngIf="user.photoURL">Accesso con Google</span>
                     <span class="info-chip soft" *ngIf="user.hasPassword">Accesso protetto</span>
                   </div>
@@ -108,10 +130,20 @@
                     <a
                       *ngIf="canRegisterUsers"
                       [routerLink]="['/register']"
+                      [queryParams]="{ from: 'management' }"
                       class="edit-btn register-users-btn"
                     >
                       Registra utenti
                     </a>
+
+                    <button
+                      *ngIf="isManagementUser"
+                      type="button"
+                      class="edit-btn register-users-btn management-profile-btn"
+                      (click)="togglePersonalCalendar()"
+                    >
+                      {{ showPersonalCalendar ? 'Nascondi agenda' : 'Agenda appuntamenti' }}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -132,6 +164,21 @@
                   <strong>{{ accessModeLabel }}</strong>
                 </div>
               </div>
+            </section>
+
+            <section *ngIf="isManagementUser && showPersonalCalendar" class="profile-calendar-embed">
+              @defer (when showPersonalCalendar) {
+                <app-personal-appointments-calendar
+                  [operatorId]="user.idUtente"
+                  [operatorName]="getFullName()"
+                  [operatorEmail]="user.email || ''"
+                ></app-personal-appointments-calendar>
+              } @placeholder {
+                <div class="state-panel">
+                  <div class="state-orb"></div>
+                  <span>Caricamento agenda...</span>
+                </div>
+              }
             </section>
 
             <section class="profile-content-grid">
