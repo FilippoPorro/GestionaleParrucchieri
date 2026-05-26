@@ -149,6 +149,7 @@ export class AuthService {
     password: string,
     telefono: string,
     data_nascita: string,
+    sesso: 'm' | 'f',
     ruolo: string
   }) {
     return this.http.post<LoginResponse>(`${this.api}/register`, user)

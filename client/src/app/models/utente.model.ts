@@ -5,6 +5,7 @@ export interface Utente {
     email: string;
     telefono?: string | null;
     data_nascita?: string | null;
+    sesso?: 'm' | 'f' | null;
     ruolo?: string;
     photoURL?: string | null;
     picture?: string | null;

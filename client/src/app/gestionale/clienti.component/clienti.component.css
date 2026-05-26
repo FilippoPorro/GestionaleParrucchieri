@@ -928,7 +928,8 @@
   letter-spacing: 0.06em;
 }
 
-.customers-field input {
+.customers-field input,
+.customers-field select {
   width: 100%;
   box-sizing: border-box;
   min-height: 50px;
@@ -940,12 +941,37 @@
   font-size: 15px;
 }
 
+.customers-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  cursor: pointer;
+  padding-right: 46px;
+  border-color: rgba(242, 209, 139, 0.22);
+  background:
+    linear-gradient(45deg, transparent 50%, #f2d18b 50%) calc(100% - 24px) 50% / 7px 7px no-repeat,
+    linear-gradient(135deg, #f2d18b 50%, transparent 50%) calc(100% - 19px) 50% / 7px 7px no-repeat,
+    rgba(10, 8, 6, 0.58);
+}
+
+.customers-field select option {
+  background: #24231f;
+  color: #f8f1e7;
+}
+
+.customers-field select option:checked,
+.customers-field select option:hover {
+  background: #f2d18b;
+  color: #2b1c0f;
+}
+
 .customers-field input[readonly] {
   color: rgba(248, 241, 231, 0.72);
   cursor: default;
 }
 
-.customers-field input:focus {
+.customers-field input:focus,
+.customers-field select:focus {
   outline: none;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
@@ -1631,11 +1657,27 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
+.customers-card--editor .customers-field select {
+  min-height: 54px;
+  color: #fff8ec;
+  font-size: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
 .customers-card--editor .customers-field input:focus,
 .customers-card--editor .customers-date-trigger:hover,
 .customers-card--editor .customers-date-trigger.open {
   border-color: rgba(242, 209, 139, 0.58);
   background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
+    rgba(10, 8, 6, 0.82);
+}
+
+.customers-card--editor .customers-field select:focus {
+  border-color: rgba(242, 209, 139, 0.58);
+  background:
+    linear-gradient(45deg, transparent 50%, #fff0cd 50%) calc(100% - 24px) 50% / 7px 7px no-repeat,
+    linear-gradient(135deg, #fff0cd 50%, transparent 50%) calc(100% - 19px) 50% / 7px 7px no-repeat,
     linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018)),
     rgba(10, 8, 6, 0.82);
 }

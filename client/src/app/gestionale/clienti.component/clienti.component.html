@@ -114,6 +114,7 @@
                 <th>Cliente</th>
                 <th>Email</th>
                 <th>Telefono</th>
+                <th>Sesso</th>
                 <th>Data nascita</th>
                 <th>Azioni</th>
               </tr>
@@ -150,6 +151,7 @@
                 <td class="customers-cell-contact">
                   <span class="customers-cell-phone">{{ cliente.telefono || 'Telefono non inserito' }}</span>
                 </td>
+                <td class="customers-cell-date">{{ cliente.sesso === 'm' ? 'Maschio' : cliente.sesso === 'f' ? 'Femmina' : '-' }}</td>
                 <td class="customers-cell-date">{{ formatDate(cliente.data_nascita) }}</td>
                 <td class="customers-actions-cell">
                   <div class="customers-actions" aria-label="Azioni cliente">
@@ -352,6 +354,15 @@
                 </div>
               </div>
 
+              <label class="customers-field customers-create-field customers-create-field--half">
+                <span>Sesso</span>
+                <select [(ngModel)]="newCliente.sesso" name="newSesso" required>
+                  <option value="" disabled>Seleziona</option>
+                  <option value="m">Maschio</option>
+                  <option value="f">Femmina</option>
+                </select>
+              </label>
+
               <label class="customers-field customers-create-field customers-create-field--full">
                 <span>Ruolo</span>
                 <input [ngModel]="newCliente.ruolo" name="newRuolo" type="text" readonly />
@@ -454,6 +465,15 @@
                 <input [(ngModel)]="draftCliente.data_nascita" name="data_nascita" type="date" />
               </label>
 
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Sesso</span>
+                <select [(ngModel)]="draftCliente.sesso" name="sesso" required>
+                  <option value="" disabled>Seleziona</option>
+                  <option value="m">Maschio</option>
+                  <option value="f">Femmina</option>
+                </select>
+              </label>
+
               <label class="customers-field customers-edit-field customers-edit-field--full">
                 <span>Ruolo</span>
                 <input [ngModel]="draftCliente.ruolo || 'cliente'" name="ruolo" type="text" readonly />
@@ -465,6 +485,10 @@
             <div class="customers-meta-chip">
               <span>Ruolo</span>
               <strong>{{ draftCliente.ruolo || 'cliente' }}</strong>
+            </div>
+            <div class="customers-meta-chip">
+              <span>Sesso</span>
+              <strong>{{ draftCliente.sesso === 'm' ? 'Maschio' : draftCliente.sesso === 'f' ? 'Femmina' : '-' }}</strong>
             </div>
             <div class="customers-meta-chip">
               <span>ID cliente</span>

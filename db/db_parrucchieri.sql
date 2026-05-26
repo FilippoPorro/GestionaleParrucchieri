@@ -149,6 +149,7 @@ CREATE TABLE `utenti` (
   `password` varchar(255) NOT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `data_nascita` date DEFAULT NULL,
+  `sesso` enum('m','f') DEFAULT NULL,
   `ruolo` enum('cliente','operatore','titolare','salone') NOT NULL,
   `photoURL` text DEFAULT NULL,
   `resetPasswordToken` varchar(255) DEFAULT NULL,
@@ -160,8 +161,8 @@ CREATE TABLE `utenti` (
 -- Dump dei dati per la tabella `utenti`
 --
 
-INSERT INTO `utenti` (`idUtente`, `nome`, `cognome`, `email`, `password`, `telefono`, `data_nascita`, `ruolo`, `photoURL`, `resetPasswordToken`, `resetPasswordExpires`, `mustChangePassword`) VALUES
-(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'titolare', NULL, NULL, NULL, 0);
+INSERT INTO `utenti` (`idUtente`, `nome`, `cognome`, `email`, `password`, `telefono`, `data_nascita`, `sesso`, `ruolo`, `photoURL`, `resetPasswordToken`, `resetPasswordExpires`, `mustChangePassword`) VALUES
+(1, 'Giuseppe', 'Porro', 'beppeporro72@gmail.com', 'JSON.parse();', '+39 3393652037', '1972-04-22', 'm', 'titolare', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 

@@ -16,18 +16,7 @@
         </p>
 
         <div class="profile-meta-row" *ngIf="user && !isLoading">
-          <button
-            *ngIf="isManagementUser; else readonlyHeroRole"
-            type="button"
-            class="profile-meta-pill profile-role-toggle"
-            [class.is-active]="showPersonalCalendar"
-            (click)="togglePersonalCalendar()"
-          >
-            {{ user.ruolo || 'Cliente' }}
-          </button>
-          <ng-template #readonlyHeroRole>
-            <span class="profile-meta-pill">{{ user.ruolo || 'Cliente' }}</span>
-          </ng-template>
+          <span class="profile-meta-pill">{{ user.ruolo || 'Cliente' }}</span>
           <span class="profile-meta-pill accent" *ngIf="user.photoURL">Account Google collegato</span>
           <span class="profile-meta-pill soft" *ngIf="passwordRequired">Password da impostare</span>
         </div>
@@ -98,18 +87,7 @@
                   <p class="identity-email">{{ user.email || '-' }}</p>
 
                   <div class="identity-chips">
-                    <button
-                      *ngIf="isManagementUser; else readonlyIdentityRole"
-                      type="button"
-                      class="info-chip profile-role-toggle"
-                      [class.is-active]="showPersonalCalendar"
-                      (click)="togglePersonalCalendar()"
-                    >
-                      {{ user.ruolo || 'Cliente' }}
-                    </button>
-                    <ng-template #readonlyIdentityRole>
-                      <span class="info-chip">{{ user.ruolo || 'Cliente' }}</span>
-                    </ng-template>
+                    <span class="info-chip">{{ user.ruolo || 'Cliente' }}</span>
                     <span class="info-chip subtle" *ngIf="user.photoURL">Accesso con Google</span>
                     <span class="info-chip soft" *ngIf="user.hasPassword">Accesso protetto</span>
                   </div>
@@ -136,14 +114,6 @@
                       Registra utenti
                     </a>
 
-                    <button
-                      *ngIf="isManagementUser"
-                      type="button"
-                      class="edit-btn register-users-btn management-profile-btn"
-                      (click)="togglePersonalCalendar()"
-                    >
-                      {{ showPersonalCalendar ? 'Nascondi agenda' : 'Agenda appuntamenti' }}
-                    </button>
                   </div>
                 </div>
               </div>
@@ -164,21 +134,6 @@
                   <strong>{{ accessModeLabel }}</strong>
                 </div>
               </div>
-            </section>
-
-            <section *ngIf="isManagementUser && showPersonalCalendar" class="profile-calendar-embed">
-              @defer (when showPersonalCalendar) {
-                <app-personal-appointments-calendar
-                  [operatorId]="user.idUtente"
-                  [operatorName]="getFullName()"
-                  [operatorEmail]="user.email || ''"
-                ></app-personal-appointments-calendar>
-              } @placeholder {
-                <div class="state-panel">
-                  <div class="state-orb"></div>
-                  <span>Caricamento agenda...</span>
-                </div>
-              }
             </section>
 
             <section class="profile-content-grid">
@@ -215,7 +170,12 @@
                     <span class="detail-value">{{ formatDate(user.data_nascita) }}</span>
                   </article>
 
-                  <article class="detail-card wide muted">
+                  <article class="detail-card">
+                    <span class="detail-label">Sesso</span>
+                    <span class="detail-value">{{ user.sesso === 'm' ? 'Maschio' : user.sesso === 'f' ? 'Femmina' : '-' }}</span>
+                  </article>
+
+                  <article class="detail-card muted">
                     <span class="detail-label">Ruolo</span>
                     <span class="detail-value">{{ user.ruolo || '-' }}</span>
                   </article>
@@ -379,7 +339,14 @@
 
                 <div class="form-group full-width">
                   <label for="email">Email</label>
-                  <input id="email" type="email" name="email" [ngModel]="user.email" disabled />
+                  <input
+                    id="email"
+                    type="text"
+                    name="email"
+                    class="readonly-text-input"
+                    [value]="user.email"
+                    readonly
+                  />
                 </div>
 
                 <div class="form-group phone-group">
@@ -395,6 +362,55 @@
 
                   <div *ngIf="!isPhoneValid" class="inline-status error-text phone-error">
                     Inserisci un numero di telefono valido.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="sesso">Sesso</label>
+                  <div class="profile-sex-picker" [class.is-open]="sexDropdownOpen || sexDropdownClosing">
+                    <button
+                      id="sesso"
+                      type="button"
+                      name="sesso"
+                      class="profile-sex-trigger"
+                      [class.has-value]="!!user.sesso"
+                      [attr.aria-expanded]="sexDropdownOpen"
+                      aria-haspopup="listbox"
+                      aria-label="Seleziona sesso"
+                      (click)="toggleSexDropdown()"
+                    >
+                      <span>{{ sexDisplayValue }}</span>
+                      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+
+                    <div
+                      *ngIf="sexDropdownOpen || sexDropdownClosing"
+                      class="profile-sex-panel"
+                      [class.is-closing]="sexDropdownClosing"
+                      role="listbox"
+                      aria-label="Opzioni sesso"
+                    >
+                      <button
+                        type="button"
+                        class="profile-sex-option"
+                        [class.is-selected]="user.sesso === 'm'"
+                        role="option"
+                        [attr.aria-selected]="user.sesso === 'm'"
+                        (click)="selectSex('m')"
+                      >
+                        Maschio
+                      </button>
+                      <button
+                        type="button"
+                        class="profile-sex-option"
+                        [class.is-selected]="user.sesso === 'f'"
+                        role="option"
+                        [attr.aria-selected]="user.sesso === 'f'"
+                        (click)="selectSex('f')"
+                      >
+                        Femmina
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -432,9 +448,16 @@
                             <i class="bi bi-chevron-left" aria-hidden="true"></i>
                           </button>
 
-                          <div class="profile-date-picker-month">
+                          <button
+                            type="button"
+                            class="profile-date-picker-month"
+                            [class.is-active]="birthDatePickerMode === 'years'"
+                            (click)="toggleBirthDatePickerYears()"
+                            aria-label="Scegli anno"
+                          >
                             {{ birthDatePickerMonthLabel }}
-                          </div>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                          </button>
 
                           <button
                             type="button"
@@ -446,11 +469,11 @@
                           </button>
                         </div>
 
-                        <div class="profile-date-picker-weekdays">
+                        <div *ngIf="birthDatePickerMode === 'days'" class="profile-date-picker-weekdays">
                           <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
                         </div>
 
-                        <div class="profile-date-picker-grid">
+                        <div *ngIf="birthDatePickerMode === 'days'" class="profile-date-picker-grid">
                           <button
                             *ngFor="let day of birthDatePickerDays"
                             type="button"
@@ -463,14 +486,26 @@
                             {{ day.label }}
                           </button>
                         </div>
+
+                        <div *ngIf="birthDatePickerMode === 'years'" class="profile-date-picker-years">
+                          <button
+                            *ngFor="let year of birthDatePickerYears"
+                            type="button"
+                            class="profile-date-picker-year-option"
+                            [class.is-selected]="year === birthDatePickerYear"
+                            (click)="selectBirthDatePickerYear(year)"
+                          >
+                            {{ year }}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="form-group full-width compact-readonly">
+                <div class="form-group compact-readonly">
                   <label for="ruolo">Ruolo</label>
-                  <input id="ruolo" type="text" name="ruolo" [ngModel]="user.ruolo" disabled />
+                  <input id="ruolo" type="text" name="ruolo" [value]="user.ruolo" readonly />
                 </div>
               </div>
             </div>

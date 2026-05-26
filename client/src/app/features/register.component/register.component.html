@@ -120,6 +120,51 @@
                     </div>
 
                     <div class="col-6 mb-2">
+                        <label class="form-label">Sesso</label>
+                        <div class="register-sex-picker" [class.is-open]="sexDropdownOpen || sexDropdownClosing">
+                            <button
+                                type="button"
+                                class="clean-input register-sex-trigger"
+                                [class.has-value]="!!userData.sesso"
+                                [attr.aria-expanded]="sexDropdownOpen"
+                                aria-haspopup="listbox"
+                                aria-label="Seleziona sesso"
+                                (click)="toggleSexDropdown()">
+                                <span [class.is-placeholder]="!userData.sesso">{{ sexDisplayValue }}</span>
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </button>
+
+                            <div
+                                *ngIf="sexDropdownOpen || sexDropdownClosing"
+                                class="register-sex-panel"
+                                [class.is-closing]="sexDropdownClosing"
+                                role="listbox"
+                                aria-label="Opzioni sesso">
+                                <button
+                                    type="button"
+                                    class="register-sex-option"
+                                    [class.is-selected]="userData.sesso === 'm'"
+                                    role="option"
+                                    [attr.aria-selected]="userData.sesso === 'm'"
+                                    (click)="selectSex('m')">
+                                    Maschio
+                                </button>
+                                <button
+                                    type="button"
+                                    class="register-sex-option"
+                                    [class.is-selected]="userData.sesso === 'f'"
+                                    role="option"
+                                    [attr.aria-selected]="userData.sesso === 'f'"
+                                    (click)="selectSex('f')">
+                                    Femmina
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-2">
                         <label class="form-label">Data Nascita</label>
 
                         <div class="date-input-wrap birthdate-picker">

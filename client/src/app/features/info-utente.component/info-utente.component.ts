@@ -14,7 +14,6 @@ import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
 import { AuthService } from '../../services/auth';
 import { NavbarComponent } from '../navbar.component/navbar.component';
 import { environment } from '../../../environments/environment';
-import { PersonalAppointmentsCalendarComponent } from '../personal-appointments-calendar.component/personal-appointments-calendar.component';
 
 interface UserProfile {
   idUtente: number;
@@ -23,6 +22,7 @@ interface UserProfile {
   email: string;
   telefono: string;
   data_nascita: string;
+  sesso: '' | 'm' | 'f';
   ruolo: string;
   hasPassword?: boolean;
   mustChangePassword?: boolean;
@@ -50,8 +50,7 @@ interface CalendarPickerDay {
     FormsModule,
     NavbarComponent,
     RouterLink,
-    IntlTelInputComponent,
-    PersonalAppointmentsCalendarComponent
+    IntlTelInputComponent
   ],
   templateUrl: './info-utente.component.html',
   styleUrls: ['./info-utente.component.css']
@@ -73,7 +72,6 @@ export class InfoUtenteComponent implements OnInit {
   isLoading = true;
   isSaving = false;
   isEditMode = false;
-  showPersonalCalendar = false;
 
   errorMessage = '';
   successMessage = '';
@@ -109,14 +107,18 @@ export class InfoUtenteComponent implements OnInit {
   birthDatePickerOpen = false;
   birthDatePickerClosing = false;
   birthDatePickerOpenUpward = true;
+  birthDatePickerMode: 'days' | 'years' = 'days';
   birthDatePickerMonth = new Date();
   birthDatePickerDays: CalendarPickerDay[] = [];
+  sexDropdownOpen = false;
+  sexDropdownClosing = false;
+  private sexDropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly calendarPickerWeekdays = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'];
   readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', {
-    month: 'long',
-    year: 'numeric'
+    month: 'long'
   });
+  readonly birthDatePickerYears = this.buildBirthDatePickerYears();
 
   preferredCountries = ['it', 'gb', 'fr', 'de', 'es', 'us'];
 
@@ -164,15 +166,6 @@ export class InfoUtenteComponent implements OnInit {
     return role === 'operatore' || role === 'titolare';
   }
 
-  togglePersonalCalendar(): void {
-    if (!this.isManagementUser) {
-      return;
-    }
-
-    this.showPersonalCalendar = !this.showPersonalCalendar;
-    this.cdr.detectChanges();
-  }
-
   get accessModeLabel(): string {
     return this.user?.photoURL ? 'Google' : 'Credenziali';
   }
@@ -187,7 +180,13 @@ export class InfoUtenteComponent implements OnInit {
   }
 
   get birthDatePickerMonthLabel(): string {
-    return this.calendarPickerMonthFormatter.format(this.birthDatePickerMonth);
+    const label = this.calendarPickerMonthFormatter.format(this.birthDatePickerMonth);
+    const month = label.charAt(0).toUpperCase() + label.slice(1);
+    return `${month} ${this.birthDatePickerYear}`;
+  }
+
+  get birthDatePickerYear(): number {
+    return this.birthDatePickerMonth.getFullYear();
   }
 
   private resetCompletionPasswordFields(): void {
@@ -245,9 +244,10 @@ export class InfoUtenteComponent implements OnInit {
     const cognome = String(this.user.cognome ?? '').trim();
     const telefono = String(this.user.telefono ?? '').trim();
     const dataNascita = String(this.user.data_nascita ?? '').trim();
+    const sesso = String(this.user.sesso ?? '').trim();
     const hasPassword = !!this.user.hasPassword;
 
-    this.missingRequiredFields = !nome || !cognome || !telefono || !dataNascita;
+    this.missingRequiredFields = !nome || !cognome || !telefono || !dataNascita || !sesso;
 
     this.requirePasswordForCompletion = !hasPassword || !!this.user.mustChangePassword;
     this.passwordRequired = this.requirePasswordForCompletion;
@@ -297,6 +297,7 @@ export class InfoUtenteComponent implements OnInit {
           data_nascita: res.data_nascita
             ? String(res.data_nascita).substring(0, 10)
             : '',
+          sesso: res.sesso === 'm' || res.sesso === 'f' ? res.sesso : '',
           ruolo: res.ruolo ?? '',
           hasPassword: !!res.hasPassword,
           mustChangePassword: !!res.mustChangePassword,
@@ -396,6 +397,7 @@ export class InfoUtenteComponent implements OnInit {
 
     this.birthDatePickerMonth =
       this.parseInputDate(this.user?.data_nascita ?? '') ?? new Date();
+    this.birthDatePickerMode = 'days';
     this.birthDatePickerDays = this.buildCalendarPickerDays(
       this.birthDatePickerMonth
     );
@@ -417,9 +419,15 @@ export class InfoUtenteComponent implements OnInit {
     this.birthDatePickerCloseTimeout = setTimeout(() => {
       this.birthDatePickerOpen = false;
       this.birthDatePickerClosing = false;
+      this.birthDatePickerMode = 'days';
       this.birthDatePickerCloseTimeout = null;
       this.cdr.detectChanges();
     }, 220);
+  }
+
+  toggleBirthDatePickerYears(): void {
+    this.birthDatePickerMode = this.birthDatePickerMode === 'years' ? 'days' : 'years';
+    this.cdr.detectChanges();
   }
 
   previousBirthDatePickerMonth(): void {
@@ -457,11 +465,97 @@ export class InfoUtenteComponent implements OnInit {
     this.closeBirthDatePicker();
   }
 
+  get sexDisplayValue(): string {
+    if (this.user?.sesso === 'm') {
+      return 'Maschio';
+    }
+
+    if (this.user?.sesso === 'f') {
+      return 'Femmina';
+    }
+
+    return 'Seleziona';
+  }
+
+  toggleSexDropdown(): void {
+    if (this.sexDropdownOpen) {
+      this.closeSexDropdown();
+      return;
+    }
+
+    this.clearSexDropdownTimer();
+    this.sexDropdownClosing = false;
+    this.sexDropdownOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  selectBirthDatePickerYear(year: number | string): void {
+    const parsedYear = Number(year);
+
+    if (!Number.isFinite(parsedYear)) {
+      return;
+    }
+
+    this.birthDatePickerMonth = new Date(
+      parsedYear,
+      this.birthDatePickerMonth.getMonth(),
+      1
+    );
+    this.birthDatePickerDays = this.buildCalendarPickerDays(
+      this.birthDatePickerMonth
+    );
+    this.birthDatePickerMode = 'days';
+    this.cdr.detectChanges();
+  }
+
+  closeSexDropdown(immediate = false): void {
+    if (!this.sexDropdownOpen && !this.sexDropdownClosing) {
+      return;
+    }
+
+    this.clearSexDropdownTimer();
+
+    if (immediate) {
+      this.sexDropdownOpen = false;
+      this.sexDropdownClosing = false;
+      return;
+    }
+
+    this.sexDropdownClosing = true;
+    this.sexDropdownCloseTimeout = setTimeout(() => {
+      this.sexDropdownOpen = false;
+      this.sexDropdownClosing = false;
+      this.sexDropdownCloseTimeout = null;
+      this.cdr.detectChanges();
+    }, 180);
+  }
+
+  selectSex(value: 'm' | 'f'): void {
+    if (!this.user) {
+      return;
+    }
+
+    this.user.sesso = value;
+    this.onFieldChange();
+    this.closeSexDropdown();
+  }
+
+  private clearSexDropdownTimer(): void {
+    if (this.sexDropdownCloseTimeout) {
+      clearTimeout(this.sexDropdownCloseTimeout);
+      this.sexDropdownCloseTimeout = null;
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target?.closest('.profile-birthdate-picker')) {
       this.closeBirthDatePicker();
+    }
+
+    if (!target?.closest('.profile-sex-picker')) {
+      this.closeSexDropdown();
     }
   }
 
@@ -715,8 +809,9 @@ export class InfoUtenteComponent implements OnInit {
     const cognome = String(this.user.cognome).trim();
     const telefono = String(this.user.telefono).trim();
     const dataNascita = String(this.user.data_nascita).trim();
+    const sesso = String(this.user.sesso ?? '').trim();
 
-    if (!nome || !cognome || !telefono || !dataNascita) {
+    if (!nome || !cognome || !telefono || !dataNascita || !sesso) {
       this.errorMessage = 'Compila tutti i campi obbligatori.';
       this.cdr.detectChanges();
       return;
@@ -751,12 +846,14 @@ export class InfoUtenteComponent implements OnInit {
       cognome: string;
       telefono: string;
       data_nascita: string;
+      sesso: 'm' | 'f';
       password?: string;
     } = {
       nome,
       cognome,
       telefono,
-      data_nascita: dataNascita
+      data_nascita: dataNascita,
+      sesso: sesso as 'm' | 'f'
     };
 
     if (this.passwordRequired) {
@@ -909,6 +1006,17 @@ export class InfoUtenteComponent implements OnInit {
         isSelected: !!selectedDate && date.toDateString() === selectedDate.toDateString()
       };
     });
+  }
+
+  private buildBirthDatePickerYears(): number[] {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+
+    for (let year = currentYear; year >= 1900; year--) {
+      years.push(year);
+    }
+
+    return years;
   }
 
   private parseInputDate(value: string): Date | null {

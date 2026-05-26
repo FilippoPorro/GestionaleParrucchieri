@@ -870,7 +870,38 @@ form .custom-alert.success {
 
 select.clean-input {
   appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  appearance: none;
   cursor: pointer;
+  padding-right: 44px;
+  border-color: rgba(212, 176, 106, 0.32);
+  background:
+    linear-gradient(45deg, transparent 50%, #d4b06a 50%) calc(100% - 22px) 50% / 7px 7px no-repeat,
+    linear-gradient(135deg, #d4b06a 50%, transparent 50%) calc(100% - 17px) 50% / 7px 7px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(22, 21, 18, 0.94);
+}
+
+select.clean-input:hover,
+select.clean-input:focus {
+  border-color: rgba(212, 176, 106, 0.58);
+  background:
+    linear-gradient(45deg, transparent 50%, #f3dfb5 50%) calc(100% - 22px) 50% / 7px 7px no-repeat,
+    linear-gradient(135deg, #f3dfb5 50%, transparent 50%) calc(100% - 17px) 50% / 7px 7px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(28, 27, 23, 0.98);
+}
+
+select.clean-input option {
+  background: #24231f;
+  color: #f8f5ef;
+}
+
+select.clean-input option:checked,
+select.clean-input option:hover {
+  background: #d4b06a;
+  color: #17130e;
 }
 
 
@@ -909,6 +940,126 @@ input[type="date"].clean-input:focus::-webkit-datetime-edit-year-field {
 
 .birthdate-picker {
   align-items: stretch;
+}
+
+.register-sex-picker {
+  position: relative;
+  width: 100%;
+}
+
+.register-sex-trigger {
+  position: relative;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+  padding-right: 48px;
+  border-color: rgba(212, 176, 106, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.026)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(244, 239, 231, 0.016)),
+    rgba(24, 22, 18, 0.46);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+.register-sex-trigger.has-value {
+  color: #fffaf1;
+}
+
+.register-sex-trigger span.is-placeholder {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.register-sex-trigger i {
+  position: absolute;
+  right: 16px;
+  color: var(--gold-soft);
+  font-size: 14px;
+  pointer-events: none;
+  transition: transform 0.22s ease, color 0.22s ease;
+}
+
+.register-sex-trigger:hover {
+  border-color: rgba(212, 176, 106, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.038)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.056), rgba(244, 239, 231, 0.022)),
+    rgba(30, 27, 22, 0.54);
+}
+
+.register-sex-picker.is-open .register-sex-trigger {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.048)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(244, 239, 231, 0.026)),
+    rgba(34, 30, 24, 0.62);
+  border-color: rgba(212, 176, 106, 0.46);
+  box-shadow: var(--focus-ring);
+}
+
+.register-sex-picker.is-open .register-sex-trigger i {
+  transform: rotate(180deg);
+  color: var(--gold-soft);
+}
+
+.register-sex-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 42;
+  width: min(342px, 100%);
+  max-width: calc(100vw - 40px);
+  padding: 12px;
+  border-radius: 24px;
+  border: 1px solid rgba(212, 176, 106, 0.22);
+  background:
+    linear-gradient(180deg, rgba(42, 38, 32, 0.84), rgba(19, 17, 14, 0.88)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(244, 239, 231, 0.024)),
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.16), transparent 44%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 22px 46px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  animation: registerSexPanelIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(-50%);
+  transform-origin: top center;
+}
+
+.register-sex-panel.is-closing {
+  animation: registerSexPanelOut 0.18s ease forwards;
+  pointer-events: none;
+}
+
+.register-sex-option {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016)),
+    rgba(255, 255, 255, 0.018);
+  color: #fff1d2;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.register-sex-option + .register-sex-option {
+  margin-top: 7px;
+}
+
+.register-sex-option:hover,
+.register-sex-option.is-selected {
+  transform: translateY(-1px);
+  border-color: rgba(212, 176, 106, 0.42);
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.28), rgba(212, 176, 106, 0.12)),
+    rgba(255, 255, 255, 0.07);
+  color: #fff7e3;
 }
 
 .birthdate-trigger {
@@ -1177,6 +1328,30 @@ input[type="date"].clean-input:focus::-webkit-datetime-edit-year-field {
   to {
     opacity: 0;
     transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes registerSexPanelIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes registerSexPanelOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.98);
   }
 }
 

@@ -13,6 +13,7 @@ interface ClienteFormDraft {
   email: string;
   telefono: string;
   data_nascita: string;
+  sesso: '' | 'm' | 'f';
   ruolo: string;
 }
 
@@ -118,7 +119,8 @@ export class ClientiComponent implements OnInit, OnDestroy {
       this.selectedCliente.cognome !== this.draftCliente.cognome ||
       this.selectedCliente.email !== this.draftCliente.email ||
       (this.selectedCliente.telefono ?? '') !== (this.draftCliente.telefono ?? '') ||
-      this.toDateInputValue(this.selectedCliente.data_nascita) !== (this.draftCliente.data_nascita ?? '');
+      this.toDateInputValue(this.selectedCliente.data_nascita) !== (this.draftCliente.data_nascita ?? '') ||
+      (this.selectedCliente.sesso ?? '') !== (this.draftCliente.sesso ?? '');
   }
 
   get isNewClienteValid(): boolean {
@@ -126,6 +128,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
       this.newCliente.cognome.trim() !== '' &&
       this.newCliente.email.trim() !== '' &&
       this.newCliente.telefono.trim() !== '' &&
+      this.newCliente.sesso !== '' &&
       this.isNewPhoneValid &&
       this.isAdult(this.newCliente.data_nascita);
   }
@@ -198,6 +201,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
       ...cliente,
       telefono: cliente.telefono ?? '',
       data_nascita: this.toDateInputValue(cliente.data_nascita),
+      sesso: cliente.sesso ?? null,
       ruolo: cliente.ruolo ?? 'cliente'
     };
     this.isEditPhoneValid = true;
@@ -339,7 +343,8 @@ export class ClientiComponent implements OnInit, OnDestroy {
       cognome: this.draftCliente.cognome,
       email: this.draftCliente.email,
       telefono: this.draftCliente.telefono ?? '',
-      data_nascita: this.draftCliente.data_nascita ?? ''
+      data_nascita: this.draftCliente.data_nascita ?? '',
+      sesso: this.draftCliente.sesso || undefined
     }).subscribe({
       next: (clienteAggiornato: Utente) => {
         this.clienti = this.clienti.map((cliente) =>
@@ -379,6 +384,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
       email: this.newCliente.email.trim().toLowerCase(),
       telefono: this.newCliente.telefono.trim(),
       data_nascita: this.newCliente.data_nascita,
+      sesso: this.newCliente.sesso as 'm' | 'f',
       ruolo: 'cliente'
     }).subscribe({
       next: (clienteCreato: Utente) => {
@@ -681,6 +687,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
       email: '',
       telefono: '',
       data_nascita: '',
+      sesso: '',
       ruolo: 'cliente'
     };
   }

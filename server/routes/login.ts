@@ -25,6 +25,7 @@ interface User {
   password: string;
   telefono: string | null;
   data_nascita: string | null;
+  sesso: "m" | "f" | null;
   ruolo: string;
   photoURL?: string | null;
   picture?: string | null;
@@ -33,6 +34,20 @@ interface User {
   mustChangePassword?: boolean;
   resetPasswordToken?: string | null;
   resetPasswordExpires?: string | null;
+}
+
+function normalizeSesso(value: unknown): "m" | "f" | null {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  if (normalized === "m" || normalized === "maschio" || normalized === "mascio") {
+    return "m";
+  }
+
+  if (normalized === "f" || normalized === "femmina") {
+    return "f";
+  }
+
+  return null;
 }
 
 function buildJwt(user: Pick<User, "idUtente" | "nome" | "cognome" | "email" | "ruolo"> & { mustChangePassword?: boolean }): string {
@@ -122,6 +137,7 @@ router.post("/login", async (req: Request, res: Response) => {
         email: user.email,
         telefono: user.telefono,
         data_nascita: user.data_nascita,
+        sesso: user.sesso,
         ruolo: user.ruolo,
         mustChangePassword: !!user.mustChangePassword
       }
@@ -148,6 +164,7 @@ router.get("/me", verifyToken, async (req: any, res: Response) => {
       email: user.email,
       telefono: user.telefono,
       data_nascita: user.data_nascita,
+      sesso: user.sesso,
       ruolo: user.ruolo,
       hasPassword: !!user.password && user.password.trim() !== "",
       mustChangePassword: !!user.mustChangePassword,
@@ -169,10 +186,11 @@ router.put("/me", verifyToken, async (req: any, res: Response) => {
   try {
     const userId = req.user.userId;
     const { nome, cognome, telefono, data_nascita, password } = req.body;
+    const sesso = normalizeSesso(req.body?.sesso);
 
-    if (!nome || !cognome || !telefono || !data_nascita) {
+    if (!nome || !cognome || !telefono || !data_nascita || !sesso) {
       return res.status(400).json({
-        message: "Nome, cognome, telefono e data di nascita sono obbligatori"
+        message: "Nome, cognome, telefono, data di nascita e sesso sono obbligatori"
       });
     }
 
@@ -180,7 +198,8 @@ router.put("/me", verifyToken, async (req: any, res: Response) => {
       nome,
       cognome,
       telefono,
-      data_nascita
+      data_nascita,
+      sesso
     };
 
     if (password && password.trim() !== "") {
@@ -218,9 +237,10 @@ router.post("/register", async (req: Request, res: Response) => {
     const password = req.body.password;
     const telefono = req.body.telefono;
     const data_nascita = req.body.data_nascita;
+    const sesso = normalizeSesso(req.body.sesso);
     const ruolo = req.body.ruolo || "cliente";
 
-    if (!nome || !cognome || !email || !password) {
+    if (!nome || !cognome || !email || !password || !sesso) {
       return res.status(400).json({
         message: "Campi obbligatori mancanti"
       });
@@ -245,9 +265,10 @@ router.post("/register", async (req: Request, res: Response) => {
         password: hashedPassword,
         telefono: telefono || null,
         data_nascita: data_nascita || null,
+        sesso,
         ruolo
       })
-      .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
+      .select("idUtente, nome, cognome, email, telefono, data_nascita, sesso, ruolo")
       .single();
 
     if (error) {
@@ -273,6 +294,7 @@ router.post("/register", async (req: Request, res: Response) => {
         email: createdUser.email,
         telefono: createdUser.telefono,
         data_nascita: createdUser.data_nascita,
+        sesso: createdUser.sesso,
         ruolo: createdUser.ruolo
       }
     });

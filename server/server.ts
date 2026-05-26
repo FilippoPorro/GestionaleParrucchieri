@@ -991,8 +991,18 @@ app.delete("/api/prodotti/:id", async (req, res) => {
 });
 app.post("/api/register", async (req, res) => {
   try {
-    const { nome, cognome, email, password, telefono, data_nascita, ruolo } =
+    const { nome, cognome, email, password, telefono, data_nascita, sesso, ruolo } =
       req.body;
+    const rawSesso = String(sesso || "").trim().toLowerCase();
+    const normalizedSesso = rawSesso === "m" || rawSesso === "maschio" || rawSesso === "mascio"
+      ? "m"
+      : rawSesso === "f" || rawSesso === "femmina"
+        ? "f"
+        : "";
+
+    if (!["m", "f"].includes(normalizedSesso)) {
+      return res.status(400).json({ message: "Il sesso deve essere m o f" });
+    }
 
     const { data: existingUser, error: existingError } = await db
       .from("utenti")
@@ -1015,6 +1025,7 @@ app.post("/api/register", async (req, res) => {
       password: hashedPassword,
       telefono,
       data_nascita,
+      sesso: normalizedSesso,
       ruolo,
     });
 

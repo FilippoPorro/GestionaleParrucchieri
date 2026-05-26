@@ -11,9 +11,24 @@ interface Utente {
   email: string;
   telefono: string | null;
   data_nascita: string | null;
+  sesso: "m" | "f" | null;
   ruolo: string;
   photoURL?: string | null;
   mustChangePassword?: boolean;
+}
+
+function normalizeSesso(value: unknown): "m" | "f" | null {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  if (normalized === "m" || normalized === "maschio" || normalized === "mascio") {
+    return "m";
+  }
+
+  if (normalized === "f" || normalized === "femmina") {
+    return "f";
+  }
+
+  return null;
 }
 
 type ClienteSource = "clienti" | "utenti";
@@ -44,6 +59,7 @@ function normalizeClienteRow(row: any, source: ClienteSource): Utente | null {
     email: String(row?.email ?? "").trim(),
     telefono: row?.telefono != null ? String(row.telefono).trim() : null,
     data_nascita: row?.data_nascita != null ? String(row.data_nascita).trim() : null,
+    sesso: normalizeSesso(row?.sesso),
     ruolo: source === "clienti"
       ? "cliente"
       : String(row?.ruolo ?? "cliente").trim() || "cliente",
@@ -199,6 +215,7 @@ function buildClientiUpdatePayload(row: any, values: {
   email: string;
   telefono: string;
   data_nascita: string;
+  sesso: "m" | "f";
 }) {
   const payload: Record<string, string | null> = {
     nome: values.nome,
@@ -212,6 +229,10 @@ function buildClientiUpdatePayload(row: any, values: {
 
   if (Object.prototype.hasOwnProperty.call(row, "data_nascita")) {
     payload.data_nascita = values.data_nascita || null;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(row, "sesso")) {
+    payload.sesso = values.sesso;
   }
 
   return payload;
@@ -259,9 +280,10 @@ router.post("/clienti", async (req: Request, res: Response) => {
     const email = String(req.body?.email ?? "").trim().toLowerCase();
     const telefono = String(req.body?.telefono ?? "").trim();
     const data_nascita = String(req.body?.data_nascita ?? "").trim();
+    const sesso = normalizeSesso(req.body?.sesso);
 
-    if (!nome || !cognome || !email || !telefono || !data_nascita) {
-      return res.status(400).json({ message: "Nome, cognome, email, telefono e data di nascita sono obbligatori" });
+    if (!nome || !cognome || !email || !telefono || !data_nascita || !sesso) {
+      return res.status(400).json({ message: "Nome, cognome, email, telefono, data di nascita e sesso sono obbligatori" });
     }
 
     if (!isAdultBirthDate(data_nascita)) {
@@ -296,6 +318,7 @@ router.post("/clienti", async (req: Request, res: Response) => {
         password: hashedPassword,
         telefono: telefono || null,
         data_nascita: data_nascita || null,
+        sesso,
         ruolo: "cliente",
         mustChangePassword: true,
         resetPasswordToken,
@@ -338,13 +361,14 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
     const email = String(req.body?.email ?? "").trim().toLowerCase();
     const telefono = String(req.body?.telefono ?? "").trim();
     const data_nascita = String(req.body?.data_nascita ?? "").trim();
+    const sesso = normalizeSesso(req.body?.sesso);
 
     if (!Number.isFinite(idUtente) || idUtente <= 0) {
       return res.status(400).json({ message: "Cliente non valido" });
     }
 
-    if (!nome || !cognome || !email) {
-      return res.status(400).json({ message: "Nome, cognome ed email sono obbligatori" });
+    if (!nome || !cognome || !email || !sesso) {
+      return res.status(400).json({ message: "Nome, cognome, email e sesso sono obbligatori" });
     }
 
     const lookup = await getClientLookupById(idUtente);
@@ -357,7 +381,8 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
           cognome,
           email,
           telefono,
-          data_nascita
+          data_nascita,
+          sesso
         }))
         .eq(lookup.idColumn, idUtente)
         .select("*")
@@ -398,7 +423,8 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
         cognome,
         email,
         telefono: telefono || null,
-        data_nascita: data_nascita || null
+        data_nascita: data_nascita || null,
+        sesso
       })
       .eq("idUtente", idUtente)
       .select("*")
@@ -492,7 +518,7 @@ router.get("/operatori", async (_req: Request, res: Response) => {
   try {
     const { data, error } = await db
       .from("utenti")
-      .select("idUtente, nome, cognome, email, telefono, data_nascita, ruolo")
+      .select("idUtente, nome, cognome, email, telefono, data_nascita, sesso, ruolo")
       .in("ruolo", ["operatore", "titolare"])
       .order("cognome", { ascending: true })
       .order("nome", { ascending: true });

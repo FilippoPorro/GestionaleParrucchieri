@@ -30,6 +30,7 @@ export class RegisterComponent implements OnInit {
     password: '',
     telefono: '',
     data_nascita: '',
+    sesso: '' as '' | 'm' | 'f',
     ruolo: 'cliente'
   };
 
@@ -51,6 +52,9 @@ export class RegisterComponent implements OnInit {
   readonly calendarPickerWeekdays = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'];
   readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', { month: 'long' });
   private birthDatePickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  sexDropdownOpen = false;
+  sexDropdownClosing = false;
+  private sexDropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
   initTelOptions = {
     initialCountry: 'auto' as const,
@@ -170,6 +174,7 @@ export class RegisterComponent implements OnInit {
       this.isPasswordValid() &&
 
       this.isValidPhone() &&
+      this.userData.sesso !== '' &&
       this.isAdult()
     );
   }
@@ -182,7 +187,10 @@ export class RegisterComponent implements OnInit {
     this.alertMessage = '';  
     this.alertType = 'success';
 
-    this.auth.register(this.userData).subscribe({
+    this.auth.register({
+      ...this.userData,
+      sesso: this.userData.sesso as 'm' | 'f'
+    }).subscribe({
       next: () => {
         this.isLoading = false;
         this.isSuccess = true;
@@ -240,6 +248,56 @@ export class RegisterComponent implements OnInit {
 
   get birthDatePickerYear(): number {
     return this.birthDatePickerMonth.getFullYear();
+  }
+
+  get sexDisplayValue(): string {
+    if (this.userData.sesso === 'm') {
+      return 'Maschio';
+    }
+
+    if (this.userData.sesso === 'f') {
+      return 'Femmina';
+    }
+
+    return 'Seleziona';
+  }
+
+  toggleSexDropdown(): void {
+    if (this.sexDropdownOpen) {
+      this.closeSexDropdown();
+      return;
+    }
+
+    this.clearSexDropdownTimer();
+    this.sexDropdownClosing = false;
+    this.sexDropdownOpen = true;
+  }
+
+  closeSexDropdown(immediate = false): void {
+    if (!this.sexDropdownOpen && !this.sexDropdownClosing) {
+      return;
+    }
+
+    this.clearSexDropdownTimer();
+
+    if (immediate) {
+      this.sexDropdownOpen = false;
+      this.sexDropdownClosing = false;
+      return;
+    }
+
+    this.sexDropdownClosing = true;
+    this.sexDropdownCloseTimeout = setTimeout(() => {
+      this.sexDropdownOpen = false;
+      this.sexDropdownClosing = false;
+      this.sexDropdownCloseTimeout = null;
+      this.cdr.detectChanges();
+    }, 180);
+  }
+
+  selectSex(value: 'm' | 'f'): void {
+    this.userData.sesso = value;
+    this.closeSexDropdown();
   }
 
   toggleBirthDatePicker(): void {
@@ -321,6 +379,10 @@ export class RegisterComponent implements OnInit {
     if (!target?.closest('.birthdate-picker')) {
       this.closeBirthDatePicker();
     }
+
+    if (!target?.closest('.register-sex-picker')) {
+      this.closeSexDropdown();
+    }
   }
 
   private buildBirthDatePickerYears(): number[] {
@@ -338,6 +400,13 @@ export class RegisterComponent implements OnInit {
     if (this.birthDatePickerCloseTimeout) {
       clearTimeout(this.birthDatePickerCloseTimeout);
       this.birthDatePickerCloseTimeout = null;
+    }
+  }
+
+  private clearSexDropdownTimer(): void {
+    if (this.sexDropdownCloseTimeout) {
+      clearTimeout(this.sexDropdownCloseTimeout);
+      this.sexDropdownCloseTimeout = null;
     }
   }
 
