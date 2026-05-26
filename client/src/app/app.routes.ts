@@ -27,7 +27,6 @@ import { PrenotaAppuntamentoGestionaleComponent } from './gestionale/prenota-app
 import { ServiziComponent } from './gestionale/servizi.component/servizi.component';
 import { MagazzinoComponent } from './gestionale/magazzino.component/magazzino.component';
 import { FornitoriComponent } from './gestionale/fornitori.component/fornitori.component';
-import { GestionalePlaceholderComponent } from './gestionale/gestionale-placeholder.component/gestionale-placeholder.component';
 import { ReportComponent } from './gestionale/report.component/report.component';
 
 export const routes: Routes = [
@@ -60,29 +59,6 @@ export const routes: Routes = [
         path: 'gestionale/report',
         component: ReportComponent,
         canActivate: [titolareManagementGuard],
-    },
-    {
-        path: 'gestionale/promozioni',
-        component: GestionalePlaceholderComponent,
-        canActivate: [managementGuard],
-        data: {
-            title: 'Promozioni',
-            description: 'Gestione di coupon, pacchetti e offerte dedicate ai clienti.',
-            cards: [
-                {
-                    title: 'Coupon',
-                    text: 'Codici sconto e campagne a tempo per servizi selezionati.'
-                },
-                {
-                    title: 'Pacchetti',
-                    text: 'Combinazioni di trattamenti, prodotti e percorsi ricorrenti.'
-                },
-                {
-                    title: 'Offerte',
-                    text: 'Promozioni stagionali per aumentare prenotazioni e retail.'
-                }
-            ]
-        }
     },
     { path: '**', redirectTo: '/home' }
 ];

@@ -138,11 +138,6 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
           href: '/gestionale/staff',
           description: 'Operatori e permessi',
           titolareOnly: true,
-        },
-        {
-          label: 'Promozioni',
-          href: '/gestionale/promozioni',
-          description: 'Coupon, pacchetti e offerte',
         }
       ]
     }

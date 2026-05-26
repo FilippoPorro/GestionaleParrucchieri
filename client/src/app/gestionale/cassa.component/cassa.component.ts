@@ -892,7 +892,7 @@ export class CassaComponent implements OnInit {
       ? this.clienti.find(c => c.idUtente === Number(this.selectedClienteId))
       : null;
 
-    const clienteName = this.selectedClienteLabel || (cliente ? this.formatClienteLabel(cliente) : 'Non selezionato');
+    const clienteName = this.selectedClienteLabel || (cliente ? this.formatClienteLabel(cliente) : 'Generico');
 
     const operatore = this.operatori.find(
       o => o.idUtente === Number(this.selectedOperatoreId)
@@ -950,404 +950,478 @@ export class CassaComponent implements OnInit {
     // HTML WORD
     // =========================================
 
-    const htmlContent = `
-  <!DOCTYPE html>
-  <html lang="it">
 
-  <head>
+    const items = this.receiptItems.map((item) => ({
+      nome: item.nome,
+      tipologia: item.tipo,
+      quantita: item.quantita,
+      prezzo: item.prezzoUnitario
+    }));
 
-    <meta charset="UTF-8">
+const htmlContent = `
+<!DOCTYPE html>
+<html lang="it">
 
-    <title>Ricevuta Vendita</title>
+<head>
 
-    <style>
+  <meta charset="UTF-8" />
 
-      body{
-        font-family: Arial, Helvetica, sans-serif;
-        background:#ffffff;
-        color:#2c2c2c;
-        margin:0;
-        padding:40px;
+  <title>Ricevuta di Pagamento</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      background:#f3f4f6;
+      font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color:#1f2937;
+      padding:45px;
+      line-height: 1.5;
+    }
+
+    .receipt-container{
+      max-width:980px;
+      margin:0 auto;
+      background:#ffffff;
+      border-radius:24px;
+      padding:55px;
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.04),
+        0 6px 18px rgba(0,0,0,0.02);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .receipt-container::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:7px;
+      background:linear-gradient(
+        90deg,
+        #8f6b10,
+        #c89b2f,
+        #f2d27a,
+        #b8860b
+      );
+    }
+
+    /* =========================
+        HEADER
+    ========================= */
+
+    .header{
+      text-align:center;
+      margin-bottom:55px;
+    }
+
+    .logo{
+      width:320px;
+      max-width:100%;
+      object-fit:contain;
+      margin-bottom:18px;
+    }
+
+    .receipt-title{
+      font-size:13px;
+      color:#6b7280;
+      text-transform:uppercase;
+      letter-spacing:5px;
+      font-weight:600;
+    }
+
+    /* =========================
+        SECTION TITLE
+    ========================= */
+
+    .section-title{
+      font-size:14px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:2px;
+      color:#b8860b;
+      margin-bottom:22px;
+      padding-left:4px;
+    }
+
+    /* FORZATURA TOTALE DELLA NUOVA PAGINA */
+    .force-page-break {
+      page-break-before: always !important;
+      break-before: page !important;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* =========================
+        INFO GRID
+    ========================= */
+
+    .details-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+      margin-bottom:50px;
+    }
+
+    .detail-card{
+      background:#fafafa;
+      border:1px solid #f3f4f6;
+      border-radius:16px;
+      padding:20px 24px;
+      transition:all 0.2s ease;
+    }
+
+    .detail-card:hover{
+      transform:translateY(-1px);
+      background:#f7f7f7;
+    }
+
+    .detail-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      color:#9ca3af;
+      margin-bottom:8px;
+      font-weight:700;
+    }
+
+    .detail-value{
+      font-size:16px;
+      font-weight:600;
+      color:#111827;
+      line-height:1.4;
+    }
+
+    /* =========================
+        PRODUCTS TABLE
+    ========================= */
+
+    .products-wrapper{
+      background:#ffffff;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid #e5e7eb;
+      margin-top:12px;
+    }
+
+    .products-table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    .products-table thead th{
+      background:#1f2937;
+      color:#ffffff;
+      padding:18px 20px;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      font-weight:700;
+      text-align:right;
+    }
+
+    .products-table thead th.th-desc {
+      text-align:left;
+      width: 40%;
+    }
+    
+    .products-table thead th.th-type {
+      text-align:center;
+      width: 18%;
+    }
+
+    .products-table tbody tr{
+      border-bottom:1px solid #f3f4f6;
+      transition:background 0.2s ease;
+    }
+
+    .products-table tbody tr:last-child{
+      border-bottom:none;
+    }
+
+    .products-table tbody tr:nth-child(even){
+      background:#f9fafb;
+    }
+
+    .products-table tbody tr:hover{
+      background:#f3f4f6;
+    }
+
+    .products-table tbody td{
+      padding:18px 20px;
+      font-size:14px;
+      color:#374151;
+      vertical-align:middle;
+      text-align:right;
+    }
+
+    .products-table tbody td.td-desc{
+      text-align:left;
+      font-weight:600;
+      color:#111827;
+      line-height:1.5;
+    }
+
+    .products-table tbody td.td-type{
+      text-align:center;
+    }
+
+    .type-badge{
+      display:inline-block;
+      padding:6px 14px;
+      border-radius:8px;
+      font-size:11px;
+      font-weight:700;
+      text-transform: uppercase;
+      letter-spacing:0.5px;
+      background:#fef3c7;
+      color:#92400e;
+    }
+
+    .price, .total-price{
+      white-space: nowrap !important;
+    }
+
+    .price{
+      font-weight:500;
+      color:#374151;
+    }
+
+    .qty{
+      font-weight:600;
+      color:#6b7280;
+    }
+
+    .total-price{
+      font-weight:700;
+      color:#b8860b;
+      font-size:15px;
+    }
+
+    /* =========================
+        TOTALS
+    ========================= */
+
+    .totals-wrapper{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:35px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .totals-card{
+      width:380px;
+      background:#fafafa;
+      border-radius:16px;
+      padding:24px;
+      border:1px solid #e5e7eb;
+    }
+
+    .totals-table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    .totals-table tr td{
+      padding:12px 0;
+    }
+
+    .totals-table tr:not(.grand-total){
+      border-bottom:1px dashed #e5e7eb;
+    }
+
+    .totals-label{
+      font-size:14px;
+      color:#4b5563;
+      font-weight:500;
+    }
+
+    .totals-value{
+      text-align:right;
+      font-size:15px;
+      font-weight:600;
+      color:#111827;
+      white-space: nowrap;
+    }
+
+    .discount-value{
+      color:#dc2626;
+    }
+
+    .grand-total td{
+      padding-top:20px !important;
+    }
+
+    .grand-total .totals-label{
+      font-size:15px;
+      color:#b8860b;
+      font-weight:700;
+      letter-spacing:0.5px;
+    }
+
+    .grand-total .totals-value{
+      font-size:32px;
+      color:#b8860b;
+      font-weight:800;
+      line-height:1;
+    }
+
+    /* =========================
+        FOOTER
+    ========================= */
+
+    .footer{
+      margin-top:60px;
+      padding-top:24px;
+      border-top:1px solid #e5e7eb;
+      text-align:center;
+    }
+
+    .footer-text{
+      color:#9ca3af;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .footer-thanks{
+      color:#4b5563;
+      font-size:14px;
+      font-style:italic;
+    }
+
+    /* Regola esplicita per i motori di stampa PDF */
+    @media print {
+      .force-page-break {
+        page-break-before: always !important;
+        break-before: page !important;
       }
+    }
 
-      .container{
-        max-width:950px;
-        margin:0 auto;
-      }
+  </style>
 
-      /* =========================
-         HEADER
-      ========================= */
+</head>
 
-      .header{
-        text-align:center;
-        padding-bottom:30px;
-        border-bottom:3px solid #b8860b;
-        margin-bottom:40px;
-      }
+<body>
 
-      .logo{
-        width:170px;
-        margin:0 auto 15px auto;
-        display:block;
-      }
+  <div class="receipt-container">
 
-      .title{
-        font-size:34px;
-        font-weight:bold;
-        color:#b8860b;
-        letter-spacing:2px;
-        margin-bottom:10px;
-        text-transform:uppercase;
-      }
+    <div class="header">
+      <img
+        src="${logoUrl}"
+        alt="Logo Parrucchieri"
+        class="logo"
+      />
+      <div class="receipt-title">
+        Ricevuta di Pagamento
+      </div>
+    </div>
 
-      .subtitle{
-        font-size:15px;
-        color:#777777;
-      }
+    <div class="section-title">
+      Dettagli Transazione
+    </div>
 
-      /* =========================
-         SEZIONI
-      ========================= */
-
-      .section-title{
-        font-size:18px;
-        font-weight:bold;
-        color:#b8860b;
-        text-align:center;
-        margin-top:35px;
-        margin-bottom:18px;
-        letter-spacing:1px;
-      }
-
-      /* =========================
-         DETAILS TABLE
-      ========================= */
-
-      .details-wrapper{
-        display:flex;
-        justify-content:center;
-      }
-
-      .details-table{
-        width:80%;
-        border-collapse:collapse;
-        background:#fafafa;
-        border-radius:10px;
-        overflow:hidden;
-        border:1px solid #ececec;
-      }
-
-      .details-table td{
-        padding:14px 18px;
-        border-bottom:1px solid #eeeeee;
-        font-size:14px;
-      }
-
-      .details-label{
-        width:35%;
-        font-weight:bold;
-        color:#b8860b;
-        background:#fcfcfc;
-      }
-
-      /* =========================
-         ITEMS TABLE
-      ========================= */
-
-      .table-container{
-        margin-top:15px;
-      }
-
-      .items-table{
-        width:100%;
-        border-collapse:collapse;
-        overflow:hidden;
-        border-radius:12px;
-        border:1px solid #e5e5e5;
-      }
-
-      .items-table thead th{
-        background:#b8860b;
-        color:white;
-        padding:15px;
-        text-align:center;
-        font-size:14px;
-        letter-spacing:0.5px;
-      }
-
-      .items-table td{
-        padding:14px;
-        border-bottom:1px solid #efefef;
-        font-size:14px;
-      }
-
-      .row-even{
-        background:#ffffff;
-      }
-
-      .row-odd{
-        background:#fafafa;
-      }
-
-      /* =========================
-         TOTALI
-      ========================= */
-
-      .totals-wrapper{
-        display:flex;
-        justify-content:flex-end;
-        margin-top:35px;
-      }
-
-      .totals-box{
-        width:360px;
-        border:1px solid #e6e6e6;
-        border-radius:12px;
-        padding:20px;
-        background:#fcfcfc;
-      }
-
-      .totals-table{
-        width:100%;
-        border-collapse:collapse;
-      }
-
-      .totals-table td{
-        padding:10px 0;
-        font-size:15px;
-      }
-
-      .totals-label{
-        color:#666666;
-      }
-
-      .discount{
-        color:#d9534f;
-        font-weight:bold;
-      }
-
-      .final-total{
-        border-top:2px solid #b8860b;
-      }
-
-      .final-total td{
-        padding-top:18px;
-        font-size:24px;
-        font-weight:bold;
-        color:#b8860b;
-      }
-
-      /* =========================
-         FOOTER
-      ========================= */
-
-      .footer{
-        margin-top:70px;
-        text-align:center;
-        color:#888888;
-        font-size:12px;
-        border-top:1px solid #e5e5e5;
-        padding-top:25px;
-      }
-
-      .footer-thanks{
-        margin-top:8px;
-        font-style:italic;
-      }
-
-    </style>
-
-  </head>
-
-  <body>
-
-    <div class="container">
-
-      <!-- =========================
-           HEADER
-      ========================== -->
-
-      <div class="header">
-
-        <img
-          src="${logoUrl}"
-          class="logo"
-          alt="Logo Parrucchieri"
-        />
-
-        <div class="title">
-          I Parrucchieri di Fossano
-        </div>
-
-        <div class="subtitle">
-          Ricevuta di Pagamento e Riepilogo Vendita
-        </div>
-
+    <div class="details-grid">
+      <div class="detail-card">
+        <div class="detail-label">Data e Ora</div>
+        <div class="detail-value">${currentDate}</div>
       </div>
 
-      <!-- =========================
-           DETTAGLI
-      ========================== -->
+      <div class="detail-card">
+        <div class="detail-label">Cliente</div>
+        <div class="detail-value">${clienteName}</div>
+      </div>
 
+      <div class="detail-card">
+        <div class="detail-label">Operatore</div>
+        <div class="detail-value">${operatoreName}</div>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">Metodo di Pagamento</div>
+        <div class="detail-value">${metodoPagamento}</div>
+      </div>
+    </div>
+
+    <div class="force-page-break"></div>
+
+    <div class="table-container">
+      
       <div class="section-title">
-        DETTAGLI TRANSAZIONE
+        Prodotti e Servizi
       </div>
 
-      <div class="details-wrapper">
-
-        <table class="details-table">
-
-          <tr>
-            <td class="details-label">
-              Data e Ora
-            </td>
-
-            <td>
-              ${currentDate}
-            </td>
-          </tr>
-
-          <tr>
-            <td class="details-label">
-              Cliente
-            </td>
-
-            <td>
-              ${clienteName}
-            </td>
-          </tr>
-
-          <tr>
-            <td class="details-label">
-              Operatore
-            </td>
-
-            <td>
-              ${operatoreName}
-            </td>
-          </tr>
-
-          <tr>
-            <td class="details-label">
-              Metodo di Pagamento
-            </td>
-
-            <td>
-              ${metodoPagamento}
-            </td>
-          </tr>
-
-        </table>
-
-      </div>
-
-      <!-- =========================
-           ARTICOLI
-      ========================== -->
-
-      <div class="section-title">
-        PRODOTTI E SERVIZI
-      </div>
-
-      <div class="table-container">
-
-        <table class="items-table">
-
+      <div class="products-wrapper">
+        <table class="products-table">
           <thead>
-
             <tr>
-              <th>Descrizione</th>
-              <th>Tipologia</th>
-              <th>Quantità</th>
-              <th>Prezzo Unitario</th>
+              <th class="th-desc">Descrizione</th>
+              <th class="th-type">Tipologia</th>
+              <th>QTA</th>
+              <th>Prezzo</th>
               <th>Totale</th>
             </tr>
-
           </thead>
-
           <tbody>
-
-            ${itemsHtml}
-
+            ${items.map((item, index) => `
+              <tr>
+                <td class="td-desc">${item.nome}</td>
+                <td class="td-type">
+                  <span class="type-badge">${item.tipologia}</span>
+                </td>
+                <td class="qty">${item.quantita}</td>
+                <td class="price">€ ${Number(item.prezzo).toFixed(2)}</td>
+                <td class="total-price">€ ${(item.quantita * item.prezzo).toFixed(2)}</td>
+              </tr>
+            `).join("")}
           </tbody>
-
         </table>
-
-      </div>
-
-      <!-- =========================
-           TOTALI
-      ========================== -->
-
-      <div class="totals-wrapper">
-
-        <div class="totals-box">
-
-          <table class="totals-table">
-
-            <tr>
-
-              <td class="totals-label">
-                Subtotale
-              </td>
-
-              <td style="text-align:right; font-weight:bold;">
-                € ${this.subtotal.toFixed(2)}
-              </td>
-
-            </tr>
-
-            <tr>
-
-              <td class="totals-label">
-                ${discountLabel}
-              </td>
-
-              <td class="discount" style="text-align:right;">
-                - € ${this.discountAmount.toFixed(2)}
-              </td>
-
-            </tr>
-
-            <tr class="final-total">
-
-              <td>
-                TOTALE
-              </td>
-
-              <td style="text-align:right;">
-                € ${this.total.toFixed(2)}
-              </td>
-
-            </tr>
-
-          </table>
-
-        </div>
-
-      </div>
-
-      <!-- =========================
-           FOOTER
-      ========================== -->
-
-      <div class="footer">
-
-        Documento generato automaticamente dal gestionale.
-
-        <div class="footer-thanks">
-          Grazie per aver scelto I Parrucchieri di Fossano.
-        </div>
-
       </div>
 
     </div>
 
-  </body>
+    <div class="totals-wrapper">
+      <div class="totals-card">
+        <table class="totals-table">
+          <tr>
+            <td class="totals-label">Subtotale</td>
+            <td class="totals-value">€ ${this.subtotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td class="totals-label">${discountLabel}</td>
+            <td class="totals-value discount-value">- € ${this.discountAmount.toFixed(2)}</td>
+          </tr>
+          <tr class="grand-total">
+            <td class="totals-label">TOTALE</td>
+            <td class="totals-value">€ ${this.total.toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
 
-  </html>
-  `;
+    <div class="footer">
+      <div class="footer-text">
+        Documento generato automaticamente dal gestionale.
+      </div>
+      <div class="footer-thanks">
+        Grazie per aver scelto I Parrucchieri di Fossano.
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>
+`;
 
     // =========================================
     // CREAZIONE FILE WORD
