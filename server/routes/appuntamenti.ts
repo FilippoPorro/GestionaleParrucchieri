@@ -30,6 +30,9 @@ function isMissingAppointmentServiceOverrideColumnError(error: any): boolean {
 }
 
 const router = Router();
+const CUSTOMER_MIN_NOTICE_HOURS = 12;
+const CUSTOMER_MIN_NOTICE_MS = CUSTOMER_MIN_NOTICE_HOURS * 60 * 60 * 1000;
+const CUSTOMER_MIN_NOTICE_MESSAGE = "Per prenotare, modificare o annullare nelle 12 ore precedenti l'appuntamento chiama direttamente il salone.";
 
 function normalizeEndDateTime(dataOraInizio: string, dataOraFine: string): string {
   if (dataOraFine.includes("T")) {
@@ -60,10 +63,8 @@ function isMissingRpcError(error: any): boolean {
     );
 }
 
-function startOfDay(date: Date): Date {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
+function hasCustomerMinimumNotice(date: Date): boolean {
+  return !Number.isNaN(date.getTime()) && date.getTime() - Date.now() >= CUSTOMER_MIN_NOTICE_MS;
 }
 
 async function getAppointmentMailUser(idUtente: number): Promise<AppointmentMailUser | null> {
@@ -484,6 +485,10 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
       });
     }
 
+    if (!isStaffRole(userRole) && !hasCustomerMinimumNotice(new Date(dataOraInizio))) {
+      return res.status(409).json({ message: CUSTOMER_MIN_NOTICE_MESSAGE });
+    }
+
     const { data: cliente, error: clienteError } = await db
       .from("utenti")
       .select("idUtente, nome, cognome, email")
@@ -693,13 +698,8 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
     }
 
     const appointmentStart = new Date(existingAppointment.dataOraInizio);
-    const todayStart = startOfDay(new Date());
-    const appointmentDayStart = startOfDay(appointmentStart);
-
-    if (appointmentDayStart <= todayStart) {
-      return res.status(409).json({
-        message: "La modifica e consentita solo fino al giorno prima dell'appuntamento"
-      });
+    if (!canManageAllAppointments && !hasCustomerMinimumNotice(appointmentStart)) {
+      return res.status(409).json({ message: CUSTOMER_MIN_NOTICE_MESSAGE });
     }
 
     const nextStart = req.body?.dataOraInizio || existingAppointment.dataOraInizio;
@@ -711,6 +711,11 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
       ? Math.trunc(requestedDuration)
       : null;
     const normalizedEndDateTime = normalizeEndDateTime(nextStart, nextEnd);
+
+    if (!canManageAllAppointments && !hasCustomerMinimumNotice(new Date(nextStart))) {
+      return res.status(409).json({ message: CUSTOMER_MIN_NOTICE_MESSAGE });
+    }
+
     const { data, error: updateAppointmentError } = await db
       .rpc("update_appuntamento_sicuro", {
         p_id_appuntamento: idAppuntamento,
@@ -815,13 +820,8 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
     }
 
     const appointmentStart = new Date(appointment.dataOraInizio);
-    const todayStart = startOfDay(new Date());
-    const appointmentDayStart = startOfDay(appointmentStart);
-
-    if (!appointment.idCliente ? false : appointmentDayStart <= todayStart) {
-      return res.status(409).json({
-        message: "L'eliminazione e consentita solo fino al giorno prima dell'appuntamento"
-      });
+    if (!canManageAllAppointments && appointment.idCliente && !hasCustomerMinimumNotice(appointmentStart)) {
+      return res.status(409).json({ message: CUSTOMER_MIN_NOTICE_MESSAGE });
     }
 
     const { error } = await db

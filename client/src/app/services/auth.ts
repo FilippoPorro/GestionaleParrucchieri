@@ -38,18 +38,15 @@ export class AuthService {
 
   private _token = signal<string | null>(this.getStoredToken());
 
-  isLoggedIn = computed(() => !!this._token());
+  isLoggedIn = computed(() => this.isTokenUsable(this._token()));
 
   userRole = computed(() => {
-    const token = this._token();
+    const token = this.getToken();
     if (!token) return null;
 
     try {
-      const payloadBase64 = token.split('.')[1];
-      if (!payloadBase64) return null;
-
-      const decodedPayload = JSON.parse(atob(payloadBase64));
-      return decodedPayload.ruolo ?? null;
+      const decodedPayload = this.decodeTokenPayload(token);
+      return decodedPayload['ruolo'] ?? null;
     } catch (e) {
       console.error('Errore decodifica token', e);
       return null;
@@ -63,15 +60,12 @@ export class AuthService {
   currentUser = computed<AuthUserSummary | null>(() => this.getUserSummaryFromToken());
 
   mustChangePassword = computed(() => {
-    const token = this._token();
+    const token = this.getToken();
     if (!token) return false;
 
     try {
-      const payloadBase64 = token.split('.')[1];
-      if (!payloadBase64) return false;
-
-      const decodedPayload = JSON.parse(atob(payloadBase64));
-      return !!decodedPayload.mustChangePassword;
+      const decodedPayload = this.decodeTokenPayload(token);
+      return !!decodedPayload['mustChangePassword'];
     } catch (e) {
       console.error('Errore decodifica stato password dal token', e);
       return false;
@@ -118,7 +112,17 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this._token();
+    const token = this._token();
+
+    if (!this.isTokenUsable(token)) {
+      if (token) {
+        this.clearToken();
+      }
+
+      return null;
+    }
+
+    return token;
   }
 
   clearToken(): void {
@@ -135,7 +139,7 @@ export class AuthService {
   }
 
   get token(): string | null {
-    return this._token();
+    return this.getToken();
   }
 
   register(user: {
@@ -164,21 +168,15 @@ export class AuthService {
   }
 
   getUserEmailFromToken(): string | null {
-    const token = this._token();
+    const token = this.getToken();
 
     if (!token) {
       return null;
     }
 
     try {
-      const payloadBase64 = token.split('.')[1];
-
-      if (!payloadBase64) {
-        return null;
-      }
-
-      const decodedPayload = JSON.parse(atob(payloadBase64));
-      return typeof decodedPayload.email === 'string' ? decodedPayload.email : null;
+      const decodedPayload = this.decodeTokenPayload(token);
+      return typeof decodedPayload['email'] === 'string' ? decodedPayload['email'] : null;
     } catch (e) {
       console.error('Errore decodifica email dal token', e);
       return null;
@@ -186,29 +184,22 @@ export class AuthService {
   }
 
   getUserSummaryFromToken(): AuthUserSummary | null {
-    const token = this._token();
+    const token = this.getToken();
 
     if (!token) {
       return null;
     }
 
     try {
-      const payloadBase64 = token.split('.')[1];
-
-      if (!payloadBase64) {
-        return null;
-      }
-
-      const decodedPayload = JSON.parse(atob(payloadBase64));
+      const decodedPayload = this.decodeTokenPayload(token);
+      const id = Number(decodedPayload['userId'] ?? decodedPayload['idUtente'] ?? decodedPayload['id']);
 
       return {
-        id: Number.isFinite(Number(decodedPayload.idUtente ?? decodedPayload.id))
-          ? Number(decodedPayload.idUtente ?? decodedPayload.id)
-          : null,
-        nome: typeof decodedPayload.nome === 'string' ? decodedPayload.nome : '',
-        cognome: typeof decodedPayload.cognome === 'string' ? decodedPayload.cognome : '',
-        email: typeof decodedPayload.email === 'string' ? decodedPayload.email : '',
-        ruolo: typeof decodedPayload.ruolo === 'string' ? decodedPayload.ruolo : ''
+        id: Number.isFinite(id) ? id : null,
+        nome: typeof decodedPayload['nome'] === 'string' ? decodedPayload['nome'] : '',
+        cognome: typeof decodedPayload['cognome'] === 'string' ? decodedPayload['cognome'] : '',
+        email: typeof decodedPayload['email'] === 'string' ? decodedPayload['email'] : '',
+        ruolo: typeof decodedPayload['ruolo'] === 'string' ? decodedPayload['ruolo'] : ''
       };
     } catch (e) {
       console.error('Errore decodifica utente dal token', e);
@@ -229,7 +220,15 @@ export class AuthService {
   }
 
   private getStoredToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+    const token = localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+
+    if (!this.isTokenUsable(token)) {
+      localStorage.removeItem(this.TOKEN_KEY);
+      sessionStorage.removeItem(this.TOKEN_KEY);
+      return null;
+    }
+
+    return token;
   }
 
   private getUserIdFromToken(token: string | null): number | null {
@@ -238,14 +237,45 @@ export class AuthService {
     }
 
     try {
-      const payloadBase64 = token.split('.')[1];
-      if (!payloadBase64) return null;
-
-      const decodedPayload = JSON.parse(atob(payloadBase64));
-      const id = Number(decodedPayload.userId ?? decodedPayload.idUtente ?? decodedPayload.id);
+      const decodedPayload = this.decodeTokenPayload(token);
+      const id = Number(decodedPayload['userId'] ?? decodedPayload['idUtente'] ?? decodedPayload['id']);
       return Number.isFinite(id) ? id : null;
     } catch {
       return null;
+    }
+  }
+
+  private decodeTokenPayload(token: string): Record<string, any> {
+    const payloadBase64 = token.split('.')[1];
+
+    if (!payloadBase64) {
+      throw new Error('Payload token mancante');
+    }
+
+    const normalizedPayload = payloadBase64
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
+
+    return JSON.parse(atob(normalizedPayload));
+  }
+
+  private isTokenUsable(token: string | null): boolean {
+    if (!token) {
+      return false;
+    }
+
+    try {
+      const decodedPayload = this.decodeTokenPayload(token);
+      const exp = Number(decodedPayload['exp']);
+
+      if (Number.isFinite(exp) && exp * 1000 <= Date.now()) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
     }
   }
 

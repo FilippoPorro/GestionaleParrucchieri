@@ -859,7 +859,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.refreshView();
 
     setTimeout(() => {
-      this.calendarComponent?.getApi().updateSize();
+      this.calendarComponent?.getApi()?.updateSize();
     }, 0);
   }
 
@@ -1201,7 +1201,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private syncDatePickerValue(fallbackDate: Date): void {
-    const activeDate = this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate;
+    const activeDate = this.calendarComponent?.getApi()?.getDate() ?? fallbackDate;
     this.calendarDatePickerValue = this.formatDateForInput(activeDate);
     this.syncCalendarPickerMonth(activeDate);
   }
@@ -1320,7 +1320,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
 
     this.calendarScrollTimeout = setTimeout(() => {
-      this.calendarComponent?.getApi().scrollToTime(this.getCalendarScrollTimeForNow());
+      this.calendarComponent?.getApi()?.scrollToTime(this.getCalendarScrollTimeForNow());
     }, 60);
   }
 

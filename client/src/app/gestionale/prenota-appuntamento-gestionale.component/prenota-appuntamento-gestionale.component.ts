@@ -661,7 +661,6 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
       note
     };
 
-    console.log('Invio:', payload);
     this.isSubmitting = true;
 
     this.appuntamentoService.creaAppuntamento(payload)
@@ -690,13 +689,21 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
             });
           }, 1500);
         },
-        error: (err: unknown) => {
+        error: (err: any) => {
           console.error(err);
           this.isSubmitting = false;
-          this.showBookingAlert(
-            'Prenotazione dell\'appuntamento non riuscita',
-            'error'
-          );
+          if (err?.status === 401) {
+            this.showBookingAlert(
+              'La sessione e scaduta. Effettua di nuovo il login prima di prenotare.',
+              'error',
+              'Login richiesto'
+            );
+          } else {
+            this.showBookingAlert(
+              err?.error?.message || 'Prenotazione dell\'appuntamento non riuscita',
+              'error'
+            );
+          }
           this.cdr.detectChanges();
         }
       });

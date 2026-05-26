@@ -57,6 +57,10 @@ interface AppointmentEditForm {
 export class AppuntamentiComponent implements OnInit {
   private readonly mobileBreakpoint = 768;
   private readonly minimumAppointmentDurationMinutes = 30;
+  private readonly customerMinimumNoticeHours = 12;
+  private readonly customerMinimumNoticeMessage =
+    'Per prenotare, modificare o annullare nelle 12 ore precedenti l\'appuntamento chiama direttamente il salone.';
+  private readonly selectedOperatorStorageKey = 'site_selected_operator';
 
   private api = `${environment.apiUrl}/auth`;
   private readonly openingSchedule: Record<number, DailySchedule> = {
@@ -118,6 +122,7 @@ export class AppuntamentiComponent implements OnInit {
   isAppointmentDetailClosing = false;
   appointmentDetailToneClass = 'tone-other';
   isEditingAppointment = false;
+  private isEditingFromCalendarAction = false;
   isAppointmentActionLoading = false;
   isEditFormLoading = false;
   appointmentActionError = '';
@@ -244,11 +249,14 @@ export class AppuntamentiComponent implements OnInit {
         if (this.operatori.length > 0) {
           if (this.requestedOperatorId && this.operatori.some((operatore) => operatore.idUtente === this.requestedOperatorId)) {
             this.selectedOperator = this.requestedOperatorId;
+            this.saveSelectedOperator(this.selectedOperator);
             this.onOperatorChange(null);
           } else if (this.selectedServiceId) {
+            this.selectedOperator = this.getSavedSelectedOperator(operatori);
             this.loadSelectedServiceContext(this.selectedServiceId);
           } else {
-            this.selectedOperator = this.operatori[0].idUtente;
+            this.selectedOperator = this.getSavedSelectedOperator(operatori) ?? this.operatori[0].idUtente;
+            this.saveSelectedOperator(this.selectedOperator);
             this.onOperatorChange(null);
           }
         }
@@ -324,6 +332,7 @@ export class AppuntamentiComponent implements OnInit {
     const clickedElement = arg.jsEvent?.target as HTMLElement | null;
     if (clickedElement?.closest('.appointment-icon-btn.edit')) {
       if (!arg.event.extendedProps?.canModify) {
+        this.showAlert(this.customerMinimumNoticeMessage);
         return;
       }
       this.openAppointmentDetail(appointment, true);
@@ -332,6 +341,7 @@ export class AppuntamentiComponent implements OnInit {
 
     if (clickedElement?.closest('.appointment-icon-btn.delete')) {
       if (!arg.event.extendedProps?.canDelete) {
+        this.showAlert(this.customerMinimumNoticeMessage);
         return;
       }
       this.openDeleteConfirmation(appointment, false);
@@ -348,7 +358,6 @@ export class AppuntamentiComponent implements OnInit {
             if (!res) return;
 
             this.user = res;
-            console.log("Utente loggato:", this.user);
 
             if (this.selectedOperator) {
               this.onOperatorChange(null);
@@ -368,11 +377,11 @@ export class AppuntamentiComponent implements OnInit {
       this.closeOperatorSelect();
 
       if(!this.selectedOperator) return;
+      this.saveSelectedOperator(this.selectedOperator);
 
     this.appuntamentoService.getAppuntamenti(this.selectedOperator)
       .subscribe({
         next: (eventi) => {
-          console.log(eventi);
           this.loadedAppointments = eventi;
           this.loadServiceDetailsForOperator(this.selectedOperator!);
           this.closeAppointmentDetail();
@@ -513,6 +522,7 @@ export class AppuntamentiComponent implements OnInit {
     this.selectedAppointmentLabel = this.buildAppointmentLabel(appointment);
     this.appointmentActionError = '';
     this.isEditingAppointment = false;
+    this.isEditingFromCalendarAction = startInEditMode;
     this.isAppointmentDetailClosing = false;
     this.isAppointmentDetailOpen = true;
     this.appointmentDetailToneClass = this.getAppointmentToneClass(appointment);
@@ -534,7 +544,7 @@ export class AppuntamentiComponent implements OnInit {
 
     if (startInEditMode) {
       if (!this.canModifySelectedAppointment) {
-        this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+        this.appointmentActionError = this.customerMinimumNoticeMessage;
       } else {
         this.isEditingAppointment = true;
       }
@@ -551,6 +561,7 @@ export class AppuntamentiComponent implements OnInit {
       this.isAppointmentDetailOpen = false;
       this.isAppointmentDetailClosing = false;
       this.isEditingAppointment = false;
+      this.isEditingFromCalendarAction = false;
       this.isAppointmentActionLoading = false;
       this.isEditFormLoading = false;
       this.appointmentActionError = '';
@@ -585,7 +596,7 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -594,6 +605,7 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     this.isEditingAppointment = true;
+    this.isEditingFromCalendarAction = false;
     this.appointmentActionError = '';
     this.syncEditStartPartsFromForm();
     this.closeEditDatePicker(true);
@@ -604,6 +616,11 @@ export class AppuntamentiComponent implements OnInit {
 
   cancelAppointmentEdit(): void {
     if (!this.selectedAppointment) {
+      return;
+    }
+
+    if (this.isEditingFromCalendarAction) {
+      this.closeAppointmentDetail();
       return;
     }
 
@@ -679,7 +696,7 @@ export class AppuntamentiComponent implements OnInit {
     this.closeEditServicesPicker();
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -687,6 +704,11 @@ export class AppuntamentiComponent implements OnInit {
 
     if (!range) {
       this.appointmentActionError = "Seleziona orario e servizio validi.";
+      return;
+    }
+
+    if (!this.hasCustomerMinimumNotice(range.start)) {
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -724,6 +746,7 @@ export class AppuntamentiComponent implements OnInit {
       next: () => {
         this.isAppointmentActionLoading = false;
         this.isEditingAppointment = false;
+        this.isEditingFromCalendarAction = false;
         this.showAlert('Appuntamento modificato con successo.', 'success');
         this.forceViewRefresh(true);
         this.onOperatorChange(null);
@@ -741,6 +764,12 @@ export class AppuntamentiComponent implements OnInit {
       return;
     }
 
+    if (!this.canDeleteSelectedAppointment) {
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
+      this.forceViewRefresh();
+      return;
+    }
+
     this.openDeleteConfirmation(this.selectedAppointment, true);
   }
 
@@ -750,6 +779,12 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     if (!this.canDeleteAppointment(appointment)) {
+      if (keepDetailOpen) {
+        this.appointmentActionError = this.customerMinimumNoticeMessage;
+        this.forceViewRefresh();
+      } else {
+        this.showAlert(this.customerMinimumNoticeMessage);
+      }
       return;
     }
 
@@ -774,7 +809,7 @@ export class AppuntamentiComponent implements OnInit {
 
     if (!this.canDeleteAppointment(this.deleteConfirmAppointment)) {
       this.cancelDeleteConfirmation();
-      this.appointmentActionError = 'Puoi eliminare solo appuntamenti futuri e gestibili.';
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       this.forceViewRefresh();
       return;
     }
@@ -797,6 +832,7 @@ export class AppuntamentiComponent implements OnInit {
         error: (err) => {
           this.isAppointmentActionLoading = false;
           const message = err?.error?.message || 'Eliminazione non riuscita.';
+          this.cancelDeleteConfirmation();
           if (keepDetailOpen) {
             this.appointmentActionError = message;
           } else {
@@ -1085,24 +1121,6 @@ export class AppuntamentiComponent implements OnInit {
     });
   }
 
-  private isUntilDayBefore(dateString: string): boolean {
-    const appointmentDate = new Date(dateString);
-
-    if (Number.isNaN(appointmentDate.getTime())) {
-      return false;
-    }
-
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const appointmentDayStart = new Date(
-      appointmentDate.getFullYear(),
-      appointmentDate.getMonth(),
-      appointmentDate.getDate()
-    );
-
-    return appointmentDayStart > todayStart;
-  }
-
   private renderAppointmentEvent(arg: EventContentArg): { html: string } {
     if (arg.event.display === 'background') {
       return { html: '' };
@@ -1231,8 +1249,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    const appointmentEnd = new Date(appointment.dataOraFine);
-    return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() > Date.now();
+    return this.hasCustomerMinimumNotice(new Date(appointment.dataOraInizio));
   }
 
   private canDeleteAppointment(appointment: Appuntamento): boolean {
@@ -1240,12 +1257,17 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    return !this.isPastAppointment(appointment);
+    return this.hasCustomerMinimumNotice(new Date(appointment.dataOraInizio));
   }
 
   private isPastAppointment(appointment: Appuntamento): boolean {
     const appointmentEnd = new Date(appointment.dataOraFine);
     return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() < Date.now();
+  }
+
+  private hasCustomerMinimumNotice(date: Date): boolean {
+    return !Number.isNaN(date.getTime()) &&
+      date.getTime() - Date.now() >= this.customerMinimumNoticeHours * 60 * 60 * 1000;
   }
 
   private escapeHtml(value: string): string {
@@ -1599,6 +1621,7 @@ export class AppuntamentiComponent implements OnInit {
     }
 
     this.selectedOperator = operatorId;
+    this.saveSelectedOperator(operatorId);
     this.onOperatorChange(null);
   }
 
@@ -1741,11 +1764,16 @@ export class AppuntamentiComponent implements OnInit {
         this.availableServiceOperatorIds = availableIds;
 
         if (!this.selectedOperator || !this.availableServiceOperatorIds.has(this.selectedOperator)) {
-          this.selectedOperator = this.operatori.find((operatore) =>
-            this.availableServiceOperatorIds.has(operatore.idUtente)
-          )?.idUtente ?? null;
+          const savedOperator = this.getSavedSelectedOperator(this.operatori);
+          this.selectedOperator =
+            savedOperator && this.availableServiceOperatorIds.has(savedOperator)
+              ? savedOperator
+              : this.operatori.find((operatore) =>
+                this.availableServiceOperatorIds.has(operatore.idUtente)
+              )?.idUtente ?? null;
 
           if (this.selectedOperator) {
+            this.saveSelectedOperator(this.selectedOperator);
             this.onOperatorChange(null);
           }
         }
@@ -1757,6 +1785,35 @@ export class AppuntamentiComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private getSavedSelectedOperator(operators: Utente[] = this.operatori): number | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    const savedOperator = Number(localStorage.getItem(this.selectedOperatorStorageKey));
+
+    if (!Number.isFinite(savedOperator)) {
+      return null;
+    }
+
+    return operators.some((operatore) => operatore.idUtente === savedOperator)
+      ? savedOperator
+      : null;
+  }
+
+  private saveSelectedOperator(operatorId: number | null): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    if (operatorId == null) {
+      localStorage.removeItem(this.selectedOperatorStorageKey);
+      return;
+    }
+
+    localStorage.setItem(this.selectedOperatorStorageKey, String(operatorId));
   }
 
   private handleDatesSet(arg: { start: Date; end: Date }): void {
@@ -1976,7 +2033,8 @@ export class AppuntamentiComponent implements OnInit {
   private syncDatePickerValue(fallbackDate: Date): void {
     const requestedDate = this.parseCalendarDateValue(this.requestedCalendarDate);
     const activeDate = requestedDate
-      ?? (this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate);
+      ?? this.calendarComponent?.getApi()?.getDate()
+      ?? fallbackDate;
 
     this.calendarDatePickerValue = this.formatDateForInput(activeDate);
     this.syncCalendarPickerMonth(activeDate);
@@ -2156,26 +2214,31 @@ export class AppuntamentiComponent implements OnInit {
   }
 
   private refreshCalendarEvents(): void {
-    if (!this.calendarComponent) {
+    this.availabilityMaskEvents = this.buildAvailabilityMaskEvents();
+    const calendarEvents = [
+      ...this.availabilityMaskEvents,
+      ...this.events
+    ];
+
+    const calendarApi = this.calendarComponent?.getApi();
+    if (!calendarApi) {
+      this.calendarOptions = {
+        ...this.calendarOptions,
+        events: calendarEvents
+      };
       return;
     }
 
-    this.availabilityMaskEvents = this.buildAvailabilityMaskEvents();
-
-    const calendarApi = this.calendarComponent.getApi();
     calendarApi.removeAllEvents();
-    calendarApi.addEventSource([
-      ...this.availabilityMaskEvents,
-      ...this.events
-    ]);
+    calendarApi.addEventSource(calendarEvents);
     this.forceViewRefresh(true);
   }
 
   private forceViewRefresh(resizeCalendar = false): void {
     this.cdr.detectChanges();
 
-    if (resizeCalendar && this.calendarComponent) {
-      this.calendarComponent.getApi().updateSize();
+    if (resizeCalendar) {
+      this.calendarComponent?.getApi()?.updateSize();
     }
   }
 
@@ -2188,7 +2251,7 @@ export class AppuntamentiComponent implements OnInit {
       return false;
     }
 
-    return this.isWithinOpeningHours(date);
+    return this.hasCustomerMinimumNotice(date) && this.isWithinOpeningHours(date);
   }
 
   private isPastSlot(date: Date): boolean {
@@ -2220,6 +2283,10 @@ export class AppuntamentiComponent implements OnInit {
   private getInvalidSlotMessage(date: Date): string {
     if (date < new Date()) {
       return 'Non puoi prenotare in un orario gia passato.';
+    }
+
+    if (!this.hasCustomerMinimumNotice(date)) {
+      return this.customerMinimumNoticeMessage;
     }
 
     const daySchedule = this.openingSchedule[date.getDay()];

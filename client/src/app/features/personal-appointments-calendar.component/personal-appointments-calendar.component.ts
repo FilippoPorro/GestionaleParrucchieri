@@ -63,6 +63,9 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   private readonly calendarDateStorageKey = 'personal_appointments_calendar_date';
   private readonly operatorDaySelectionStorageKey = 'personal_appointments_operator_day_selection';
   private readonly operatorDayOrderStorageKey = 'personal_appointments_operator_day_order';
+  private readonly customerMinimumNoticeHours = 12;
+  private readonly customerMinimumNoticeMessage =
+    'Per prenotare, modificare o annullare nelle 12 ore precedenti l\'appuntamento chiama direttamente il salone.';
   private readonly openingSchedule: Record<number, DailySchedule> = {
     0: { name: 'Domenica', intervals: [] },
     1: { name: 'Lunedi', intervals: [] },
@@ -600,7 +603,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     }
 
     if (!this.isBookableDateTime(clickedDate)) {
-      this.calendarComponent?.getApi().unselect();
+      this.calendarComponent?.getApi()?.unselect();
       this.showCalendarMessage(this.getInvalidSlotMessage(clickedDate));
       this.cdr.detectChanges();
       return;
@@ -638,6 +641,8 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     if (isEditClick) {
       if (this.canModifyAppointment(appointment)) {
         this.openAppointmentDetail(appointment, true);
+      } else {
+        this.showCalendarMessage(this.customerMinimumNoticeMessage);
       }
       return;
     }
@@ -645,6 +650,8 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     if (isDeleteClick) {
       if (this.canDeleteAppointment(appointment)) {
         this.openDeleteConfirmation(appointment, false);
+      } else {
+        this.showCalendarMessage(this.customerMinimumNoticeMessage);
       }
       return;
     }
@@ -980,7 +987,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
 
     if (startInEditMode) {
       if (!this.canModifySelectedAppointment) {
-        this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+        this.appointmentActionError = this.customerMinimumNoticeMessage;
       } else {
         this.isEditingAppointment = true;
       }
@@ -1040,7 +1047,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     }
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -1151,7 +1158,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     this.closeEditServicesPicker();
 
     if (!this.canModifySelectedAppointment) {
-      this.appointmentActionError = "Puoi modificare solo appuntamenti futuri e gestibili.";
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -1163,7 +1170,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
     }
 
     if (!this.isEditedRangeInFuture(range.start)) {
-      this.appointmentActionError = "Non puoi spostare un appuntamento in un orario gia passato.";
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       return;
     }
 
@@ -1306,7 +1313,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
 
     if (!this.canDeleteAppointment(this.deleteConfirmAppointment)) {
       this.cancelDeleteConfirmation();
-      this.appointmentActionError = 'Puoi eliminare solo appuntamenti futuri e gestibili.';
+      this.appointmentActionError = this.customerMinimumNoticeMessage;
       this.forceViewRefresh();
       return;
     }
@@ -1329,6 +1336,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
         error: (err) => {
           this.isAppointmentActionLoading = false;
           const message = err?.error?.message || 'Eliminazione non riuscita.';
+          this.cancelDeleteConfirmation();
           if (keepDetailOpen) {
             this.appointmentActionError = message;
           } else {
@@ -1969,7 +1977,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   }
 
   private isEditedRangeInFuture(start: Date): boolean {
-    return !Number.isNaN(start.getTime()) && start.getTime() > Date.now();
+    return this.hasCustomerMinimumNotice(start);
   }
 
   private canModifyAppointment(appointment: Appuntamento): boolean {
@@ -1981,8 +1989,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
       return false;
     }
 
-    const appointmentEnd = new Date(appointment.dataOraFine);
-    return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() > Date.now();
+    return this.hasCustomerMinimumNotice(new Date(appointment.dataOraInizio));
   }
 
   private canDeleteAppointment(appointment: Appuntamento): boolean {
@@ -1990,25 +1997,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
       return false;
     }
 
-    return !this.isPastAppointment(appointment);
-  }
-
-  private isUntilDayBefore(dateString: string): boolean {
-    const appointmentDate = new Date(dateString);
-
-    if (Number.isNaN(appointmentDate.getTime())) {
-      return false;
-    }
-
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const appointmentDayStart = new Date(
-      appointmentDate.getFullYear(),
-      appointmentDate.getMonth(),
-      appointmentDate.getDate()
-    );
-
-    return appointmentDayStart > todayStart;
+    return this.hasCustomerMinimumNotice(new Date(appointment.dataOraInizio));
   }
 
   private canUserManageAppointment(appointment: Appuntamento): boolean {
@@ -2018,6 +2007,11 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   private isPastAppointment(appointment: Appuntamento): boolean {
     const appointmentEnd = new Date(appointment.dataOraFine);
     return !Number.isNaN(appointmentEnd.getTime()) && appointmentEnd.getTime() < Date.now();
+  }
+
+  private hasCustomerMinimumNotice(date: Date): boolean {
+    return !Number.isNaN(date.getTime()) &&
+      date.getTime() - Date.now() >= this.customerMinimumNoticeHours * 60 * 60 * 1000;
   }
 
   private isPermissionAppointment(appointment: Appuntamento): boolean {
@@ -2039,7 +2033,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
       return false;
     }
 
-    return this.isWithinOpeningHours(date);
+    return this.hasCustomerMinimumNotice(date) && this.isWithinOpeningHours(date);
   }
 
   private isWithinOpeningHours(date: Date): boolean {
@@ -2061,6 +2055,10 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   private getInvalidSlotMessage(date: Date): string {
     if (date < new Date()) {
       return 'Non puoi prenotare in un orario gia passato.';
+    }
+
+    if (!this.hasCustomerMinimumNotice(date)) {
+      return this.customerMinimumNoticeMessage;
     }
 
     const daySchedule = this.openingSchedule[date.getDay()];
@@ -2456,8 +2454,8 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   private forceViewRefresh(resizeCalendar = false): void {
     this.cdr.detectChanges();
 
-    if (resizeCalendar && this.calendarComponent) {
-      this.calendarComponent.getApi().updateSize();
+    if (resizeCalendar) {
+      this.calendarComponent?.getApi()?.updateSize();
     }
   }
 
@@ -2592,7 +2590,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
       return this.isSameLocalDay(this.operatorDayDate, new Date());
     }
 
-    const activeDate = this.calendarComponent?.getApi().getDate();
+    const activeDate = this.calendarComponent?.getApi()?.getDate();
     return activeDate ? this.isSameLocalDay(activeDate, new Date()) : false;
   }
 
@@ -2684,7 +2682,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
 
     const activeDate = this.isOperatorDayView
       ? this.operatorDayDate
-      : (this.calendarComponent?.getApi().getDate() ?? arg.start);
+      : (this.calendarComponent?.getApi()?.getDate() ?? arg.start);
     localStorage.setItem(this.calendarDateStorageKey, this.formatDateForInput(activeDate));
   }
 
@@ -2754,7 +2752,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
   private syncDatePickerValue(fallbackDate: Date): void {
     const activeDate = this.isOperatorDayView
       ? this.operatorDayDate
-      : (this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate);
+      : (this.calendarComponent?.getApi()?.getDate() ?? fallbackDate);
     this.calendarDatePickerValue = this.formatDateForInput(activeDate);
     this.syncCalendarPickerMonth(activeDate);
   }
@@ -2778,7 +2776,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
         return;
       }
 
-      this.calendarComponent.getApi().scrollToTime(this.getCalendarScrollTimeForNow());
+      this.calendarComponent?.getApi()?.scrollToTime(this.getCalendarScrollTimeForNow());
     }, 60);
   }
 
@@ -2891,7 +2889,7 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
 
     const nextTitle = this.isOperatorDayView
       ? this.formatOperatorDayTitle(this.operatorDayDate)
-      : (fullCalendarTitle ?? this.calendarComponent?.getApi().view.title);
+      : (fullCalendarTitle ?? this.calendarComponent?.getApi()?.view.title);
 
     if (nextTitle && title.textContent !== nextTitle) {
       title.textContent = nextTitle;

@@ -1192,8 +1192,7 @@
 
 :host ::ng-deep .appointment-icon-btn.is-disabled {
   opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 :host ::ng-deep .appointment-icon-btn.is-hidden {
@@ -1659,6 +1658,11 @@
   gap: 10px;
 }
 
+.appointment-detail-body--grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .appointment-detail-body.is-loading {
   position: relative;
 }
@@ -1717,27 +1721,34 @@
 }
 
 .appointment-detail-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(76px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 9px 11px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
 }
 
+.appointment-detail-row--wide {
+  grid-column: 1 / -1;
+}
+
 .appointment-detail-label {
   color: rgba(217, 186, 122, 0.84);
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  font-size: 10px;
+  letter-spacing: 0.9px;
+  font-size: 9px;
   font-weight: 700;
 }
 
 .appointment-detail-value {
   color: #fff4d3;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .appointment-detail-field {
@@ -2294,6 +2305,10 @@
   .appointments-top-row {
     grid-template-columns: 1fr;
   }
+
+  .appointment-detail-body--grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -2342,6 +2357,14 @@
 
   .appointment-edit-datetime-row {
     grid-template-columns: 1fr;
+  }
+
+  .appointment-detail-body--grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-detail-row {
+    grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
   }
 
   .appointment-edit-date-picker-panel {

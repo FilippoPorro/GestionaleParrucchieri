@@ -216,6 +216,11 @@
       </div>
 
       <div class="appointment-detail-row">
+        <span class="appointment-detail-label">Stato</span>
+        <strong class="appointment-detail-value">{{ selectedAppointment.stato || 'prenotato' }}</strong>
+      </div>
+
+      <div class="appointment-detail-row appointment-detail-row--wide">
         <span class="appointment-detail-label">Dettagli</span>
         <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota' }}</strong>
       </div>
@@ -391,7 +396,7 @@
         type="button"
         class="appointment-action secondary with-icon"
         *ngIf="!isEditingAppointment"
-        [disabled]="isAppointmentActionLoading || !canModifySelectedAppointment"
+        [disabled]="isAppointmentActionLoading"
         (click)="beginAppointmentEdit()"
       >
         <i class="bi bi-pencil-square"></i>
@@ -402,7 +407,7 @@
         type="button"
         class="appointment-action danger with-icon"
         *ngIf="!isEditingAppointment"
-        [disabled]="isAppointmentActionLoading || !canDeleteSelectedAppointment"
+        [disabled]="isAppointmentActionLoading"
         (click)="deleteSelectedAppointment()"
       >
         <i class="bi bi-trash3"></i>

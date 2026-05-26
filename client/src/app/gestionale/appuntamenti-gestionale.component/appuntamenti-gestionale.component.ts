@@ -613,7 +613,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
     }
 
     if (!this.isBookableDateTime(clickedDate)) {
-      this.calendarComponent?.getApi().unselect();
+      this.calendarComponent?.getApi()?.unselect();
       this.showCalendarMessage(this.getInvalidSlotMessage(clickedDate));
       this.cdr.detectChanges();
       return;
@@ -2003,7 +2003,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return false;
     }
 
-    return !this.isPastAppointment(appointment);
+    return true;
   }
 
   private isUntilDayBefore(dateString: string): boolean {
@@ -2450,8 +2450,8 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private forceViewRefresh(resizeCalendar = false): void {
     this.cdr.detectChanges();
 
-    if (resizeCalendar && this.calendarComponent) {
-      this.calendarComponent.getApi().updateSize();
+    if (resizeCalendar) {
+      this.calendarComponent?.getApi()?.updateSize();
     }
   }
 
@@ -2587,7 +2587,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
       return this.isSameLocalDay(this.operatorDayDate, new Date());
     }
 
-    const activeDate = this.calendarComponent?.getApi().getDate();
+    const activeDate = this.calendarComponent?.getApi()?.getDate();
     return activeDate ? this.isSameLocalDay(activeDate, new Date()) : false;
   }
 
@@ -2679,7 +2679,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     const activeDate = this.isOperatorDayView
       ? this.operatorDayDate
-      : (this.calendarComponent?.getApi().getDate() ?? arg.start);
+      : (this.calendarComponent?.getApi()?.getDate() ?? arg.start);
     localStorage.setItem(this.calendarDateStorageKey, this.formatDateForInput(activeDate));
   }
 
@@ -2749,7 +2749,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private syncDatePickerValue(fallbackDate: Date): void {
     const activeDate = this.isOperatorDayView
       ? this.operatorDayDate
-      : (this.calendarComponent ? this.calendarComponent.getApi().getDate() : fallbackDate);
+      : (this.calendarComponent?.getApi()?.getDate() ?? fallbackDate);
     this.calendarDatePickerValue = this.formatDateForInput(activeDate);
     this.syncCalendarPickerMonth(activeDate);
   }
@@ -2773,7 +2773,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         return;
       }
 
-      this.calendarComponent.getApi().scrollToTime(this.getCalendarScrollTimeForNow());
+      this.calendarComponent?.getApi()?.scrollToTime(this.getCalendarScrollTimeForNow());
     }, 60);
   }
 
@@ -2886,7 +2886,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
 
     const nextTitle = this.isOperatorDayView
       ? this.formatOperatorDayTitle(this.operatorDayDate)
-      : (fullCalendarTitle ?? this.calendarComponent?.getApi().view.title);
+      : (fullCalendarTitle ?? this.calendarComponent?.getApi()?.view.title);
 
     if (nextTitle && title.textContent !== nextTitle) {
       title.textContent = nextTitle;

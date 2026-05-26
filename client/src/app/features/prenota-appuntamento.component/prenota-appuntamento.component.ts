@@ -55,6 +55,9 @@ export class PrenotaAppuntamentoComponent implements OnInit {
   private selectedServizioFromQuery: number | null = null;
   private hasLoadedManagementClienti = false;
   private readonly minimumAppointmentDurationMinutes = 30;
+  private readonly customerMinimumNoticeHours = 12;
+  private readonly customerMinimumNoticeMessage =
+    'Per prenotare nelle 12 ore precedenti l\'appuntamento chiama direttamente il salone.';
   private readonly openingSchedule: Record<number, DailySchedule> = {
     0: { name: 'Domenica', intervals: [] },
     1: { name: 'Lunedi', intervals: [] },
@@ -584,8 +587,11 @@ export class PrenotaAppuntamentoComponent implements OnInit {
 
     const decodedPayload = this.isManagementBooking
       ? null
-      : this.decodeTokenPayload<{ userId?: number }>();
-    const idCliente = this.isManagementBooking ? this.form.idCliente : decodedPayload?.userId;
+      : this.decodeTokenPayload<{ userId?: number; idUtente?: number; id?: number }>();
+    const decodedClienteId = Number(decodedPayload?.userId ?? decodedPayload?.idUtente ?? decodedPayload?.id);
+    const idCliente = this.isManagementBooking
+      ? this.form.idCliente
+      : (Number.isFinite(decodedClienteId) ? decodedClienteId : null);
     const note = this.getSelectedServizioNome();
 
     if (!idCliente) {
@@ -612,7 +618,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
       note
     };
 
-    console.log('Invio:', payload);
     this.isSubmitting = true;
 
     this.appuntamentoService.creaAppuntamento(payload)
@@ -641,13 +646,21 @@ export class PrenotaAppuntamentoComponent implements OnInit {
             });
           }, 1500);
         },
-        error: (err: unknown) => {
+        error: (err: any) => {
           console.error(err);
           this.isSubmitting = false;
-          this.showBookingAlert(
-            'Prenotazione dell\'appuntamento non riuscita',
-            'error'
-          );
+          if (err?.status === 401) {
+            this.showBookingAlert(
+              'La sessione e scaduta. Effettua di nuovo il login prima di prenotare.',
+              'warning',
+              'Login richiesto'
+            );
+          } else {
+            this.showBookingAlert(
+              err?.error?.message || 'Prenotazione dell\'appuntamento non riuscita',
+              'error'
+            );
+          }
           this.cdr.detectChanges();
         }
       });
@@ -712,6 +725,10 @@ export class PrenotaAppuntamentoComponent implements OnInit {
       return 'Non puoi prenotare in un orario gia passato.';
     }
 
+    if (!this.isManagementBooking && !this.hasCustomerMinimumNotice(start)) {
+      return this.customerMinimumNoticeMessage;
+    }
+
     if (end <= start) {
       return 'L\'orario di fine deve essere successivo all\'inizio.';
     }
@@ -727,6 +744,10 @@ export class PrenotaAppuntamentoComponent implements OnInit {
     }
 
     return null;
+  }
+
+  private hasCustomerMinimumNotice(date: Date): boolean {
+    return date.getTime() - Date.now() >= this.customerMinimumNoticeHours * 60 * 60 * 1000;
   }
 
   private isWithinOpeningHours(start: Date, end: Date): boolean {
