@@ -142,6 +142,41 @@ function getAgeRangeLabel(age: number): string {
   return `${start}-${end}`;
 }
 
+function normalizeGender(value: unknown): "f" | "m" | "n/d" {
+  const normalized = normalizeKey(value);
+
+  if (normalized === "f" || normalized === "femmina") {
+    return "f";
+  }
+
+  if (normalized === "m" || normalized === "maschio") {
+    return "m";
+  }
+
+  return "n/d";
+}
+
+function getWeekdayOrder(label: string): number {
+  switch (normalizeKey(label)) {
+    case "lunedi":
+      return 1;
+    case "martedi":
+      return 2;
+    case "mercoledi":
+      return 3;
+    case "giovedi":
+      return 4;
+    case "venerdi":
+      return 5;
+    case "sabato":
+      return 6;
+    case "domenica":
+      return 7;
+    default:
+      return 99;
+  }
+}
+
 function getCurrentHalfHourSlot(date: Date): { start: Date; end: Date } {
   const start = new Date(date);
   start.setMinutes(date.getMinutes() < 30 ? 0 : 30, 0, 0);
@@ -585,7 +620,7 @@ router.get("/report", async (req: Request, res: Response) => {
       annualCustomerIds.length > 0
       ? await db
         .from("utenti")
-        .select("idUtente, nome, cognome, data_nascita")
+        .select("idUtente, nome, cognome, data_nascita, sesso")
         .in("idUtente", annualCustomerIds)
       : { data: [], error: null },
       completedOperatorIds.length > 0
@@ -786,11 +821,24 @@ router.get("/report", async (req: Request, res: Response) => {
       const operatorId = Number(appointment.idOperatore);
       const services = serviceRowsByAppointmentId.get(appointmentId) || [];
       const revenue = services.reduce((sum, service) => sum + Number(service.prezzo || 0), 0);
-      const detectedSegment = services
-        .map((service) => resolveCustomerSegment(service))
-        .find((segment) => segment !== "non_classificato")
-        || customerSegmentById.get(customerId)
-        || "non_classificato";
+      const customer = customersById.get(customerId);
+      const customerGender = normalizeGender(customer?.sesso);
+      const customerAge = calculateAgeFromBirthDate(customer?.data_nascita, now);
+      const isChild = customerAge !== null && customerAge < 14;
+      const segmentFromProfile: "donna" | "uomo" | "bambino" | "non_classificato" = isChild
+        ? "bambino"
+        : customerGender === "f"
+          ? "donna"
+          : customerGender === "m"
+            ? "uomo"
+            : "non_classificato";
+      const detectedSegment = segmentFromProfile !== "non_classificato"
+        ? segmentFromProfile
+        : services
+          .map((service) => resolveCustomerSegment(service))
+          .find((segment) => segment !== "non_classificato")
+          || customerSegmentById.get(customerId)
+          || "non_classificato";
 
       if (Number.isFinite(customerId) && !customerSegmentById.has(customerId)) {
         customerSegmentById.set(customerId, detectedSegment);
@@ -891,7 +939,7 @@ router.get("/report", async (req: Request, res: Response) => {
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "it"));
 
-    const segmentLabels: Array<"donna" | "uomo" | "bambino"> = ["donna", "uomo", "bambino"];
+    const segmentLabels: Array<"uomo" | "donna" | "bambino"> = ["uomo", "donna", "bambino"];
     const segments = segmentLabels.map((segment) => {
       const entry = segmentStats.get(segment) || { customers: new Set<number>(), appointments: 0, revenue: 0 };
       return {
@@ -901,10 +949,7 @@ router.get("/report", async (req: Request, res: Response) => {
         averageSpend: entry.appointments > 0 ? Number((entry.revenue / entry.appointments).toFixed(2)) : 0,
         revenue: Number(entry.revenue.toFixed(2))
       };
-    });
-
-    const totalSegmentCustomers = segments.reduce((sum, item) => sum + item.customers, 0);
-    const classifiedCustomers = totalSegmentCustomers > 0 ? totalSegmentCustomers : customerFrequency.length;
+    }).filter((segment) => segment.customers > 0 || segment.appointments > 0 || segment.revenue > 0);
 
     const busiestDays = Array.from(dayStatsMap.values())
       .map((day) => {
@@ -919,11 +964,29 @@ router.get("/report", async (req: Request, res: Response) => {
           revenue: Number(day.revenue.toFixed(2)),
           drivingSegment: mainSegment,
           drivingSegmentCount: mainSegmentCount,
-          drivingSegmentPercentage: mainSegmentPercentage
+          drivingSegmentPercentage: mainSegmentPercentage,
+          workloadPercentage: 0,
+          revenuePercentage: 0,
+          rank: 0
         };
       })
-      .sort((a, b) => b.appointments - a.appointments || b.revenue - a.revenue)
-      .slice(0, 7);
+      .sort((a, b) => getWeekdayOrder(a.label) - getWeekdayOrder(b.label));
+
+    const maxAppointments = busiestDays.reduce((max, day) => Math.max(max, day.appointments), 0);
+    const maxRevenue = busiestDays.reduce((max, day) => Math.max(max, day.revenue), 0);
+    const rankedDays = [...busiestDays]
+      .sort((a, b) => b.appointments - a.appointments || b.revenue - a.revenue);
+
+    rankedDays.forEach((day, index) => {
+      const target = busiestDays.find((item) => item.label === day.label);
+      if (!target) {
+        return;
+      }
+
+      target.rank = index + 1;
+      target.workloadPercentage = maxAppointments > 0 ? Number(((target.appointments / maxAppointments) * 100).toFixed(1)) : 0;
+      target.revenuePercentage = maxRevenue > 0 ? Number(((target.revenue / maxRevenue) * 100).toFixed(1)) : 0;
+    });
 
     return res.json({
       range: {
@@ -956,7 +1019,6 @@ router.get("/report", async (req: Request, res: Response) => {
       customers: {
         frequency: customerFrequency,
         total: customerFrequency.length,
-        classifiedTotal: classifiedCustomers,
         segments,
         averageAge,
         ageDistribution

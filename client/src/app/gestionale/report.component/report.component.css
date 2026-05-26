@@ -266,7 +266,7 @@
 
 .management-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 24px;
 }
@@ -340,6 +340,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+  margin-top: 24px;
+}
+
+.report-grid--audience {
   margin-top: 24px;
 }
 
@@ -418,6 +422,15 @@
 .report-table--operators .report-table__head,
 .report-table--operators .report-table__row {
   grid-template-columns: 1.8fr 1fr 1fr;
+}
+
+.report-table--traffic .report-table__head,
+.report-table--traffic .report-table__row {
+  grid-template-columns: 1.2fr 0.7fr 0.8fr 0.8fr 1fr 1.5fr;
+}
+
+.report-table__row--top {
+  background: rgba(242, 209, 139, 0.07);
 }
 
 @media (max-width: 1200px) {
@@ -500,5 +513,15 @@
   .report-table__row {
     grid-template-columns: 1.5fr 1fr 1fr 0.9fr;
     font-size: 13px;
+  }
+
+  .report-table--traffic {
+    overflow-x: auto;
+  }
+
+  .report-table--traffic .report-table__head,
+  .report-table--traffic .report-table__row {
+    min-width: 760px;
+    grid-template-columns: 1.2fr 0.7fr 0.8fr 0.8fr 1fr 1.5fr;
   }
 }

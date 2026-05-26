@@ -89,6 +89,9 @@ export interface ReportBusiestDayDatum {
   drivingSegment: string;
   drivingSegmentCount: number;
   drivingSegmentPercentage: number;
+  workloadPercentage: number;
+  revenuePercentage: number;
+  rank: number;
 }
 
 export interface ReportOperatorPerformanceDatum {
@@ -132,7 +135,6 @@ export interface ReportData {
   customers: {
     frequency: ReportCustomerFrequencyDatum[];
     total: number;
-    classifiedTotal: number;
     segments: ReportCustomerSegmentDatum[];
     averageAge: number;
     ageDistribution: ReportAgeDistributionDatum[];

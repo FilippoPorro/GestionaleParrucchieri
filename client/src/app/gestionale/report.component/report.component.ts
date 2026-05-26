@@ -88,8 +88,29 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.reportData?.customers.segments || [];
   }
 
+  get menSegment(): ReportCustomerSegmentDatum | null {
+    return this.customerSegments.find((segment) => segment.label === 'uomo') || null;
+  }
+
+  get womenSegment(): ReportCustomerSegmentDatum | null {
+    return this.customerSegments.find((segment) => segment.label === 'donna') || null;
+  }
+
+  get childrenSegment(): ReportCustomerSegmentDatum | null {
+    return this.customerSegments.find((segment) => segment.label === 'bambino') || null;
+  }
+
   get busiestDays(): ReportBusiestDayDatum[] {
     return this.reportData?.traffic.busiestDays || [];
+  }
+
+  get averageDailyAppointments(): number {
+    if (this.busiestDays.length === 0) {
+      return 0;
+    }
+
+    const total = this.busiestDays.reduce((sum, day) => sum + day.appointments, 0);
+    return Number((total / this.busiestDays.length).toFixed(1));
   }
 
   get operatorPerformance(): ReportOperatorPerformanceDatum[] {
@@ -116,6 +137,8 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
         return 'Uomini';
       case 'bambino':
         return 'Bambini';
+      case 'non_classificato':
+        return 'Non classificato';
       default:
         return label;
     }

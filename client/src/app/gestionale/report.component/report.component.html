@@ -76,13 +76,6 @@
         </article>
         <article class="management-stat-card">
           <div class="management-stat-card__top">
-            <p>Clienti analizzati</p>
-          </div>
-          <strong>{{ reportData.customers.total }}</strong>
-          <span class="management-stat-card__trend">Con appuntamenti completati nell'anno</span>
-        </article>
-        <article class="management-stat-card">
-          <div class="management-stat-card__top">
             <p>Appuntamenti completati</p>
           </div>
           <strong>{{ reportData.summary.totalCompletedAppointments }}</strong>
@@ -91,14 +84,56 @@
       </section>
 
       <section class="management-stats management-stats--segments">
-        <article class="management-stat-card" *ngFor="let segment of customerSegments">
+        <article class="management-stat-card" *ngIf="menSegment as men">
           <div class="management-stat-card__top">
-            <p>{{ formatSegmentLabel(segment.label) }}</p>
+            <p>Uomini</p>
           </div>
-          <strong>{{ segment.customers }}</strong>
+          <strong>{{ men.customers }}</strong>
           <span class="management-stat-card__trend">
-            Passaggi {{ segment.appointments }} · Spesa media {{ formatCurrency(segment.averageSpend) }}
+            Passaggi {{ men.appointments }} · Spesa media {{ formatCurrency(men.averageSpend) }}
           </span>
+        </article>
+        <article class="management-stat-card" *ngIf="womenSegment as women">
+          <div class="management-stat-card__top">
+            <p>Donne</p>
+          </div>
+          <strong>{{ women.customers }}</strong>
+          <span class="management-stat-card__trend">
+            Passaggi {{ women.appointments }} · Spesa media {{ formatCurrency(women.averageSpend) }}
+          </span>
+        </article>
+        <article class="management-stat-card" *ngIf="childrenSegment as children">
+          <div class="management-stat-card__top">
+            <p>Bambini</p>
+          </div>
+          <strong>{{ children.customers }}</strong>
+          <span class="management-stat-card__trend">
+            Passaggi {{ children.appointments }} · Spesa media {{ formatCurrency(children.averageSpend) }}
+          </span>
+        </article>
+      </section>
+
+      <section class="report-grid report-grid--audience">
+        <article class="management-panel report-panel" *ngIf="womenSegment as women">
+          <div class="management-panel__head">
+            <span>Clientela</span>
+            <h2>Focus donne</h2>
+          </div>
+          <p class="report-panel__copy">
+            {{ women.customers }} clienti, {{ women.appointments }} passaggi e spesa media di
+            <strong>{{ formatCurrency(women.averageSpend) }}</strong>.
+          </p>
+        </article>
+
+        <article class="management-panel report-panel" *ngIf="childrenSegment as children">
+          <div class="management-panel__head">
+            <span>Clientela</span>
+            <h2>Focus bambini</h2>
+          </div>
+          <p class="report-panel__copy">
+            {{ children.customers }} clienti, {{ children.appointments }} passaggi e spesa media di
+            <strong>{{ formatCurrency(children.averageSpend) }}</strong>.
+          </p>
         </article>
       </section>
 
@@ -199,14 +234,25 @@
             <span>Affluenza</span>
             <h2>Giorni piu' forti</h2>
           </div>
-          <div class="report-list" *ngIf="busiestDays.length > 0; else noTraffic">
-            <div class="report-list__row report-list__row--stack" *ngFor="let day of busiestDays">
+          <p class="report-panel__copy" *ngIf="busiestDays.length > 0">
+            Media periodo: <strong>{{ averageDailyAppointments }}</strong> appuntamenti al giorno.
+          </p>
+          <div class="report-table report-table--traffic" *ngIf="busiestDays.length > 0; else noTraffic">
+            <div class="report-table__head">
+              <span>Giorno</span>
+              <span>Posizione</span>
+              <span>Passaggi</span>
+              <span>Carico</span>
+              <span>Incasso</span>
+              <span>Segmento trainante</span>
+            </div>
+            <div class="report-table__row" *ngFor="let day of busiestDays" [class.report-table__row--top]="day.rank === 1">
               <span>{{ day.label }}</span>
-              <strong>{{ day.appointments }} passaggi</strong>
-              <span>
-                Trainato da {{ formatSegmentLabel(day.drivingSegment) }} ({{ day.drivingSegmentPercentage }}%) ·
-                {{ formatCurrency(day.revenue) }}
-              </span>
+              <span>#{{ day.rank }}</span>
+              <span>{{ day.appointments }}</span>
+              <span>{{ day.workloadPercentage }}%</span>
+              <span>{{ formatCurrency(day.revenue) }}</span>
+              <span>{{ formatSegmentLabel(day.drivingSegment) }} ({{ day.drivingSegmentPercentage }}%)</span>
             </div>
           </div>
           <ng-template #noTraffic>
@@ -220,7 +266,7 @@
             <h2>Tagli, pieghe, colori, schiariture e altri servizi</h2>
           </div>
           <p class="report-panel__copy">
-            Fatturato servizi incassati: {{ formatCurrency(reportData.services.revenue) }} Â· Incide per
+            Fatturato servizi incassati: {{ formatCurrency(reportData.services.revenue) }} · Incide per
             {{ reportData.services.percentageOnSales }}% sulle vendite registrate.
           </p>
           <div class="report-table report-table--services" *ngIf="topServices.length > 0; else noServices">
