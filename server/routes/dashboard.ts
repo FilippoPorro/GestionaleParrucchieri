@@ -520,8 +520,15 @@ router.get("/report", async (req: Request, res: Response) => {
 
     const dettagliVenditaResult = venditaIds.length > 0
       ? await db
-        .from("dettagliovendita")
+        .from("dettagliovenditaProdotti")
         .select("idVendita, idProdotto, quantita, prezzoUnitario")
+        .in("idVendita", venditaIds)
+      : { data: [], error: null };
+
+    const dettagliVenditaServiziResult = venditaIds.length > 0
+      ? await db
+        .from("dettaglioVenditaServizi")
+        .select("idVendita, idServizio, prezzoUnitario")
         .in("idVendita", venditaIds)
       : { data: [], error: null };
 
@@ -529,7 +536,12 @@ router.get("/report", async (req: Request, res: Response) => {
       throw dettagliVenditaResult.error;
     }
 
+    if (dettagliVenditaServiziResult.error) {
+      throw dettagliVenditaServiziResult.error;
+    }
+
     const dettagliVendita = dettagliVenditaResult.data || [];
+    const dettagliVenditaServizi = dettagliVenditaServiziResult.data || [];
     const productIds = Array.from(
       new Set(dettagliVendita.map((item: any) => Number(item.idProdotto)).filter(Number.isFinite))
     );
@@ -620,12 +632,16 @@ router.get("/report", async (req: Request, res: Response) => {
     const completedServiceIds = Array.from(
       new Set(completedServiceRelations.map((relation: any) => Number(relation.idServizio)).filter(Number.isFinite))
     );
+    const soldServiceIds = Array.from(
+      new Set(dettagliVenditaServizi.map((item: any) => Number(item.idServizio)).filter(Number.isFinite))
+    );
+    const reportServiceIds = Array.from(new Set([...completedServiceIds, ...soldServiceIds]));
 
-    const serviziResult = completedServiceIds.length > 0
+    const serviziResult = reportServiceIds.length > 0
       ? await db
         .from("servizi")
         .select("idServizio, nome, categoria, sottocategoria, prezzo")
-        .in("idServizio", completedServiceIds)
+        .in("idServizio", reportServiceIds)
       : { data: [], error: null };
 
     if (serviziResult.error) {
@@ -636,6 +652,10 @@ router.get("/report", async (req: Request, res: Response) => {
     const totalSales = vendite.length;
     const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
     const totalProductsSold = dettagliVendita.reduce((sum: number, item: any) => sum + Number(item.quantita || 0), 0);
+    const productRevenue = dettagliVendita.reduce(
+      (sum: number, item: any) => sum + Number(item.quantita || 0) * Number(item.prezzoUnitario || 0),
+      0
+    );
     const totalCompletedAppointments = completedAppointments.length;
 
     const contantiRevenue = pagamenti
@@ -783,18 +803,6 @@ router.get("/report", async (req: Request, res: Response) => {
       segmentEntry.appointments += 1;
       segmentEntry.revenue += revenue;
 
-      services.forEach((service) => {
-        const key = normalizeKey(service.nome) || `servizio-${service.idServizio}`;
-        const current = serviceStatsMap.get(key) || {
-          label: service.nome,
-          quantity: 0,
-          revenue: 0
-        };
-        current.quantity += 1;
-        current.revenue += Number(service.prezzo || 0);
-        serviceStatsMap.set(key, current);
-      });
-
       const appointmentDate = new Date(appointment.dataOraInizio);
       const weekdayLabel = appointmentDate.toLocaleDateString("it-IT", { weekday: "long" });
       const weekdayKey = normalizeKey(weekdayLabel);
@@ -836,6 +844,31 @@ router.get("/report", async (req: Request, res: Response) => {
       current.revenue += revenue;
       productStatsMap.set(productId, current);
     });
+
+    dettagliVenditaServizi.forEach((item: any) => {
+      const serviceId = Number(item.idServizio);
+      const revenue = Number(item.prezzoUnitario || 0);
+      const service = servicesById.get(serviceId);
+      const key = normalizeKey(service?.nome) || `servizio-${serviceId}`;
+      const current = serviceStatsMap.get(key) || {
+        label: String(service?.nome || `Servizio #${serviceId}`),
+        quantity: 0,
+        revenue: 0
+      };
+
+      current.quantity += 1;
+      current.revenue += revenue;
+      serviceStatsMap.set(key, current);
+    });
+
+    const serviceRows = Array.from(serviceStatsMap.values())
+      .map((item) => ({
+        label: item.label,
+        quantity: item.quantity,
+        revenue: Number(item.revenue.toFixed(2))
+      }))
+      .sort((a, b) => b.quantity - a.quantity || b.revenue - a.revenue);
+    const serviceRevenue = serviceRows.reduce((sum, item) => sum + item.revenue, 0);
 
     const ageRows = Array.from(customersById.values())
       .map((customer: any) => calculateAgeFromBirthDate(customer.data_nascita, now))
@@ -929,13 +962,9 @@ router.get("/report", async (req: Request, res: Response) => {
         ageDistribution
       },
       services: {
-        byType: Array.from(serviceStatsMap.values())
-          .map((item) => ({
-            label: item.label,
-            quantity: item.quantity,
-            revenue: Number(item.revenue.toFixed(2))
-          }))
-          .sort((a, b) => b.quantity - a.quantity || b.revenue - a.revenue)
+        revenue: Number(serviceRevenue.toFixed(2)),
+        percentageOnSales: totalRevenue > 0 ? Number(((serviceRevenue / totalRevenue) * 100).toFixed(1)) : 0,
+        byType: serviceRows
       },
       traffic: {
         busiestDays
@@ -951,15 +980,15 @@ router.get("/report", async (req: Request, res: Response) => {
           .sort((a, b) => b.revenue - a.revenue || b.tasks - a.tasks)
       },
       retail: {
-        revenue: Number(totalRevenue.toFixed(2)),
-        percentageOnSales: totalRevenue > 0 ? 100 : 0,
+        revenue: Number(productRevenue.toFixed(2)),
+        percentageOnSales: totalRevenue > 0 ? Number(((productRevenue / totalRevenue) * 100).toFixed(1)) : 0,
         topProducts: Array.from(productStatsMap.values())
           .map((item) => ({
             id: item.id,
             label: item.label,
             quantity: item.quantity,
             revenue: Number(item.revenue.toFixed(2)),
-            percentage: totalRevenue > 0 ? Number(((item.revenue / totalRevenue) * 100).toFixed(1)) : 0
+            percentage: productRevenue > 0 ? Number(((item.revenue / productRevenue) * 100).toFixed(1)) : 0
           }))
           .sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity)
       }

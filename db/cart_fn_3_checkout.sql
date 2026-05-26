@@ -76,7 +76,7 @@ BEGIN
       RAISE EXCEPTION 'stock_insufficiente' USING ERRCODE = 'P0001';
     END IF;
 
-    INSERT INTO public.dettagliovendita (
+    INSERT INTO public."dettagliovenditaProdotti" (
       "idVendita",
       "idProdotto",
       "quantita",

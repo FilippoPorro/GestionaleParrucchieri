@@ -138,6 +138,8 @@ export interface ReportData {
     ageDistribution: ReportAgeDistributionDatum[];
   };
   services: {
+    revenue: number;
+    percentageOnSales: number;
     byType: ReportServiceDatum[];
   };
   traffic: {

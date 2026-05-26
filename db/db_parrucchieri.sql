@@ -54,14 +54,27 @@ CREATE TABLE `appuntamentiservizi` (
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `dettagliovendita`
+-- Struttura della tabella `dettagliovenditaProdotti`
 --
 
-CREATE TABLE `dettagliovendita` (
+CREATE TABLE `dettagliovenditaProdotti` (
   `id` int(11) NOT NULL,
   `idVendita` int(11) NOT NULL,
   `idProdotto` int(11) NOT NULL,
   `quantita` int(11) NOT NULL,
+  `prezzoUnitario` decimal(8,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `dettaglioVenditaServizi`
+--
+
+CREATE TABLE `dettaglioVenditaServizi` (
+  `id` int(11) NOT NULL,
+  `idVendita` int(11) NOT NULL,
+  `idServizio` int(11) NOT NULL,
   `prezzoUnitario` decimal(8,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -198,12 +211,20 @@ ALTER TABLE `appuntamentiservizi`
   ADD KEY `idServizio` (`idServizio`);
 
 --
--- Indici per le tabelle `dettagliovendita`
+-- Indici per le tabelle `dettagliovenditaProdotti`
 --
-ALTER TABLE `dettagliovendita`
+ALTER TABLE `dettagliovenditaProdotti`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idVendita` (`idVendita`),
   ADD KEY `idProdotto` (`idProdotto`);
+
+--
+-- Indici per le tabelle `dettaglioVenditaServizi`
+--
+ALTER TABLE `dettaglioVenditaServizi`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idVendita` (`idVendita`),
+  ADD KEY `idServizio` (`idServizio`);
 
 --
 -- Indici per le tabelle `fornitori`
@@ -269,9 +290,15 @@ ALTER TABLE `appuntamentiservizi`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT per la tabella `dettagliovendita`
+-- AUTO_INCREMENT per la tabella `dettagliovenditaProdotti`
 --
-ALTER TABLE `dettagliovendita`
+ALTER TABLE `dettagliovenditaProdotti`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT per la tabella `dettaglioVenditaServizi`
+--
+ALTER TABLE `dettaglioVenditaServizi`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -335,11 +362,18 @@ ALTER TABLE `appuntamentiservizi`
   ADD CONSTRAINT `appuntamentiservizi_ibfk_2` FOREIGN KEY (`idServizio`) REFERENCES `servizi` (`idServizio`);
 
 --
--- Limiti per la tabella `dettagliovendita`
+-- Limiti per la tabella `dettagliovenditaProdotti`
 --
-ALTER TABLE `dettagliovendita`
-  ADD CONSTRAINT `dettagliovendita_ibfk_1` FOREIGN KEY (`idVendita`) REFERENCES `vendite` (`idVendita`) ON DELETE CASCADE,
-  ADD CONSTRAINT `dettagliovendita_ibfk_2` FOREIGN KEY (`idProdotto`) REFERENCES `prodotti` (`idProdotto`);
+ALTER TABLE `dettagliovenditaProdotti`
+  ADD CONSTRAINT `dettagliovenditaProdotti_ibfk_1` FOREIGN KEY (`idVendita`) REFERENCES `vendite` (`idVendita`) ON DELETE CASCADE,
+  ADD CONSTRAINT `dettagliovenditaProdotti_ibfk_2` FOREIGN KEY (`idProdotto`) REFERENCES `prodotti` (`idProdotto`);
+
+--
+-- Limiti per la tabella `dettaglioVenditaServizi`
+--
+ALTER TABLE `dettaglioVenditaServizi`
+  ADD CONSTRAINT `dettaglioVenditaServizi_ibfk_1` FOREIGN KEY (`idVendita`) REFERENCES `vendite` (`idVendita`) ON DELETE CASCADE,
+  ADD CONSTRAINT `dettaglioVenditaServizi_ibfk_2` FOREIGN KEY (`idServizio`) REFERENCES `servizi` (`idServizio`);
 
 --
 -- Limiti per la tabella `ordini`

@@ -105,7 +105,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get serviceRevenue(): number {
-    return this.operatorPerformance.reduce((sum, operator) => sum + operator.revenue, 0);
+    return this.reportData?.services.revenue || 0;
   }
 
   formatSegmentLabel(label: string): string {

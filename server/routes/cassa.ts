@@ -9,6 +9,14 @@ type NormalizedCassaProduct = {
   prezzoUnitario: number;
 };
 
+type NormalizedCassaService = {
+  serviceId: number;
+  prezzoUnitario: number;
+};
+
+const DETTAGLI_VENDITA_PRODOTTI_TABLE = "dettagliovenditaProdotti";
+const DETTAGLIO_VENDITA_SERVIZI_TABLE = "dettaglioVenditaServizi";
+
 function normalizeCassaProducts(prodotti: any[]): NormalizedCassaProduct[] {
   const byProduct = new Map<number, NormalizedCassaProduct>();
 
@@ -38,6 +46,26 @@ function normalizeCassaProducts(prodotti: any[]): NormalizedCassaProduct[] {
   return [...byProduct.values()];
 }
 
+function normalizeCassaServices(servizi: any[]): NormalizedCassaService[] {
+  const byService = new Map<number, NormalizedCassaService>();
+
+  for (const item of servizi) {
+    const serviceId = Number(item.idServizio ?? item.id);
+    const prezzoUnitario = Number(item.prezzoUnitario ?? item.prezzo ?? 0);
+
+    if (!Number.isFinite(serviceId) || serviceId <= 0) {
+      throw new Error("Servizio non valido");
+    }
+
+    byService.set(serviceId, {
+      serviceId,
+      prezzoUnitario: Number.isFinite(prezzoUnitario) ? prezzoUnitario : 0
+    });
+  }
+
+  return [...byService.values()];
+}
+
 function isStockError(error: unknown): boolean {
   const message =
     error instanceof Error
@@ -59,6 +87,17 @@ function isMissingCheckoutRpcError(error: unknown): boolean {
         : "";
 
   return code === "PGRST202" && /complete_checkout_sicuro/i.test(message);
+}
+
+function isCheckoutRpcFallbackError(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return isMissingCheckoutRpcError(error) || /dettagliovendita/i.test(message);
 }
 
 async function completeCheckoutWithFallback(
@@ -135,12 +174,33 @@ async function completeCheckoutWithFallback(
   }));
 
   const { error: dettagliError } = await db
-    .from("dettagliovendita")
+    .from(DETTAGLI_VENDITA_PRODOTTI_TABLE)
     .insert(dettagliVendita);
 
   if (dettagliError) throw dettagliError;
 
   return idVendita;
+}
+
+async function insertDettagliVenditaServizi(
+  idVendita: number,
+  serviziVenduti: NormalizedCassaService[]
+): Promise<void> {
+  if (serviziVenduti.length === 0) {
+    return;
+  }
+
+  const dettagliServizi = serviziVenduti.map((item) => ({
+    idVendita,
+    idServizio: item.serviceId,
+    prezzoUnitario: item.prezzoUnitario
+  }));
+
+  const { error } = await db
+    .from(DETTAGLIO_VENDITA_SERVIZI_TABLE)
+    .insert(dettagliServizi);
+
+  if (error) throw error;
 }
 
 function normalizeMetodoPagamento(metodo: unknown): "contanti" | "carta" | null {
@@ -372,7 +432,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
 // POST /api/cassa/registra
 router.post("/registra", async (req: Request, res: Response) => {
   try {
-    const { idCliente, idOperatore, idAppuntamento, totale, metodo, prodotti } = req.body;
+    const { idCliente, idOperatore, idAppuntamento, totale, metodo, prodotti, servizi } = req.body;
 
     if (totale === undefined || totale === null || Number(totale) < 0) {
       return res.status(400).json({ message: "Totale non valido" });
@@ -385,13 +445,14 @@ router.post("/registra", async (req: Request, res: Response) => {
     }
 
     const prodottiVenduti = normalizeCassaProducts(Array.isArray(prodotti) ? prodotti : []);
+    const serviziVenduti = normalizeCassaServices(Array.isArray(servizi) ? servizi : []);
     const hasProdottiVenduti = prodottiVenduti.length > 0;
 
     let idVendita: number;
 
     if (hasProdottiVenduti) {
       // Quando la vendita da gestionale include prodotti, passiamo dalla RPC
-      // così vengono aggiornati stock, vendite e dettagliovendita.
+      // così vengono aggiornati stock, vendite e dettagli prodotto.
       const { data: checkoutData, error: checkoutError } = await db
         .rpc("complete_checkout_sicuro", {
           p_id_cliente: idCliente ? Number(idCliente) : null,
@@ -400,7 +461,7 @@ router.post("/registra", async (req: Request, res: Response) => {
         })
         .single();
 
-      if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
+      if (checkoutError && !isCheckoutRpcFallbackError(checkoutError)) {
         throw checkoutError;
       }
 
@@ -434,6 +495,8 @@ router.post("/registra", async (req: Request, res: Response) => {
 
       idVendita = Number((venditaData as any).idVendita);
     }
+
+    await insertDettagliVenditaServizi(idVendita, serviziVenduti);
 
     // 2. Inserimento del pagamento associato alla vendita
     const { error: pagamentoError } = await db

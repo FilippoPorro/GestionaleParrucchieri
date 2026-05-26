@@ -46,6 +46,7 @@ export class CassaService {
     totale: number;
     metodo: 'carta' | 'contanti';
     prodotti: Array<{ idProdotto: number; quantita: number; prezzoUnitario: number }>;
+    servizi: Array<{ idServizio: number; prezzoUnitario: number }>;
   }): Observable<{ message: string; idVendita: number }> {
     return this.http.post<{ message: string; idVendita: number }>(`${this.api}/registra`, payload);
   }

@@ -825,6 +825,13 @@ export class CassaComponent implements OnInit {
         prezzoUnitario: item.prezzoUnitario
       }));
 
+    const serviziPayload = this.receiptItems
+      .filter(item => item.tipo === 'servizio')
+      .map(item => ({
+        idServizio: item.id,
+        prezzoUnitario: item.prezzoUnitario
+      }));
+
     const metodoPagamentoBackend: 'carta' | 'contanti' =
       this.selectedMetodo === 'pos' ? 'carta' : 'contanti';
 
@@ -834,7 +841,8 @@ export class CassaComponent implements OnInit {
       idAppuntamento: this.selectedAppuntamentoId,
       totale: this.total,
       metodo: metodoPagamentoBackend,
-      prodotti: prodottiPayload
+      prodotti: prodottiPayload,
+      servizi: serviziPayload
     };
 
     this.cassaService.registraPagamento(payload).subscribe({

@@ -219,6 +219,10 @@
             <span>Servizi</span>
             <h2>Tagli, pieghe, colori, schiariture e altri servizi</h2>
           </div>
+          <p class="report-panel__copy">
+            Fatturato servizi incassati: {{ formatCurrency(reportData.services.revenue) }} Â· Incide per
+            {{ reportData.services.percentageOnSales }}% sulle vendite registrate.
+          </p>
           <div class="report-table report-table--services" *ngIf="topServices.length > 0; else noServices">
             <div class="report-table__head">
               <span>Servizio</span>
@@ -232,7 +236,7 @@
             </div>
           </div>
           <ng-template #noServices>
-            <p class="report-state">Nessun servizio completato nel periodo.</p>
+            <p class="report-state">Nessun servizio venduto nel periodo.</p>
           </ng-template>
         </article>
 

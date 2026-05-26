@@ -506,6 +506,17 @@ function isMissingCheckoutRpcError(error: unknown): boolean {
   return code === "PGRST202" && /complete_(reserved_cart_)?checkout_sicuro/i.test(message);
 }
 
+function isCheckoutRpcFallbackError(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  return isMissingCheckoutRpcError(error) || /dettagliovendita/i.test(message);
+}
+
 function isMissingCartSchemaError(error: unknown): boolean {
   const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
   const message =
@@ -592,7 +603,7 @@ async function completeCheckoutWithFallback(
   }));
 
   const { error: detailsError } = await db
-    .from("dettagliovendita")
+    .from("dettagliovenditaProdotti")
     .insert(details);
 
   if (detailsError) throw detailsError;
@@ -1103,7 +1114,7 @@ app.post("/api/checkout/complete", async (req, res) => {
 
       if (!cartCheckoutError) {
         vendita = cartCheckoutData as CheckoutRpcResult | null;
-      } else if (!isMissingCheckoutRpcError(cartCheckoutError)) {
+      } else if (!isCheckoutRpcFallbackError(cartCheckoutError)) {
         throw cartCheckoutError;
       }
     }
@@ -1119,7 +1130,7 @@ app.post("/api/checkout/complete", async (req, res) => {
         })
         .single();
 
-      if (checkoutError && !isMissingCheckoutRpcError(checkoutError)) {
+      if (checkoutError && !isCheckoutRpcFallbackError(checkoutError)) {
         throw checkoutError;
       }
 
