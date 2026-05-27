@@ -453,8 +453,8 @@
 .services-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
-  min-width: 900px;
+  table-layout: fixed;
+  min-width: 1040px;
 }
 
 .services-table th,
@@ -484,29 +484,48 @@
   line-height: 1.45;
 }
 
-.services-table th:first-child,
-.services-table td:first-child {
-  width: 78px;
+.services-table:not(.services-table--products) th:first-child,
+.services-table:not(.services-table--products) td:first-child {
+  width: 82px;
 }
 
-.services-table th:nth-child(3),
-.services-table td:nth-child(3) {
-  width: 28%;
+.services-table:not(.services-table--products) th:nth-child(2),
+.services-table:not(.services-table--products) td:nth-child(2) {
+  width: 42%;
 }
 
-.services-table th:nth-child(4),
-.services-table td:nth-child(4) {
-  width: 190px;
+.services-table:not(.services-table--products) th:nth-child(3),
+.services-table:not(.services-table--products) td:nth-child(3) {
+  width: 14%;
 }
 
-.services-table th:nth-child(5),
-.services-table td:nth-child(5) {
-  width: 150px;
+.services-table:not(.services-table--products) th:nth-child(4),
+.services-table:not(.services-table--products) td:nth-child(4) {
+  width: 118px;
+  white-space: nowrap;
 }
 
-.services-table th:last-child,
-.services-table td:last-child {
-  width: 116px;
+.services-table:not(.services-table--products) td:nth-child(4) .services-cell-email,
+.services-table:not(.services-table--products) td:nth-child(4) .services-cell-phone {
+  white-space: nowrap;
+}
+
+.services-table:not(.services-table--products) th:nth-child(5),
+.services-table:not(.services-table--products) td:nth-child(5) {
+  width: 106px;
+  white-space: nowrap;
+}
+
+.services-table:not(.services-table--products) th:nth-child(6),
+.services-table:not(.services-table--products) td:nth-child(6) {
+  width: 142px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.services-table:not(.services-table--products) th:last-child,
+.services-table:not(.services-table--products) td:last-child {
+  width: 128px;
 }
 
 .services-table th:last-child {
@@ -626,6 +645,10 @@
 .services-cell-date {
   color: rgba(248, 241, 231, 0.8);
   font-weight: 700;
+}
+
+.services-visibility-cell {
+  color: #fff6e8;
 }
 
 .services-actions-cell {

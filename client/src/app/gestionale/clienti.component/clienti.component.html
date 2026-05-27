@@ -127,21 +127,9 @@
                 <td class="customers-cell-id">#{{ cliente.idUtente }}</td>
                 <td class="customers-cell-primary">
                   <button type="button" class="customers-person" (click)="selectCliente(cliente)">
-                    <span class="customers-avatar">
-                      <img
-                        *ngIf="getClientePhotoUrl(cliente) as photoUrl"
-                        [src]="photoUrl"
-                        alt="Foto profilo"
-                        referrerpolicy="no-referrer"
-                        (error)="onClientePhotoError(cliente)"
-                      />
-                      <ng-container *ngIf="!getClientePhotoUrl(cliente)">
-                        {{ getInitials(cliente) }}
-                      </ng-container>
-                    </span>
-                    <span>
-                      <strong>{{ cliente.nome }} {{ cliente.cognome }}</strong>
-                      <small>{{ cliente.ruolo || 'cliente' }}</small>
+                    <span class="customers-person-name">
+                      <strong>{{ cliente.nome || '-' }}</strong>
+                      <strong>{{ cliente.cognome || '-' }}</strong>
                     </span>
                   </button>
                 </td>

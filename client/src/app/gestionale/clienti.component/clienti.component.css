@@ -510,8 +510,7 @@
 
 .customers-person {
   display: inline-flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
   min-width: 0;
   max-width: 100%;
   padding: 0;
@@ -520,6 +519,12 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.customers-person-name {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
 }
 
 .customers-person strong,

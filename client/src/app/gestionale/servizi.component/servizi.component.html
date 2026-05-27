@@ -124,6 +124,7 @@
                 <th>Categoria</th>
                 <th>Prezzo</th>
                 <th>Durata</th>
+                <th>Visibile sito</th>
                 <th>Azioni</th>
               </tr>
             </thead>
@@ -153,7 +154,9 @@
                 </td>
                 <td class="services-cell-date" data-label="Durata">
                   {{ servizio.durata ? servizio.durata + ' min' : '-' }}
-                  <span class="services-cell-phone">{{ servizio.visualizzazioneSito ? 'Visibile sul sito' : 'Nascosto sul sito' }}</span>
+                </td>
+                <td class="services-cell-date services-visibility-cell" data-label="Visibile sito">
+                  {{ servizio.visualizzazioneSito ? 'Si' : 'No' }}
                 </td>
                 <td class="services-actions-cell" data-label="Azioni">
                   <div class="services-actions" aria-label="Azioni servizio">
