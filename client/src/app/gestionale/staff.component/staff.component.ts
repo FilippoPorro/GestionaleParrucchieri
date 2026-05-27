@@ -77,6 +77,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   feedbackMessage = '';
   feedbackType: 'success' | 'error' | '' = '';
   feedbackTitle = '';
+  calendarMessage = '';
   calendarDatePickerValue = '';
   calendarPickerOpen = false;
   calendarPickerClosing = false;
@@ -110,6 +111,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   availableEndTimes: string[] = [];
   minDate = '';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
+  private calendarMessageTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarPickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private appointmentDetailCloseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -208,6 +210,8 @@ export class StaffComponent implements OnInit, OnDestroy {
       clearTimeout(this.feedbackTimeout);
       this.feedbackTimeout = null;
     }
+
+    this.clearCalendarMessageTimer();
 
     if (this.calendarPickerCloseTimeout) {
       clearTimeout(this.calendarPickerCloseTimeout);
@@ -355,7 +359,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     const clickedDate = arg.date instanceof Date ? arg.date : new Date(arg.date);
 
     if (!this.isBookableDateTime(clickedDate)) {
-      this.showFeedback(this.getInvalidSlotMessage(clickedDate), 'error', 'Fascia non disponibile');
+      this.calendarComponent?.getApi()?.unselect();
+      this.showCalendarMessage(this.getInvalidSlotMessage(clickedDate));
       return;
     }
 
@@ -394,7 +399,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   private handleEventClick(arg: any): void {
     if (arg.event?.display === 'background') {
       const startDate = arg.event.start instanceof Date ? arg.event.start : new Date(arg.event.start);
-      this.showFeedback(this.getInvalidSlotMessage(startDate), 'error', 'Fascia non disponibile');
+      this.showCalendarMessage(this.getInvalidSlotMessage(startDate));
       return;
     }
 
@@ -1119,6 +1124,33 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.feedbackMessage = '';
     this.feedbackType = '';
     this.feedbackTitle = '';
+  }
+
+  private showCalendarMessage(message: string, autoHideMs = 3200): void {
+    this.clearCalendarMessageTimer();
+    this.calendarMessage = message;
+
+    if (autoHideMs > 0) {
+      this.calendarMessageTimeout = setTimeout(() => {
+        this.calendarMessage = '';
+        this.calendarMessageTimeout = null;
+        this.refreshView();
+      }, autoHideMs);
+    }
+
+    this.refreshView();
+  }
+
+  private clearCalendarMessage(): void {
+    this.clearCalendarMessageTimer();
+    this.calendarMessage = '';
+  }
+
+  private clearCalendarMessageTimer(): void {
+    if (this.calendarMessageTimeout) {
+      clearTimeout(this.calendarMessageTimeout);
+      this.calendarMessageTimeout = null;
+    }
   }
 
   private refreshView(): void {

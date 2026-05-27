@@ -172,6 +172,11 @@
         </div>
 
         <div class="calendar-wrapper staff-calendar-wrapper">
+          <div *ngIf="calendarMessage" class="appointments-alert info appointments-service-alert staff-calendar-alert">
+            <div class="appointments-alert-icon">i</div>
+            <div class="appointments-alert-text">{{ calendarMessage }}</div>
+          </div>
+
           <div *ngIf="feedbackMessage" class="appointments-alert appointments-service-alert" [ngClass]="feedbackType" role="status" aria-live="polite">
             <div class="appointments-alert-icon">
               <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
