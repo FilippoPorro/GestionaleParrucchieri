@@ -390,7 +390,7 @@ body {
 }
 
 .management-layout .staff-calendar-wrapper .fc-timegrid-slot {
-  height: 48px !important;
+  height: 74px !important;
 }
 
 .management-layout .staff-calendar-wrapper .fc-scroller {
@@ -453,12 +453,16 @@ body {
 }
 
 .management-layout .staff-calendar-wrapper .fc-bg-event.invalid-slot-background {
-  background: rgba(170, 170, 170, 0.08) !important;
+  background: transparent !important;
   opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: no-drop !important;
 }
 
 .management-layout .staff-calendar-wrapper .fc-bg-event.invalid-slot-background.is-past-slot {
   background: rgba(170, 170, 170, 0.2) !important;
+  pointer-events: auto !important;
+  cursor: no-drop !important;
 }
 
 .management-layout .staff-calendar-wrapper .fc-event.permission-appointment {

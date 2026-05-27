@@ -113,35 +113,12 @@
         </article>
       </section>
 
-      <section class="report-grid report-grid--audience">
-        <article class="management-panel report-panel" *ngIf="womenSegment as women">
-          <div class="management-panel__head">
-            <span>Clientela</span>
-            <h2>Focus donne</h2>
-          </div>
-          <p class="report-panel__copy">
-            {{ women.customers }} clienti, {{ women.appointments }} passaggi e spesa media di
-            <strong>{{ formatCurrency(women.averageSpend) }}</strong>.
-          </p>
-        </article>
-
-        <article class="management-panel report-panel" *ngIf="childrenSegment as children">
-          <div class="management-panel__head">
-            <span>Clientela</span>
-            <h2>Focus bambini</h2>
-          </div>
-          <p class="report-panel__copy">
-            {{ children.customers }} clienti, {{ children.appointments }} passaggi e spesa media di
-            <strong>{{ formatCurrency(children.averageSpend) }}</strong>.
-          </p>
-        </article>
-      </section>
 
       <section class="report-grid">
         <article class="management-panel report-panel">
           <div class="management-panel__head">
             <span>Categorie</span>
-            <h2>Prodotti piu' comprati</h2>
+            <h2>Prodotti più comprati</h2>
           </div>
           <p class="report-panel__copy">Incassi dei prodotti raggruppati per categoria.</p>
           <div class="report-chart">
@@ -180,7 +157,7 @@
             <h2>Clienti e sconti suggeriti</h2>
           </div>
           <p class="report-panel__copy">
-            Frequenza = appuntamenti completati in un anno / 12. Se la frequenza e' almeno 1, cresce anche lo sconto.
+            Frequenza = appuntamenti completati in un anno / 12. Se la frequenza è almeno 1, cresce anche lo sconto.
           </p>
 
           <div class="report-table" *ngIf="customerFrequencyRows.length > 0; else noCustomers">
@@ -206,15 +183,15 @@
 
         <article class="management-panel report-panel">
           <div class="management-panel__head">
-            <span>Eta'</span>
-            <h2>Eta' media e distribuzione</h2>
+            <span>Età</span>
+            <h2>Età media e distribuzione</h2>
           </div>
           <p class="report-panel__copy">
-            Eta' media clientela: <strong>{{ reportData.customers.averageAge }}</strong> anni.
+            Età media clientela: <strong>{{ reportData.customers.averageAge }}</strong> anni.
           </p>
           <div class="report-table report-table--age" *ngIf="reportData.customers.ageDistribution.length > 0; else noAgeData">
             <div class="report-table__head">
-              <span>Fascia eta'</span>
+              <span>Fascia Età</span>
               <span>Clienti</span>
               <span>Percentuale</span>
             </div>
@@ -232,7 +209,7 @@
         <article class="management-panel report-panel">
           <div class="management-panel__head">
             <span>Affluenza</span>
-            <h2>Giorni piu' forti</h2>
+            <h2>Giorni con più affluenza</h2>
           </div>
           <p class="report-panel__copy" *ngIf="busiestDays.length > 0">
             Media periodo: <strong>{{ averageDailyAppointments }}</strong> appuntamenti al giorno.
@@ -241,16 +218,14 @@
             <div class="report-table__head">
               <span>Giorno</span>
               <span>Posizione</span>
-              <span>Passaggi</span>
-              <span>Carico</span>
+              <span>Appuntamenti</span>
               <span>Incasso</span>
-              <span>Segmento trainante</span>
+              <span>Sesso più afflunte</span>
             </div>
             <div class="report-table__row" *ngFor="let day of busiestDays" [class.report-table__row--top]="day.rank === 1">
               <span>{{ day.label }}</span>
               <span>#{{ day.rank }}</span>
               <span>{{ day.appointments }}</span>
-              <span>{{ day.workloadPercentage }}%</span>
               <span>{{ formatCurrency(day.revenue) }}</span>
               <span>{{ formatSegmentLabel(day.drivingSegment) }} ({{ day.drivingSegmentPercentage }}%)</span>
             </div>
@@ -272,7 +247,7 @@
           <div class="report-table report-table--services" *ngIf="topServices.length > 0; else noServices">
             <div class="report-table__head">
               <span>Servizio</span>
-              <span>Quantita'</span>
+              <span>Quantità</span>
               <span>Fatturato</span>
             </div>
             <div class="report-table__row" *ngFor="let row of topServices">
@@ -311,7 +286,7 @@
         <article class="management-panel report-panel report-panel--wide">
           <div class="management-panel__head">
             <span>Vendita</span>
-            <h2>Fatturato prodotti e prodotti con piu' peso</h2>
+            <h2>Fatturato prodotti e prodotti con pù peso</h2>
           </div>
           <p class="report-panel__copy">
             Fatturato vendita prodotti: {{ formatCurrency(reportData.retail.revenue) }} · Incide per
@@ -320,7 +295,7 @@
           <div class="report-table report-table--products" *ngIf="topProducts.length > 0; else noProducts">
             <div class="report-table__head">
               <span>Prodotto</span>
-              <span>Quantita'</span>
+              <span>Quantità</span>
               <span>Fatturato</span>
               <span>Peso</span>
             </div>

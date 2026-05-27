@@ -46,27 +46,6 @@
       </div>
     </section>
 
-    <div
-      *ngIf="feedbackMessage"
-      class="customers-alert"
-      [ngClass]="feedbackType"
-      role="status"
-    >
-      <div class="customers-alert__icon">
-        <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
-        <span *ngIf="feedbackType === 'error'">!</span>
-      </div>
-
-      <div class="customers-alert__copy">
-        <strong class="customers-alert__title">{{ feedbackTitle }}</strong>
-        <div class="customers-alert__text">{{ feedbackMessage }}</div>
-      </div>
-
-      <button type="button" class="customers-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      </button>
-    </div>
-
     <section class="customers-layout staff-layout">
       <article class="customers-card customers-card--table">
         <div class="customers-card__head">
@@ -156,7 +135,7 @@
         </div>
       </article>
 
-      <article class="customers-card staff-calendar-card">
+      <article #calendarSection class="customers-card staff-calendar-card">
         <div class="customers-card__head">
             <div>
               <p class="customers-card__eyebrow">Calendario</p>
@@ -193,6 +172,17 @@
         </div>
 
         <div class="calendar-wrapper staff-calendar-wrapper">
+          <div *ngIf="feedbackMessage" class="appointments-alert appointments-service-alert" [ngClass]="feedbackType" role="status" aria-live="polite">
+            <div class="appointments-alert-icon">
+              <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+              <span *ngIf="feedbackType === 'error'">!</span>
+            </div>
+            <div class="appointments-alert-text">
+              <strong style="display: block; margin-bottom: 2px;">{{ feedbackTitle }}</strong>
+              <span>{{ feedbackMessage }}</span>
+            </div>
+          </div>
+
           <div
             *ngIf="calendarPickerOpen || calendarPickerClosing"
             class="appointments-date-picker-panel"
@@ -424,7 +414,7 @@
 
 <!-- Modal Aggiunta Ferie -->
 <div *ngIf="isFerieModalOpen" class="permission-modal" (click)="closeFerieModal()">
-  <div class="permission-card" role="dialog" aria-modal="true" aria-label="Aggiungi ferie" (click)="$event.stopPropagation()">
+  <div class="permission-card ferie-card" role="dialog" aria-modal="true" aria-label="Aggiungi ferie" (click)="$event.stopPropagation()">
     <div class="permission-head">
       <div>
         <p class="appointment-detail-kicker">Ferie</p>
@@ -461,7 +451,7 @@
         Annulla
       </button>
 
-      <button type="button" class="appointment-action success with-icon" [disabled]="isCreatingEmptySlot" (click)="confirmFerie()">
+      <button type="button" class="appointment-action success with-icon ferie-confirm-button" [disabled]="isCreatingEmptySlot" (click)="confirmFerie()">
         <i class="bi bi-check2-circle"></i>
         {{ isCreatingEmptySlot ? 'Salvataggio...' : 'Conferma ferie' }}
       </button>

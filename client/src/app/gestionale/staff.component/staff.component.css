@@ -284,15 +284,36 @@
 }
 
 :host ::ng-deep .fc-bg-event.invalid-slot-background {
-  background: rgba(170, 170, 170, 0.08) !important;
+  background: transparent !important;
   opacity: 1 !important;
   pointer-events: auto !important;
-  cursor: not-allowed !important;
+  cursor: no-drop !important;
 }
 
 :host ::ng-deep .fc-bg-event.invalid-slot-background.is-past-slot {
-  background: rgba(170, 170, 170, 0.2) !important;
-  cursor: not-allowed !important;
+  background: transparent !important;
+  cursor: no-drop !important;
+}
+
+:host ::ng-deep .fc-timegrid-slot,
+:host ::ng-deep .fc-timegrid-slot-lane {
+  height: 4.8rem !important;
+}
+
+:host ::ng-deep .fc-timegrid-col-bg .fc-bg-event.invalid-slot-background,
+:host ::ng-deep .fc-timegrid-col-bg .fc-bg-event.invalid-slot-background.is-past-slot,
+:host ::ng-deep .fc-timegrid-slot-lane.fc-slot-disabled {
+  cursor: no-drop !important;
+}
+
+:host ::ng-deep .fc-timegrid-slot-lane:hover,
+:host ::ng-deep .fc-timegrid-slot:hover {
+  cursor: pointer;
+}
+
+:host ::ng-deep .fc-timegrid-col-bg .fc-bg-event.invalid-slot-background:hover,
+:host ::ng-deep .fc-timegrid-col-bg .fc-bg-event.invalid-slot-background.is-past-slot:hover {
+  cursor: no-drop !important;
 }
 
 /* Popup staff allineati allo stile squadrato dei promemoria prodotti */
@@ -331,6 +352,11 @@
 .permission-card.delete-confirm-card::before {
   background: linear-gradient(180deg, #e95d5d, rgba(233, 93, 93, 0.18));
   box-shadow: 0 0 14px rgba(233, 93, 93, 0.2);
+}
+
+.permission-card.ferie-card::before {
+  background: linear-gradient(180deg, #52a7db, rgba(82, 167, 219, 0.18));
+  box-shadow: 0 0 14px rgba(82, 167, 219, 0.2);
 }
 
 .permission-card:has(.appointment-detail-kicker:nth-child(1)) .permission-head {
@@ -425,6 +451,22 @@
     linear-gradient(180deg, rgba(85, 210, 132, 0.16), rgba(85, 210, 132, 0.06)),
     rgba(0, 0, 0, 0.5) !important;
   color: #deffeb !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action.success.ferie-confirm-button {
+  border-color: rgba(82, 167, 219, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(82, 167, 219, 0.24), rgba(41, 128, 185, 0.08)),
+    rgba(0, 0, 0, 0.5) !important;
+  color: #ebf8ff !important;
+}
+
+:host ::ng-deep .permission-card .appointment-action.success.ferie-confirm-button:hover:not(:disabled) {
+  border-color: rgba(103, 191, 245, 0.72) !important;
+  background:
+    linear-gradient(180deg, rgba(103, 191, 245, 0.3), rgba(41, 128, 185, 0.12)),
+    rgba(0, 0, 0, 0.62) !important;
+  color: #f3fbff !important;
 }
 
 :host ::ng-deep .permission-card .appointment-action.danger {

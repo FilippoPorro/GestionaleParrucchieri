@@ -314,7 +314,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
   }
 
   isServiceDisabled(servizio: Servizio): boolean {
-    return !!this.form.dataOraInizio && !this.isServiceAvailableForSelectedSlot(servizio);
+    return false;
   }
 
   getSelectedServizioNome(): string {
@@ -871,7 +871,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
     }
 
     forkJoin({
-      servizi: this.servizioService.getServiziPrenotabiliByOperatore(this.form.idOperatore),
+      servizi: this.servizioService.getServizi(true),
       appuntamenti: this.appuntamentoService.getAppuntamenti(this.form.idOperatore)
     }).subscribe({
       next: ({ servizi, appuntamenti }) => {

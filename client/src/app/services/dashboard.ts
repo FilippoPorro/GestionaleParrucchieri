@@ -89,7 +89,6 @@ export interface ReportBusiestDayDatum {
   drivingSegment: string;
   drivingSegmentCount: number;
   drivingSegmentPercentage: number;
-  workloadPercentage: number;
   revenuePercentage: number;
   rank: number;
 }

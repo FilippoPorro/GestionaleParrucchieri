@@ -426,7 +426,7 @@
 
 .report-table--traffic .report-table__head,
 .report-table--traffic .report-table__row {
-  grid-template-columns: 1.2fr 0.7fr 0.8fr 0.8fr 1fr 1.5fr;
+  grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1.5fr;
 }
 
 .report-table__row--top {
@@ -522,6 +522,68 @@
   .report-table--traffic .report-table__head,
   .report-table--traffic .report-table__row {
     min-width: 760px;
-    grid-template-columns: 1.2fr 0.7fr 0.8fr 0.8fr 1fr 1.5fr;
+    grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1.5fr;
   }
+}
+
+/* Allineamento Tabella Frequenza Clienti */
+.report-table .report-table__head > span:nth-child(2),
+.report-table .report-table__row > span:nth-child(2),
+.report-table .report-table__head > span:nth-child(3),
+.report-table .report-table__row > span:nth-child(3) {
+  text-align: center;
+}
+.report-table .report-table__head > span:nth-child(4),
+.report-table .report-table__row > span:nth-child(4) {
+  text-align: right;
+}
+
+/* Allineamento Tabella Età */
+.report-table--age .report-table__head > span:nth-child(2),
+.report-table--age .report-table__row > span:nth-child(2) {
+  text-align: center;
+}
+.report-table--age .report-table__head > span:nth-child(3),
+.report-table--age .report-table__row > span:nth-child(3) {
+  text-align: right;
+}
+
+/* Allineamento Tabella Servizi e Operatori */
+.report-table--services .report-table__head > span:nth-child(2),
+.report-table--services .report-table__row > span:nth-child(2),
+.report-table--operators .report-table__head > span:nth-child(2),
+.report-table--operators .report-table__row > span:nth-child(2) {
+  text-align: center;
+}
+.report-table--services .report-table__head > span:nth-child(3),
+.report-table--services .report-table__row > span:nth-child(3),
+.report-table--operators .report-table__head > span:nth-child(3),
+.report-table--operators .report-table__row > span:nth-child(3) {
+  text-align: right;
+}
+
+/* Allineamento Tabella Prodotti */
+.report-table--products .report-table__head > span:nth-child(2),
+.report-table--products .report-table__row > span:nth-child(2) {
+  text-align: center;
+}
+.report-table--products .report-table__head > span:nth-child(3),
+.report-table--products .report-table__row > span:nth-child(3),
+.report-table--products .report-table__head > span:nth-child(4),
+.report-table--products .report-table__row > span:nth-child(4) {
+  text-align: right;
+}
+
+/* Allineamento Tabella Affluenza */
+.report-table--traffic .report-table__head > span:nth-child(2),
+.report-table--traffic .report-table__row > span:nth-child(2),
+.report-table--traffic .report-table__head > span:nth-child(3),
+.report-table--traffic .report-table__row > span:nth-child(3) {
+  text-align: center;
+}
+.report-table--traffic .report-table__head > span:nth-child(4),
+.report-table--traffic .report-table__row > span:nth-child(4),
+.report-table--traffic .report-table__head > span:nth-child(5),
+.report-table--traffic .report-table__row > span:nth-child(5) {
+  text-align: right;
 }

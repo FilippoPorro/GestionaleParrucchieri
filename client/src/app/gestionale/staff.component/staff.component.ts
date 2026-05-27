@@ -54,6 +54,7 @@ interface PermissionSlotForm {
 })
 export class StaffComponent implements OnInit, OnDestroy {
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
+  @ViewChild('calendarSection') calendarSection?: ElementRef<HTMLElement>;
   private readonly mobileBreakpoint = 768;
   private readonly minimumAppointmentDurationMinutes = 30;
   private readonly openingSchedule: Record<number, DailySchedule> = {
@@ -151,6 +152,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     stickyHeaderDates: true,
     selectable: true,
     selectMirror: false,
+    selectAllow: this.handleSelectAllow.bind(this),
     businessHours: [
       { daysOfWeek: [2, 4], startTime: '08:00', endTime: '12:30' },
       { daysOfWeek: [2, 4], startTime: '14:00', endTime: '19:30' },
@@ -311,11 +313,13 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   selectOperator(utente: Utente): void {
     if (this.selectedOperator === utente.idUtente) {
+      this.scrollToCalendarSection();
       return;
     }
 
     this.selectedOperator = utente.idUtente;
     this.loadAppointments();
+    this.scrollToCalendarSection();
   }
 
   private loadAppointments(): void {
@@ -370,6 +374,10 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
     
     this.openPermissionModal(start, end);
+  }
+
+  private handleSelectAllow(selectInfo: { start: Date; end: Date }): boolean {
+    return this.isBookableDateTime(selectInfo.start) && this.isRangeWithinOpeningHours(selectInfo.start, selectInfo.end);
   }
 
   private handleDatesSet(arg: { start: Date; end: Date }): void {
@@ -1096,12 +1104,10 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.feedbackType = type;
     this.feedbackTitle = title;
 
-    if (type === 'success') {
-      this.feedbackTimeout = setTimeout(() => {
-        this.clearFeedback();
-        this.refreshView();
-      }, 2600);
-    }
+    this.feedbackTimeout = setTimeout(() => {
+      this.clearFeedback();
+      this.refreshView();
+    }, 5000);
   }
 
   clearFeedback(): void {
@@ -1324,6 +1330,15 @@ export class StaffComponent implements OnInit, OnDestroy {
     }, 60);
   }
 
+  private scrollToCalendarSection(): void {
+    setTimeout(() => {
+      this.calendarSection?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 80);
+  }
+
   private getCalendarScrollTimeForNow(): string {
     const now = new Date();
     const minutesNow = now.getHours() * 60 + now.getMinutes();
@@ -1391,16 +1406,16 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private getInvalidSlotMessage(date: Date): string {
     if (date < new Date()) {
-      return 'Non puoi usare un orario gia passato.';
+      return 'Non puoi assegnare permessi in date passate.';
     }
 
     const daySchedule = this.openingSchedule[date.getDay()];
 
     if (!daySchedule || daySchedule.intervals.length === 0) {
-      return 'Il salone e chiuso in questo giorno.';
+      return 'Non puoi assegnare permessi quando il negozio e chiuso.';
     }
 
-    return `Fascia fuori dagli orari di apertura del ${daySchedule.name}.`;
+    return 'Non puoi assegnare permessi quando il negozio e chiuso.';
   }
 
   private timeToMinutes(value: string): number {

@@ -949,7 +949,7 @@ router.get("/report", async (req: Request, res: Response) => {
         averageSpend: entry.appointments > 0 ? Number((entry.revenue / entry.appointments).toFixed(2)) : 0,
         revenue: Number(entry.revenue.toFixed(2))
       };
-    }).filter((segment) => segment.customers > 0 || segment.appointments > 0 || segment.revenue > 0);
+    });
 
     const busiestDays = Array.from(dayStatsMap.values())
       .map((day) => {
@@ -965,14 +965,12 @@ router.get("/report", async (req: Request, res: Response) => {
           drivingSegment: mainSegment,
           drivingSegmentCount: mainSegmentCount,
           drivingSegmentPercentage: mainSegmentPercentage,
-          workloadPercentage: 0,
           revenuePercentage: 0,
           rank: 0
         };
       })
       .sort((a, b) => getWeekdayOrder(a.label) - getWeekdayOrder(b.label));
 
-    const maxAppointments = busiestDays.reduce((max, day) => Math.max(max, day.appointments), 0);
     const maxRevenue = busiestDays.reduce((max, day) => Math.max(max, day.revenue), 0);
     const rankedDays = [...busiestDays]
       .sort((a, b) => b.appointments - a.appointments || b.revenue - a.revenue);
@@ -984,7 +982,6 @@ router.get("/report", async (req: Request, res: Response) => {
       }
 
       target.rank = index + 1;
-      target.workloadPercentage = maxAppointments > 0 ? Number(((target.appointments / maxAppointments) * 100).toFixed(1)) : 0;
       target.revenuePercentage = maxRevenue > 0 ? Number(((target.revenue / maxRevenue) * 100).toFixed(1)) : 0;
     });
 
