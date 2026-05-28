@@ -118,11 +118,11 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get topServices() {
-    return this.reportData?.services.byType.slice(0, 12) || [];
+    return this.reportData?.services.byType || [];
   }
 
   get topProducts() {
-    return this.reportData?.retail.topProducts.slice(0, 10) || [];
+    return this.reportData?.retail.topProducts || [];
   }
 
   get serviceRevenue(): number {

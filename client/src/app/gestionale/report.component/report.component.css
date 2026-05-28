@@ -429,6 +429,52 @@
   grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1.5fr;
 }
 
+.report-table--services {
+  max-height: 380px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.report-table--services::-webkit-scrollbar {
+  width: 10px;
+}
+
+.report-table--services::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(18, 14, 10, 0.94);
+  border-radius: 999px;
+  background: rgba(215, 176, 111, 0.62);
+}
+
+.report-table--services .report-table__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.report-table--products {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.report-table--products::-webkit-scrollbar {
+  width: 10px;
+}
+
+.report-table--products::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(18, 14, 10, 0.94);
+  border-radius: 999px;
+  background: rgba(215, 176, 111, 0.62);
+}
+
+.report-table--products .report-table__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .report-table__row--top {
   background: rgba(242, 209, 139, 0.07);
 }

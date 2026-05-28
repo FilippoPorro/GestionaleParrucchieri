@@ -824,13 +824,12 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
       return res.status(409).json({ message: CUSTOMER_MIN_NOTICE_MESSAGE });
     }
 
-    const { error } = await db
-      .from("appuntamenti")
-      .delete()
-      .eq("idAppuntamento", idAppuntamento);
+    let mailPayload: AppointmentMailPayload | null = null;
 
-    if (error) {
-      throw error;
+    try {
+      mailPayload = await buildAppointmentMailPayload(appointment as Appuntamento);
+    } catch (mailPayloadError) {
+      console.error("Errore preparazione mail eliminazione appuntamento:", mailPayloadError);
     }
 
     const { error: reminderCleanupError } = await db
@@ -842,9 +841,25 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
       console.error("Errore pulizia notifiche email appuntamento:", reminderCleanupError);
     }
 
-    try {
-      const mailPayload = await buildAppointmentMailPayload(appointment as Appuntamento);
+    const { error: servicesCleanupError } = await db
+      .from("appuntamentiservizi")
+      .delete()
+      .eq("idAppuntamento", idAppuntamento);
 
+    if (servicesCleanupError) {
+      throw servicesCleanupError;
+    }
+
+    const { error } = await db
+      .from("appuntamenti")
+      .delete()
+      .eq("idAppuntamento", idAppuntamento);
+
+    if (error) {
+      throw error;
+    }
+
+    try {
       if (mailPayload) {
         await sendAppointmentCancelledEmail(mailPayload);
       }

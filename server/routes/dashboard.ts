@@ -192,6 +192,19 @@ function formatPersonName(user: any, fallback: string): string {
   return fullName || fallback;
 }
 
+function formatCustomerName(user: any, fallback = "Cliente generico"): string {
+  const fullName = formatPersonName(user, fallback);
+  return normalizeKey(fullName) === "utente utente" ? "Cliente generico" : fullName;
+}
+
+function isGenericCustomer(user: any): boolean {
+  return normalizeKey(formatPersonName(user, "")) === "utente utente";
+}
+
+function isCustomerRole(ruolo: unknown): boolean {
+  return !["operatore", "titolare", "salone"].includes(normalizeKey(ruolo));
+}
+
 function formatTimeLabel(value: string): string {
   const date = new Date(value);
 
@@ -454,7 +467,7 @@ router.get("/stats", async (_req: Request, res: Response) => {
 
       return {
         idAppuntamento: Number(appointment.idAppuntamento),
-        clienteNome: formatPersonName(cliente, "Cliente"),
+        clienteNome: formatCustomerName(cliente),
         operatoreNome: formatPersonName(operatore, "Operatore"),
         ora: formatTimeLabel(appointment.dataOraInizio),
         oraFine: formatTimeLabel(appointment.dataOraFine),
@@ -560,10 +573,10 @@ router.get("/report", async (req: Request, res: Response) => {
         .in("idVendita", venditaIds)
       : { data: [], error: null };
 
-    const dettagliVenditaServiziResult = venditaIds.length > 0
+    let dettagliVenditaServiziResult = venditaIds.length > 0
       ? await db
         .from("dettaglioVenditaServizi")
-        .select("idVendita, idServizio, prezzoUnitario")
+        .select("idVendita, idServizio, prezzoUnitario, idOperatore, idAppuntamento")
         .in("idVendita", venditaIds)
       : { data: [], error: null };
 
@@ -572,21 +585,29 @@ router.get("/report", async (req: Request, res: Response) => {
     }
 
     if (dettagliVenditaServiziResult.error) {
-      throw dettagliVenditaServiziResult.error;
+      const missingOperatorColumns = /idoperatore|idappuntamento|schema cache/i.test(
+        String(dettagliVenditaServiziResult.error.message || "")
+      );
+
+      if (!missingOperatorColumns || venditaIds.length === 0) {
+        throw dettagliVenditaServiziResult.error;
+      }
+
+      dettagliVenditaServiziResult = await db
+        .from("dettaglioVenditaServizi")
+        .select("idVendita, idServizio, prezzoUnitario")
+        .in("idVendita", venditaIds);
+
+      if (dettagliVenditaServiziResult.error) {
+        throw dettagliVenditaServiziResult.error;
+      }
     }
 
     const dettagliVendita = dettagliVenditaResult.data || [];
     const dettagliVenditaServizi = dettagliVenditaServiziResult.data || [];
-    const productIds = Array.from(
-      new Set(dettagliVendita.map((item: any) => Number(item.idProdotto)).filter(Number.isFinite))
-    );
-
-    const prodottiResult = productIds.length > 0
-      ? await db
-        .from("prodotti")
-        .select("idProdotto, nome, marca, categoria, prezzoRivendita")
-        .in("idProdotto", productIds)
-      : { data: [], error: null };
+    const prodottiResult = await db
+      .from("prodotti")
+      .select("idProdotto, nome, marca, categoria, prezzoRivendita");
 
     if (prodottiResult.error) {
       throw prodottiResult.error;
@@ -600,35 +621,22 @@ router.get("/report", async (req: Request, res: Response) => {
       (appointment: any) => String(appointment.stato || "").toLowerCase() === "completato"
     );
 
-    const annualCustomerIds = Array.from(
-      new Set(completedAnnualAppointments.map((appointment: any) => Number(appointment.idCliente)).filter(Number.isFinite))
-    );
-
     const completedAppointmentIds = completedAppointments
       .map((appointment: any) => Number(appointment.idAppuntamento))
       .filter(Number.isFinite);
-
-    const completedOperatorIds = Array.from(
-      new Set(completedAppointments.map((appointment: any) => Number(appointment.idOperatore)).filter(Number.isFinite))
-    );
 
     const [
       clientiResult,
       operatoriResult,
       completedAppointmentServicesResult
     ] = await Promise.all([
-      annualCustomerIds.length > 0
-      ? await db
+      db
         .from("utenti")
-        .select("idUtente, nome, cognome, data_nascita, sesso")
-        .in("idUtente", annualCustomerIds)
-      : { data: [], error: null },
-      completedOperatorIds.length > 0
-      ? await db
+        .select("idUtente, nome, cognome, data_nascita, sesso, ruolo"),
+      db
         .from("utenti")
         .select("idUtente, nome, cognome")
-        .in("idUtente", completedOperatorIds)
-      : { data: [], error: null },
+        .in("ruolo", ["operatore", "titolare"]),
       completedAppointmentIds.length > 0
       ? await db
         .from("appuntamentiservizi")
@@ -664,31 +672,76 @@ router.get("/report", async (req: Request, res: Response) => {
     }
 
     const completedServiceRelations = completedAppointmentServicesResult.data || [];
-    const completedServiceIds = Array.from(
-      new Set(completedServiceRelations.map((relation: any) => Number(relation.idServizio)).filter(Number.isFinite))
-    );
-    const soldServiceIds = Array.from(
-      new Set(dettagliVenditaServizi.map((item: any) => Number(item.idServizio)).filter(Number.isFinite))
-    );
-    const reportServiceIds = Array.from(new Set([...completedServiceIds, ...soldServiceIds]));
-
-    const serviziResult = reportServiceIds.length > 0
-      ? await db
-        .from("servizi")
-        .select("idServizio, nome, categoria, sottocategoria, prezzo")
-        .in("idServizio", reportServiceIds)
-      : { data: [], error: null };
+    const serviziResult = await db
+      .from("servizi")
+      .select("idServizio, nome, categoria, sottocategoria, prezzo");
 
     if (serviziResult.error) {
       throw serviziResult.error;
     }
 
+    const salesById = new Map<number, any>();
+    vendite.forEach((sale: any) => {
+      const saleId = Number(sale.idVendita);
+      if (Number.isFinite(saleId)) {
+        salesById.set(saleId, sale);
+      }
+    });
+
+    const rawLineTotalBySaleId = new Map<number, number>();
+    dettagliVendita.forEach((item: any) => {
+      const saleId = Number(item.idVendita);
+      const rawRevenue = Number(item.quantita || 0) * Number(item.prezzoUnitario || 0);
+      rawLineTotalBySaleId.set(saleId, (rawLineTotalBySaleId.get(saleId) || 0) + rawRevenue);
+    });
+    dettagliVenditaServizi.forEach((item: any) => {
+      const saleId = Number(item.idVendita);
+      const rawRevenue = Number(item.prezzoUnitario || 0);
+      rawLineTotalBySaleId.set(saleId, (rawLineTotalBySaleId.get(saleId) || 0) + rawRevenue);
+    });
+
+    function getAdjustedLineRevenue(saleId: number, rawRevenue: number): number {
+      const sale = salesById.get(saleId);
+      const saleTotal = Number(sale?.totale || 0);
+      const rawSaleTotal = rawLineTotalBySaleId.get(saleId) || 0;
+
+      if (!Number.isFinite(rawRevenue) || rawRevenue <= 0 || rawSaleTotal <= 0) {
+        return 0;
+      }
+
+      return rawRevenue * (saleTotal / rawSaleTotal);
+    }
+
+    const productLines = dettagliVendita.map((item: any) => {
+      const saleId = Number(item.idVendita);
+      const quantity = Number(item.quantita || 0);
+      const rawRevenue = quantity * Number(item.prezzoUnitario || 0);
+
+      return {
+        ...item,
+        saleId,
+        quantity,
+        adjustedRevenue: getAdjustedLineRevenue(saleId, rawRevenue)
+      };
+    });
+
+    const serviceLines = dettagliVenditaServizi.map((item: any) => {
+      const saleId = Number(item.idVendita);
+      const rawRevenue = Number(item.prezzoUnitario || 0);
+
+      return {
+        ...item,
+        saleId,
+        adjustedRevenue: getAdjustedLineRevenue(saleId, rawRevenue)
+      };
+    });
+
     const totalRevenue = vendite.reduce((sum: number, sale: any) => sum + Number(sale.totale || 0), 0);
     const totalSales = vendite.length;
     const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
-    const totalProductsSold = dettagliVendita.reduce((sum: number, item: any) => sum + Number(item.quantita || 0), 0);
-    const productRevenue = dettagliVendita.reduce(
-      (sum: number, item: any) => sum + Number(item.quantita || 0) * Number(item.prezzoUnitario || 0),
+    const totalProductsSold = productLines.reduce((sum: number, item: any) => sum + Number(item.quantity || 0), 0);
+    const productRevenue = productLines.reduce(
+      (sum: number, item: any) => sum + Number(item.adjustedRevenue || 0),
       0
     );
     const totalCompletedAppointments = completedAppointments.length;
@@ -706,10 +759,9 @@ router.get("/report", async (req: Request, res: Response) => {
     });
 
     const revenueByCategoryMap = new Map<string, number>();
-    dettagliVendita.forEach((item: any) => {
+    productLines.forEach((item: any) => {
       const id = Number(item.idProdotto);
-      const quantity = Number(item.quantita || 0);
-      const revenue = quantity * Number(item.prezzoUnitario || 0);
+      const revenue = Number(item.adjustedRevenue || 0);
       const product = productsById.get(id);
       const category = String(product?.categoria || "Senza categoria").trim() || "Senza categoria";
       revenueByCategoryMap.set(category, (revenueByCategoryMap.get(category) || 0) + revenue);
@@ -744,12 +796,24 @@ router.get("/report", async (req: Request, res: Response) => {
 
     const customersById = new Map<number, any>();
     (clientiResult.data || []).forEach((customer: any) => {
-      customersById.set(Number(customer.idUtente), customer);
+      if (isCustomerRole(customer?.ruolo) && !isGenericCustomer(customer)) {
+        customersById.set(Number(customer.idUtente), customer);
+      }
     });
 
     const operatorsById = new Map<number, any>();
     (operatoriResult.data || []).forEach((operator: any) => {
       operatorsById.set(Number(operator.idUtente), operator);
+    });
+
+    const operatorIdByAppointmentId = new Map<number, number>();
+    completedAppointments.forEach((appointment: any) => {
+      const appointmentId = Number(appointment.idAppuntamento);
+      const operatorId = Number(appointment.idOperatore);
+
+      if (Number.isFinite(appointmentId) && Number.isFinite(operatorId)) {
+        operatorIdByAppointmentId.set(appointmentId, operatorId);
+      }
     });
 
     const servicesById = new Map<number, any>();
@@ -758,9 +822,13 @@ router.get("/report", async (req: Request, res: Response) => {
     });
 
     const customerFrequencyMap = new Map<number, number>();
+    customersById.forEach((_customer, customerId) => {
+      customerFrequencyMap.set(customerId, 0);
+    });
+
     completedAnnualAppointments.forEach((appointment: any) => {
       const customerId = Number(appointment.idCliente);
-      if (!Number.isFinite(customerId)) {
+      if (!Number.isFinite(customerId) || !customersById.has(customerId)) {
         return;
       }
 
@@ -773,7 +841,7 @@ router.get("/report", async (req: Request, res: Response) => {
         const monthlyFrequency = Number((appointments / 12).toFixed(2));
         return {
           id,
-          name: formatPersonName(customer, `Cliente #${id}`),
+          name: formatCustomerName(customer),
           appointments,
           monthlyFrequency,
           discount: getDiscountByFrequency(monthlyFrequency)
@@ -802,12 +870,67 @@ router.get("/report", async (req: Request, res: Response) => {
       serviceRowsByAppointmentId.set(appointmentId, current);
     });
 
+    const revenueByAppointmentId = new Map<number, number>();
+    const serviceRowsBySaleId = new Map<number, any[]>();
+    serviceLines.forEach((line: any) => {
+      const saleId = Number(line.saleId);
+      const appointmentId = Number(line.idAppuntamento);
+      const service = servicesById.get(Number(line.idServizio));
+
+      if (Number.isFinite(appointmentId) && appointmentId > 0) {
+        revenueByAppointmentId.set(
+          appointmentId,
+          (revenueByAppointmentId.get(appointmentId) || 0) + Number(line.adjustedRevenue || 0)
+        );
+      }
+
+      if (!Number.isFinite(saleId) || !service) {
+        return;
+      }
+
+      const current = serviceRowsBySaleId.get(saleId) || [];
+      current.push({
+        idServizio: Number(service.idServizio),
+        nome: String(service.nome || "Servizio"),
+        categoria: String(service.categoria || ""),
+        sottocategoria: String(service.sottocategoria || ""),
+        prezzo: Number(line.adjustedRevenue || 0)
+      });
+      serviceRowsBySaleId.set(saleId, current);
+    });
+
     const customerSegmentById = new Map<number, "donna" | "uomo" | "bambino" | "non_classificato">();
     const segmentStats = new Map<string, { customers: Set<number>; appointments: number; revenue: number }>();
-    const serviceStatsMap = new Map<string, { label: string; quantity: number; revenue: number }>();
+    const serviceStatsMap = new Map<number, { label: string; quantity: number; revenue: number }>();
     const dayStatsMap = new Map<string, { label: string; appointments: number; revenue: number; segments: Map<string, number> }>();
     const operatorStatsMap = new Map<number, { operatorId: number; name: string; tasks: number; revenue: number }>();
     const productStatsMap = new Map<number, { id: number; label: string; quantity: number; revenue: number }>();
+
+    productsById.forEach((product, productId) => {
+      productStatsMap.set(productId, {
+        id: productId,
+        label: String(product?.nome || `Prodotto #${productId}`),
+        quantity: 0,
+        revenue: 0
+      });
+    });
+
+    servicesById.forEach((service, serviceId) => {
+      serviceStatsMap.set(serviceId, {
+        label: String(service?.nome || `Servizio #${serviceId}`),
+        quantity: 0,
+        revenue: 0
+      });
+    });
+
+    operatorsById.forEach((operator, operatorId) => {
+      operatorStatsMap.set(operatorId, {
+        operatorId,
+        name: formatPersonName(operator, `Operatore #${operatorId}`),
+        tasks: 0,
+        revenue: 0
+      });
+    });
 
     function ensureSegmentStats(label: string) {
       const current = segmentStats.get(label) || { customers: new Set<number>(), appointments: 0, revenue: 0 };
@@ -815,13 +938,7 @@ router.get("/report", async (req: Request, res: Response) => {
       return current;
     }
 
-    completedAppointments.forEach((appointment: any) => {
-      const appointmentId = Number(appointment.idAppuntamento);
-      const customerId = Number(appointment.idCliente);
-      const operatorId = Number(appointment.idOperatore);
-      const services = serviceRowsByAppointmentId.get(appointmentId) || [];
-      const revenue = services.reduce((sum, service) => sum + Number(service.prezzo || 0), 0);
-      const customer = customersById.get(customerId);
+    function resolveSegmentForCustomer(customer: any, services: any[] = []): "donna" | "uomo" | "bambino" | "non_classificato" {
       const customerGender = normalizeGender(customer?.sesso);
       const customerAge = calculateAgeFromBirthDate(customer?.data_nascita, now);
       const isChild = customerAge !== null && customerAge < 14;
@@ -832,13 +949,33 @@ router.get("/report", async (req: Request, res: Response) => {
           : customerGender === "m"
             ? "uomo"
             : "non_classificato";
-      const detectedSegment = segmentFromProfile !== "non_classificato"
+
+      return segmentFromProfile !== "non_classificato"
         ? segmentFromProfile
         : services
           .map((service) => resolveCustomerSegment(service))
           .find((segment) => segment !== "non_classificato")
-          || customerSegmentById.get(customerId)
           || "non_classificato";
+    }
+
+    customersById.forEach((customer, customerId) => {
+      const detectedSegment = resolveSegmentForCustomer(customer);
+      customerSegmentById.set(customerId, detectedSegment);
+      ensureSegmentStats(detectedSegment).customers.add(customerId);
+    });
+
+    completedAppointments.forEach((appointment: any) => {
+      const appointmentId = Number(appointment.idAppuntamento);
+      const customerId = Number(appointment.idCliente);
+      const services = serviceRowsByAppointmentId.get(appointmentId) || [];
+      const revenue = revenueByAppointmentId.get(appointmentId) || 0;
+      const customer = customersById.get(customerId);
+
+      if (!customer) {
+        return;
+      }
+
+      const detectedSegment = customerSegmentById.get(customerId) || resolveSegmentForCustomer(customer, services);
 
       if (Number.isFinite(customerId) && !customerSegmentById.has(customerId)) {
         customerSegmentById.set(customerId, detectedSegment);
@@ -864,6 +1001,18 @@ router.get("/report", async (req: Request, res: Response) => {
       dayEntry.revenue += revenue;
       dayEntry.segments.set(detectedSegment, (dayEntry.segments.get(detectedSegment) || 0) + 1);
       dayStatsMap.set(weekdayKey, dayEntry);
+    });
+
+    serviceLines.forEach((item: any) => {
+      const operatorIdFromSale = Number(item.idOperatore);
+      const appointmentId = Number(item.idAppuntamento);
+      const operatorId = Number.isFinite(operatorIdFromSale) && operatorIdFromSale > 0
+        ? operatorIdFromSale
+        : operatorIdByAppointmentId.get(appointmentId);
+
+      if (!Number.isFinite(operatorId) || Number(operatorId) <= 0) {
+        return;
+      }
 
       const operator = operatorsById.get(operatorId);
       const operatorEntry = operatorStatsMap.get(operatorId) || {
@@ -872,15 +1021,16 @@ router.get("/report", async (req: Request, res: Response) => {
         tasks: 0,
         revenue: 0
       };
-      operatorEntry.tasks += services.length || 1;
-      operatorEntry.revenue += revenue;
+
+      operatorEntry.tasks += 1;
+      operatorEntry.revenue += Number(item.adjustedRevenue || 0);
       operatorStatsMap.set(operatorId, operatorEntry);
     });
 
-    dettagliVendita.forEach((item: any) => {
+    productLines.forEach((item: any) => {
       const productId = Number(item.idProdotto);
-      const quantity = Number(item.quantita || 0);
-      const revenue = quantity * Number(item.prezzoUnitario || 0);
+      const quantity = Number(item.quantity || 0);
+      const revenue = Number(item.adjustedRevenue || 0);
       const product = productsById.get(productId);
       const current = productStatsMap.get(productId) || {
         id: productId,
@@ -893,12 +1043,11 @@ router.get("/report", async (req: Request, res: Response) => {
       productStatsMap.set(productId, current);
     });
 
-    dettagliVenditaServizi.forEach((item: any) => {
+    serviceLines.forEach((item: any) => {
       const serviceId = Number(item.idServizio);
-      const revenue = Number(item.prezzoUnitario || 0);
+      const revenue = Number(item.adjustedRevenue || 0);
       const service = servicesById.get(serviceId);
-      const key = normalizeKey(service?.nome) || `servizio-${serviceId}`;
-      const current = serviceStatsMap.get(key) || {
+      const current = serviceStatsMap.get(serviceId) || {
         label: String(service?.nome || `Servizio #${serviceId}`),
         quantity: 0,
         revenue: 0
@@ -906,7 +1055,7 @@ router.get("/report", async (req: Request, res: Response) => {
 
       current.quantity += 1;
       current.revenue += revenue;
-      serviceStatsMap.set(key, current);
+      serviceStatsMap.set(serviceId, current);
     });
 
     const serviceRows = Array.from(serviceStatsMap.values())
@@ -915,12 +1064,14 @@ router.get("/report", async (req: Request, res: Response) => {
         quantity: item.quantity,
         revenue: Number(item.revenue.toFixed(2))
       }))
-      .sort((a, b) => b.quantity - a.quantity || b.revenue - a.revenue);
+      .sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity || a.label.localeCompare(b.label, "it"));
     const serviceRevenue = serviceRows.reduce((sum, item) => sum + item.revenue, 0);
 
-    const ageRows = Array.from(customersById.values())
+    const reportCustomers = Array.from(customersById.values());
+    const ageRows = reportCustomers
       .map((customer: any) => calculateAgeFromBirthDate(customer.data_nascita, now))
       .filter((age: number | null): age is number => age !== null);
+    const unknownAgeCount = reportCustomers.length - ageRows.length;
     const averageAge = ageRows.length > 0
       ? Number((ageRows.reduce((sum, age) => sum + age, 0) / ageRows.length).toFixed(1))
       : 0;
@@ -935,9 +1086,17 @@ router.get("/report", async (req: Request, res: Response) => {
       .map(([label, count]) => ({
         label,
         count,
-        percentage: ageRows.length > 0 ? Number(((count / ageRows.length) * 100).toFixed(1)) : 0
+        percentage: reportCustomers.length > 0 ? Number(((count / reportCustomers.length) * 100).toFixed(1)) : 0
       }))
       .sort((a, b) => a.label.localeCompare(b.label, "it"));
+
+    if (unknownAgeCount > 0) {
+      ageDistribution.push({
+        label: "Non indicata",
+        count: unknownAgeCount,
+        percentage: reportCustomers.length > 0 ? Number(((unknownAgeCount / reportCustomers.length) * 100).toFixed(1)) : 0
+      });
+    }
 
     const segmentLabels: Array<"uomo" | "donna" | "bambino"> = ["uomo", "donna", "bambino"];
     const segments = segmentLabels.map((segment) => {
@@ -1036,7 +1195,7 @@ router.get("/report", async (req: Request, res: Response) => {
             tasks: item.tasks,
             revenue: Number(item.revenue.toFixed(2))
           }))
-          .sort((a, b) => b.revenue - a.revenue || b.tasks - a.tasks)
+          .sort((a, b) => b.revenue - a.revenue || b.tasks - a.tasks || a.name.localeCompare(b.name, "it"))
       },
       retail: {
         revenue: Number(productRevenue.toFixed(2)),

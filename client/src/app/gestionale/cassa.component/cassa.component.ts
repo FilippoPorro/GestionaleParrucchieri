@@ -859,8 +859,8 @@ export class CassaComponent implements OnInit {
         this.activePaymentAction = null;
         this.showProcessingAlert = false;
         this.successMessage = generaRicevuta
-          ? `Pagamento registrato con ricevuta! (Vendita #${res.idVendita})`
-          : `Pagamento registrato con successo! (Vendita #${res.idVendita})`;
+          ? 'Pagamento registrato con ricevuta!'
+          : 'Pagamento registrato con successo!';
         this.loadDailyStats();
         this.loadAppuntamentiDaIncassare();
 

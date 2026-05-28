@@ -79,7 +79,7 @@
             <p>Appuntamenti completati</p>
           </div>
           <strong>{{ reportData.summary.totalCompletedAppointments }}</strong>
-          <span class="management-stat-card__trend">Ultimo periodo</span>
+          <span class="management-stat-card__trend">Agenda nel periodo</span>
         </article>
       </section>
 
@@ -220,7 +220,7 @@
               <span>Posizione</span>
               <span>Appuntamenti</span>
               <span>Incasso</span>
-              <span>Sesso più afflunte</span>
+              <span>Segmento principale</span>
             </div>
             <div class="report-table__row" *ngFor="let day of busiestDays" [class.report-table__row--top]="day.rank === 1">
               <span>{{ day.label }}</span>

@@ -44,7 +44,8 @@ function isAllowedFrontendOrigin(origin: string): boolean {
 
   return allowedFrontendOrigins.includes(normalizedOrigin) ||
     normalizedOrigin === "http://localhost:4200" ||
-    /^https:\/\/gestionale-parrucchieri-[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin);
+    /^https:\/\/gestionale-parrucchieri-[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin) ||
+    /^https:\/\/sito-parrucchieri-[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin);
 }
 
 cloudinary.v2.config({

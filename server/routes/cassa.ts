@@ -184,7 +184,9 @@ async function completeCheckoutWithFallback(
 
 async function insertDettagliVenditaServizi(
   idVendita: number,
-  serviziVenduti: NormalizedCassaService[]
+  serviziVenduti: NormalizedCassaService[],
+  idOperatore: number | null,
+  idAppuntamento: number | null
 ): Promise<void> {
   if (serviziVenduti.length === 0) {
     return;
@@ -193,12 +195,28 @@ async function insertDettagliVenditaServizi(
   const dettagliServizi = serviziVenduti.map((item) => ({
     idVendita,
     idServizio: item.serviceId,
-    prezzoUnitario: item.prezzoUnitario
+    prezzoUnitario: item.prezzoUnitario,
+    idOperatore,
+    idAppuntamento
   }));
 
-  const { error } = await db
+  let { error } = await db
     .from(DETTAGLIO_VENDITA_SERVIZI_TABLE)
     .insert(dettagliServizi);
+
+  if (error && /idoperatore|idappuntamento|schema cache/i.test(String(error.message || ""))) {
+    const legacyDettagliServizi = serviziVenduti.map((item) => ({
+      idVendita,
+      idServizio: item.serviceId,
+      prezzoUnitario: item.prezzoUnitario
+    }));
+
+    const retry = await db
+      .from(DETTAGLIO_VENDITA_SERVIZI_TABLE)
+      .insert(legacyDettagliServizi);
+
+    error = retry.error;
+  }
 
   if (error) throw error;
 }
@@ -215,6 +233,25 @@ function normalizeMetodoPagamento(metodo: unknown): "contanti" | "carta" | null 
   }
 
   return null;
+}
+
+function normalizeText(value: unknown): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function removeAccents(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizeKey(value: unknown): string {
+  return removeAccents(normalizeText(value));
+}
+
+function formatCustomerName(cliente: any): string {
+  const fullName = `${cliente?.cognome || ""} ${cliente?.nome || ""}`.trim();
+  return !fullName || normalizeKey(fullName) === "utente utente"
+    ? "Cliente generico"
+    : fullName;
 }
 
 function formatLocalDate(date: Date): string {
@@ -281,13 +318,10 @@ router.get("/stats", async (_req: Request, res: Response) => {
 router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) => {
   try {
     const now = new Date();
-    const today = formatLocalDate(now);
-    const startOfDay = `${today}T00:00:00`;
 
     const { data: appointmentsData, error: appointmentsError } = await db
       .from("appuntamenti")
       .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, stato, note")
-      .gte("dataOraInizio", startOfDay)
       .lte("dataOraInizio", formatLocalDateTime(now))
       .not("idCliente", "is", null)
       .order("dataOraInizio", { ascending: true });
@@ -414,7 +448,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
 
       return {
         ...appointment,
-        clienteNome: cliente ? `${cliente.cognome || ""} ${cliente.nome || ""}`.trim() : "Cliente",
+        clienteNome: formatCustomerName(cliente),
         clienteEmail: cliente ? String(cliente.email || "") : "",
         operatoreNome: operatore ? `${operatore.cognome || ""} ${operatore.nome || ""}`.trim() : "Operatore",
         servizi,
@@ -496,7 +530,12 @@ router.post("/registra", async (req: Request, res: Response) => {
       idVendita = Number((venditaData as any).idVendita);
     }
 
-    await insertDettagliVenditaServizi(idVendita, serviziVenduti);
+    await insertDettagliVenditaServizi(
+      idVendita,
+      serviziVenduti,
+      idOperatore ? Number(idOperatore) : null,
+      idAppuntamento ? Number(idAppuntamento) : null
+    );
 
     // 2. Inserimento del pagamento associato alla vendita
     const { error: pagamentoError } = await db
