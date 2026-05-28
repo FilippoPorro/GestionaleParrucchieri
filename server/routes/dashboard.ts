@@ -57,23 +57,11 @@ function formatWeekLabel(start: Date): string {
 }
 
 function getDiscountByFrequency(monthlyFrequency: number): number {
-  if (monthlyFrequency < 1) {
+  if (!Number.isFinite(monthlyFrequency) || monthlyFrequency < 1) {
     return 0;
   }
 
-  if (monthlyFrequency < 2) {
-    return 5;
-  }
-
-  if (monthlyFrequency < 3) {
-    return 10;
-  }
-
-  if (monthlyFrequency < 4) {
-    return 15;
-  }
-
-  return 20;
+  return Number(monthlyFrequency.toFixed(2));
 }
 
 function normalizeText(value: unknown): string {
@@ -902,7 +890,7 @@ router.get("/report", async (req: Request, res: Response) => {
     const customerSegmentById = new Map<number, "donna" | "uomo" | "bambino" | "non_classificato">();
     const segmentStats = new Map<string, { customers: Set<number>; appointments: number; revenue: number }>();
     const serviceStatsMap = new Map<number, { label: string; quantity: number; revenue: number }>();
-    const dayStatsMap = new Map<string, { label: string; appointments: number; revenue: number; segments: Map<string, number> }>();
+    const dayStatsMap = new Map<string, { label: string; servicesCount: number; revenue: number; segments: Map<string, number> }>();
     const operatorStatsMap = new Map<number, { operatorId: number; name: string; tasks: number; revenue: number }>();
     const productStatsMap = new Map<number, { id: number; label: string; quantity: number; revenue: number }>();
 
@@ -988,17 +976,36 @@ router.get("/report", async (req: Request, res: Response) => {
       segmentEntry.appointments += 1;
       segmentEntry.revenue += revenue;
 
-      const appointmentDate = new Date(appointment.dataOraInizio);
-      const weekdayLabel = appointmentDate.toLocaleDateString("it-IT", { weekday: "long" });
+    });
+
+    serviceLines.forEach((item: any) => {
+      const sale = salesById.get(Number(item.saleId));
+      if (!sale?.data) {
+        return;
+      }
+
+      const saleDate = new Date(sale.data);
+      if (Number.isNaN(saleDate.getTime())) {
+        return;
+      }
+
+      const customerId = Number(sale.idCliente);
+      const customer = customersById.get(customerId);
+      const service = servicesById.get(Number(item.idServizio));
+      const detectedSegment = customer
+        ? (customerSegmentById.get(customerId) || resolveSegmentForCustomer(customer, service ? [service] : []))
+        : "non_classificato";
+      const weekdayLabel = saleDate.toLocaleDateString("it-IT", { weekday: "long" });
       const weekdayKey = normalizeKey(weekdayLabel);
       const dayEntry = dayStatsMap.get(weekdayKey) || {
         label: weekdayLabel.charAt(0).toUpperCase() + weekdayLabel.slice(1),
-        appointments: 0,
+        servicesCount: 0,
         revenue: 0,
         segments: new Map<string, number>()
       };
-      dayEntry.appointments += 1;
-      dayEntry.revenue += revenue;
+
+      dayEntry.servicesCount += 1;
+      dayEntry.revenue += Number(item.adjustedRevenue || 0);
       dayEntry.segments.set(detectedSegment, (dayEntry.segments.get(detectedSegment) || 0) + 1);
       dayStatsMap.set(weekdayKey, dayEntry);
     });
@@ -1115,11 +1122,11 @@ router.get("/report", async (req: Request, res: Response) => {
         const mainSegmentEntry = Array.from(day.segments.entries()).sort((a, b) => b[1] - a[1])[0];
         const mainSegment = mainSegmentEntry?.[0] || "non classificato";
         const mainSegmentCount = mainSegmentEntry?.[1] || 0;
-        const mainSegmentPercentage = day.appointments > 0 ? Number(((mainSegmentCount / day.appointments) * 100).toFixed(1)) : 0;
+        const mainSegmentPercentage = day.servicesCount > 0 ? Number(((mainSegmentCount / day.servicesCount) * 100).toFixed(1)) : 0;
 
         return {
           label: day.label,
-          appointments: day.appointments,
+          servicesCount: day.servicesCount,
           revenue: Number(day.revenue.toFixed(2)),
           drivingSegment: mainSegment,
           drivingSegmentCount: mainSegmentCount,
@@ -1132,7 +1139,7 @@ router.get("/report", async (req: Request, res: Response) => {
 
     const maxRevenue = busiestDays.reduce((max, day) => Math.max(max, day.revenue), 0);
     const rankedDays = [...busiestDays]
-      .sort((a, b) => b.appointments - a.appointments || b.revenue - a.revenue);
+      .sort((a, b) => b.servicesCount - a.servicesCount || b.revenue - a.revenue);
 
     rankedDays.forEach((day, index) => {
       const target = busiestDays.find((item) => item.label === day.label);

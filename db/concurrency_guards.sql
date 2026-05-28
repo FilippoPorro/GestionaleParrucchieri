@@ -53,6 +53,7 @@ DROP FUNCTION IF EXISTS public.update_appuntamento_sicuro(
 
 DROP FUNCTION IF EXISTS public.decrement_product_stock_sicuro(jsonb);
 DROP FUNCTION IF EXISTS public.complete_checkout_sicuro(integer, numeric, jsonb);
+DROP FUNCTION IF EXISTS public.complete_management_checkout_sicuro(integer, integer, integer, text, numeric, jsonb, jsonb);
 DROP FUNCTION IF EXISTS public.expire_cart_reservations();
 DROP FUNCTION IF EXISTS public.reserve_cart_item_sicuro(uuid, integer, integer, integer, integer);
 DROP FUNCTION IF EXISTS public.complete_reserved_cart_checkout_sicuro(uuid, integer, numeric);
@@ -390,7 +391,7 @@ BEGIN
   END LOOP;
 
   INSERT INTO public.vendite ("idCliente", "data", "totale")
-  VALUES (p_id_cliente, now(), p_total)
+  VALUES (COALESCE(p_id_cliente, -1), now(), p_total)
   RETURNING public.vendite."idVendita" INTO v_id_vendita;
 
   FOR v_item IN
@@ -430,6 +431,200 @@ BEGIN
     MAX((item->>'prezzoUnitario')::numeric)
   FROM jsonb_array_elements(p_items) item
   GROUP BY (item->>'productId')::integer;
+
+  RETURN QUERY SELECT v_id_vendita;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.complete_management_checkout_sicuro(
+  p_id_cliente integer,
+  p_id_operatore integer,
+  p_id_appuntamento integer,
+  p_metodo text,
+  p_total numeric,
+  p_product_items jsonb,
+  p_service_items jsonb
+)
+RETURNS TABLE ("idVendita" integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_product_item record;
+  v_service_item record;
+  v_updated_count integer;
+  v_id_vendita integer;
+  v_expected_total numeric(10, 2) := 0;
+BEGIN
+  IF p_total IS NULL OR p_total < 0 THEN
+    RAISE EXCEPTION 'invalid_total' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF p_metodo IS NULL OR p_metodo NOT IN ('contanti', 'carta') THEN
+    RAISE EXCEPTION 'invalid_payment_method' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF COALESCE(jsonb_array_length(COALESCE(p_service_items, '[]'::jsonb)), 0) > 0
+    AND (p_id_operatore IS NULL OR p_id_operatore <= 0) THEN
+    RAISE EXCEPTION 'operator_required' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF p_product_items IS NOT NULL AND jsonb_typeof(p_product_items) <> 'array' THEN
+    RAISE EXCEPTION 'invalid_product_items' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF p_service_items IS NOT NULL AND jsonb_typeof(p_service_items) <> 'array' THEN
+    RAISE EXCEPTION 'invalid_service_items' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF COALESCE(jsonb_array_length(COALESCE(p_product_items, '[]'::jsonb)), 0) = 0
+    AND COALESCE(jsonb_array_length(COALESCE(p_service_items, '[]'::jsonb)), 0) = 0 THEN
+    RAISE EXCEPTION 'cart_empty' USING ERRCODE = 'P0001';
+  END IF;
+
+  FOR v_product_item IN
+    SELECT
+      (item->>'productId')::integer AS product_id,
+      SUM((item->>'qty')::integer)::integer AS qty,
+      MAX((item->>'prezzoUnitario')::numeric) AS prezzo_unitario
+    FROM jsonb_array_elements(COALESCE(p_product_items, '[]'::jsonb)) item
+    GROUP BY (item->>'productId')::integer
+    ORDER BY (item->>'productId')::integer
+  LOOP
+    IF v_product_item.product_id IS NULL
+      OR v_product_item.qty IS NULL
+      OR v_product_item.qty <= 0
+      OR v_product_item.prezzo_unitario IS NULL
+      OR v_product_item.prezzo_unitario < 0 THEN
+      RAISE EXCEPTION 'invalid_product_items' USING ERRCODE = 'P0001';
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(hashtextextended('products:stock:' || v_product_item.product_id::text, 0));
+    v_expected_total := v_expected_total + (v_product_item.qty * v_product_item.prezzo_unitario);
+  END LOOP;
+
+  FOR v_service_item IN
+    SELECT
+      (item->>'serviceId')::integer AS service_id,
+      MAX((item->>'prezzoUnitario')::numeric) AS prezzo_unitario
+    FROM jsonb_array_elements(COALESCE(p_service_items, '[]'::jsonb)) item
+    GROUP BY (item->>'serviceId')::integer
+    ORDER BY (item->>'serviceId')::integer
+  LOOP
+    IF v_service_item.service_id IS NULL
+      OR v_service_item.service_id <= 0
+      OR v_service_item.prezzo_unitario IS NULL
+      OR v_service_item.prezzo_unitario < 0 THEN
+      RAISE EXCEPTION 'invalid_service_items' USING ERRCODE = 'P0001';
+    END IF;
+
+    v_expected_total := v_expected_total + v_service_item.prezzo_unitario;
+  END LOOP;
+
+  v_expected_total := ROUND(v_expected_total, 2);
+
+  IF v_expected_total <> ROUND(p_total, 2) THEN
+    RAISE EXCEPTION 'invalid_total: totale non coerente con i dettagli' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF p_id_appuntamento IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.appuntamenti
+      WHERE "idAppuntamento" = p_id_appuntamento
+    ) THEN
+      RAISE EXCEPTION 'appointment_not_found' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
+  IF p_id_operatore IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.utenti
+      WHERE "idUtente" = p_id_operatore
+    ) THEN
+      RAISE EXCEPTION 'operator_not_found' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
+  INSERT INTO public.vendite ("idCliente", "data", "totale")
+  VALUES (COALESCE(p_id_cliente, -1), now(), ROUND(p_total, 2))
+  RETURNING public.vendite."idVendita" INTO v_id_vendita;
+
+  FOR v_product_item IN
+    SELECT
+      (item->>'productId')::integer AS product_id,
+      SUM((item->>'qty')::integer)::integer AS qty,
+      MAX((item->>'prezzoUnitario')::numeric) AS prezzo_unitario
+    FROM jsonb_array_elements(COALESCE(p_product_items, '[]'::jsonb)) item
+    GROUP BY (item->>'productId')::integer
+    ORDER BY (item->>'productId')::integer
+  LOOP
+    UPDATE public.prodotti
+    SET "quantitaMagazzino" = "quantitaMagazzino" - v_product_item.qty
+    WHERE "idProdotto" = v_product_item.product_id
+      AND "quantitaMagazzino" >= v_product_item.qty;
+
+    GET DIAGNOSTICS v_updated_count = ROW_COUNT;
+
+    IF v_updated_count = 0 THEN
+      IF EXISTS (SELECT 1 FROM public.prodotti WHERE "idProdotto" = v_product_item.product_id) THEN
+        RAISE EXCEPTION 'stock_insufficiente' USING ERRCODE = 'P0001';
+      END IF;
+
+      RAISE EXCEPTION 'product_not_found' USING ERRCODE = 'P0001';
+    END IF;
+  END LOOP;
+
+  INSERT INTO public."dettagliovenditaProdotti" (
+    "idVendita",
+    "idProdotto",
+    "quantita",
+    "prezzoUnitario"
+  )
+  SELECT
+    v_id_vendita,
+    (item->>'productId')::integer,
+    SUM((item->>'qty')::integer)::integer,
+    MAX((item->>'prezzoUnitario')::numeric)
+  FROM jsonb_array_elements(COALESCE(p_product_items, '[]'::jsonb)) item
+  GROUP BY (item->>'productId')::integer;
+
+  INSERT INTO public."dettaglioVenditaServizi" (
+    "idVendita",
+    "idServizio",
+    "prezzoUnitario",
+    "idOperatore",
+    "idAppuntamento"
+  )
+  SELECT
+    v_id_vendita,
+    (item->>'serviceId')::integer,
+    MAX((item->>'prezzoUnitario')::numeric),
+    p_id_operatore,
+    p_id_appuntamento
+  FROM jsonb_array_elements(COALESCE(p_service_items, '[]'::jsonb)) item
+  GROUP BY (item->>'serviceId')::integer;
+
+  INSERT INTO public.pagamenti (
+    "idVendita",
+    "metodo",
+    "importo",
+    "data"
+  )
+  VALUES (
+    v_id_vendita,
+    p_metodo,
+    ROUND(p_total, 2),
+    now()
+  );
+
+  IF p_id_appuntamento IS NOT NULL THEN
+    UPDATE public.appuntamenti
+    SET "stato" = 'completato'
+    WHERE "idAppuntamento" = p_id_appuntamento;
+  END IF;
 
   RETURN QUERY SELECT v_id_vendita;
 END;
@@ -488,7 +683,7 @@ BEGIN
   END LOOP;
 
   INSERT INTO public.vendite ("idCliente", "data", "totale")
-  VALUES (p_id_cliente, now(), p_total)
+  VALUES (COALESCE(p_id_cliente, -1), now(), p_total)
   RETURNING public.vendite."idVendita" INTO v_id_vendita;
 
   FOR v_item IN
@@ -554,6 +749,7 @@ GRANT EXECUTE ON FUNCTION public.update_appuntamento_sicuro(
 
 GRANT EXECUTE ON FUNCTION public.decrement_product_stock_sicuro(jsonb) TO service_role;
 GRANT EXECUTE ON FUNCTION public.complete_checkout_sicuro(integer, numeric, jsonb) TO service_role;
+GRANT EXECUTE ON FUNCTION public.complete_management_checkout_sicuro(integer, integer, integer, text, numeric, jsonb, jsonb) TO service_role;
 GRANT EXECUTE ON FUNCTION public.expire_cart_reservations() TO service_role;
 GRANT EXECUTE ON FUNCTION public.reserve_cart_item_sicuro(uuid, integer, integer, integer, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.complete_reserved_cart_checkout_sicuro(uuid, integer, numeric) TO service_role;

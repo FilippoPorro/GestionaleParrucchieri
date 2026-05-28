@@ -84,7 +84,7 @@ export interface ReportServiceDatum {
 
 export interface ReportBusiestDayDatum {
   label: string;
-  appointments: number;
+  servicesCount: number;
   revenue: number;
   drivingSegment: string;
   drivingSegmentCount: number;

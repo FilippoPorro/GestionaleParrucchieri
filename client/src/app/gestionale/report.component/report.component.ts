@@ -109,7 +109,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
       return 0;
     }
 
-    const total = this.busiestDays.reduce((sum, day) => sum + day.appointments, 0);
+    const total = this.busiestDays.reduce((sum, day) => sum + day.servicesCount, 0);
     return Number((total / this.busiestDays.length).toFixed(1));
   }
 

@@ -212,33 +212,33 @@
             <h2>Giorni con più affluenza</h2>
           </div>
           <p class="report-panel__copy" *ngIf="busiestDays.length > 0">
-            Media periodo: <strong>{{ averageDailyAppointments }}</strong> appuntamenti al giorno.
+            Media periodo: <strong>{{ averageDailyAppointments }}</strong> servizi al giorno.
           </p>
           <div class="report-table report-table--traffic" *ngIf="busiestDays.length > 0; else noTraffic">
             <div class="report-table__head">
               <span>Giorno</span>
               <span>Posizione</span>
-              <span>Appuntamenti</span>
+              <span>N servizi</span>
               <span>Incasso</span>
               <span>Segmento principale</span>
             </div>
             <div class="report-table__row" *ngFor="let day of busiestDays" [class.report-table__row--top]="day.rank === 1">
               <span>{{ day.label }}</span>
               <span>#{{ day.rank }}</span>
-              <span>{{ day.appointments }}</span>
+              <span>{{ day.servicesCount }}</span>
               <span>{{ formatCurrency(day.revenue) }}</span>
               <span>{{ formatSegmentLabel(day.drivingSegment) }} ({{ day.drivingSegmentPercentage }}%)</span>
             </div>
           </div>
           <ng-template #noTraffic>
-            <p class="report-state">Nessun appuntamento completato nel periodo.</p>
+            <p class="report-state">Nessun servizio venduto nel periodo.</p>
           </ng-template>
         </article>
 
         <article class="management-panel report-panel report-panel--wide">
           <div class="management-panel__head">
             <span>Servizi</span>
-            <h2>Tagli, pieghe, colori, schiariture e altri servizi</h2>
+            <h2>Servizi</h2>
           </div>
           <p class="report-panel__copy">
             Fatturato servizi incassati: {{ formatCurrency(reportData.services.revenue) }} · Incide per

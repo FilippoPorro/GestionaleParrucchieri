@@ -14,9 +14,6 @@ type NormalizedCassaService = {
   prezzoUnitario: number;
 };
 
-const DETTAGLI_VENDITA_PRODOTTI_TABLE = "dettagliovenditaProdotti";
-const DETTAGLIO_VENDITA_SERVIZI_TABLE = "dettaglioVenditaServizi";
-
 function normalizeCassaProducts(prodotti: any[]): NormalizedCassaProduct[] {
   const byProduct = new Map<number, NormalizedCassaProduct>();
 
@@ -66,159 +63,109 @@ function normalizeCassaServices(servizi: any[]): NormalizedCassaService[] {
   return [...byService.values()];
 }
 
+function getErrorCode(error: unknown): string {
+  return typeof (error as any)?.code === "string" ? (error as any).code : "";
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : typeof (error as any)?.message === "string"
+      ? (error as any).message
+      : "";
+}
+
 function isStockError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof (error as any)?.message === "string"
-        ? (error as any).message
-        : "";
-
-  return /stock[_ ]insufficiente/i.test(message);
+  return /stock[_ ]insufficiente/i.test(getErrorMessage(error));
 }
 
-function isMissingCheckoutRpcError(error: unknown): boolean {
-  const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof (error as any)?.message === "string"
-        ? (error as any).message
-        : "";
-
-  return code === "PGRST202" && /complete_checkout_sicuro/i.test(message);
+function isMissingManagementCheckoutRpcError(error: unknown): boolean {
+  return getErrorCode(error) === "PGRST202" && /complete_management_checkout_sicuro/i.test(getErrorMessage(error));
 }
 
-function isCheckoutRpcFallbackError(error: unknown): boolean {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof (error as any)?.message === "string"
-        ? (error as any).message
-        : "";
-
-  return isMissingCheckoutRpcError(error) || /dettagliovendita/i.test(message);
+function isInvalidTotalError(error: unknown): boolean {
+  return /invalid_total|totale non coerente/i.test(getErrorMessage(error));
 }
 
-async function completeCheckoutWithFallback(
-  idCliente: number | null,
-  totale: number,
-  prodottiVenduti: NormalizedCassaProduct[]
-): Promise<number> {
-  const productIds = prodottiVenduti.map((item) => item.productId);
+function isInvalidPaymentMethodError(error: unknown): boolean {
+  return /invalid_payment_method/i.test(getErrorMessage(error));
+}
 
-  const { data: stockRows, error: stockReadError } = await db
-    .from("prodotti")
-    .select("idProdotto, quantitaMagazzino")
-    .in("idProdotto", productIds);
+function isInvalidAppointmentError(error: unknown): boolean {
+  return /appointment_not_found/i.test(getErrorMessage(error));
+}
 
-  if (stockReadError) throw stockReadError;
+function isInvalidOperatorError(error: unknown): boolean {
+  return /operator_required|operator_not_found/i.test(getErrorMessage(error));
+}
 
-  const stockByProductId = new Map<number, number>();
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
-  (stockRows || []).forEach((row: any) => {
-    stockByProductId.set(Number(row.idProdotto), Number(row.quantitaMagazzino || 0));
-  });
+function calculateExpectedTotal(
+  prodottiVenduti: NormalizedCassaProduct[],
+  serviziVenduti: NormalizedCassaService[]
+): number {
+  const prodottiTotal = prodottiVenduti.reduce(
+    (sum, item) => sum + item.qty * item.prezzoUnitario,
+    0
+  );
+  const serviziTotal = serviziVenduti.reduce(
+    (sum, item) => sum + item.prezzoUnitario,
+    0
+  );
 
-  for (const item of prodottiVenduti) {
-    const availableStock = stockByProductId.get(item.productId);
+  return roundCurrency(prodottiTotal + serviziTotal);
+}
 
-    if (availableStock === undefined) {
-      throw new Error("product_not_found");
-    }
-
-    if (availableStock < item.qty) {
-      throw new Error("stock_insufficiente");
-    }
-  }
-
-  const { data: venditaData, error: venditaError } = await db
-    .from("vendite")
-    .insert({
-      idCliente,
-      totale,
-      data: new Date().toISOString()
-    })
-    .select("idVendita")
-    .single();
-
-  if (venditaError) throw venditaError;
-
-  const idVendita = Number((venditaData as any).idVendita);
-
-  for (const item of prodottiVenduti) {
-    const currentStock = stockByProductId.get(item.productId) ?? 0;
-
-    const { data: updatedProduct, error: updateError } = await db
-      .from("prodotti")
-      .update({
-        quantitaMagazzino: currentStock - item.qty
-      })
-      .eq("idProdotto", item.productId)
-      .gte("quantitaMagazzino", item.qty)
-      .select("idProdotto")
-      .maybeSingle();
-
-    if (updateError) throw updateError;
-
-    if (!updatedProduct) {
-      throw new Error("stock_insufficiente");
-    }
-  }
-
-  const dettagliVendita = prodottiVenduti.map((item) => ({
-    idVendita,
-    idProdotto: item.productId,
-    quantita: item.qty,
+function serializeCheckoutProducts(prodottiVenduti: NormalizedCassaProduct[]) {
+  return prodottiVenduti.map((item) => ({
+    productId: item.productId,
+    qty: item.qty,
     prezzoUnitario: item.prezzoUnitario
   }));
-
-  const { error: dettagliError } = await db
-    .from(DETTAGLI_VENDITA_PRODOTTI_TABLE)
-    .insert(dettagliVendita);
-
-  if (dettagliError) throw dettagliError;
-
-  return idVendita;
 }
 
-async function insertDettagliVenditaServizi(
-  idVendita: number,
-  serviziVenduti: NormalizedCassaService[],
-  idOperatore: number | null,
-  idAppuntamento: number | null
-): Promise<void> {
-  if (serviziVenduti.length === 0) {
-    return;
-  }
-
-  const dettagliServizi = serviziVenduti.map((item) => ({
-    idVendita,
-    idServizio: item.serviceId,
-    prezzoUnitario: item.prezzoUnitario,
-    idOperatore,
-    idAppuntamento
+function serializeCheckoutServices(serviziVenduti: NormalizedCassaService[]) {
+  return serviziVenduti.map((item) => ({
+    serviceId: item.serviceId,
+    prezzoUnitario: item.prezzoUnitario
   }));
+}
 
-  let { error } = await db
-    .from(DETTAGLIO_VENDITA_SERVIZI_TABLE)
-    .insert(dettagliServizi);
+async function completeManagementCheckout(
+  idCliente: number | null,
+  idOperatore: number | null,
+  idAppuntamento: number | null,
+  metodoPagamento: "contanti" | "carta",
+  totale: number,
+  prodottiVenduti: NormalizedCassaProduct[],
+  serviziVenduti: NormalizedCassaService[]
+): Promise<number> {
+  const { data, error } = await db
+    .rpc("complete_management_checkout_sicuro", {
+      p_id_cliente: idCliente,
+      p_id_operatore: idOperatore,
+      p_id_appuntamento: idAppuntamento,
+      p_metodo: metodoPagamento,
+      p_total: totale,
+      p_product_items: serializeCheckoutProducts(prodottiVenduti),
+      p_service_items: serializeCheckoutServices(serviziVenduti)
+    })
+    .single();
 
-  if (error && /idoperatore|idappuntamento|schema cache/i.test(String(error.message || ""))) {
-    const legacyDettagliServizi = serviziVenduti.map((item) => ({
-      idVendita,
-      idServizio: item.serviceId,
-      prezzoUnitario: item.prezzoUnitario
-    }));
-
-    const retry = await db
-      .from(DETTAGLIO_VENDITA_SERVIZI_TABLE)
-      .insert(legacyDettagliServizi);
-
-    error = retry.error;
+  if (error) {
+    throw error;
   }
 
-  if (error) throw error;
+  const idVendita = Number((data as any)?.idVendita);
+
+  if (!Number.isFinite(idVendita) || idVendita <= 0) {
+    throw new Error("checkout_result_invalid");
+  }
+
+  return idVendita;
 }
 
 function normalizeMetodoPagamento(metodo: unknown): "contanti" | "carta" | null {
@@ -270,7 +217,6 @@ function formatLocalDateTime(date: Date): string {
   return `${formatLocalDate(date)}T${hours}:${minutes}:${seconds}`;
 }
 
-// GET /api/cassa/stats
 router.get("/stats", async (_req: Request, res: Response) => {
   try {
     const now = new Date();
@@ -314,7 +260,6 @@ router.get("/stats", async (_req: Request, res: Response) => {
   }
 });
 
-// GET /api/cassa/appuntamenti-da-incassare
 router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) => {
   try {
     const now = new Date();
@@ -346,11 +291,7 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
     const clienteIds = Array.from(new Set(appointments.map((appointment: any) => Number(appointment.idCliente)).filter(Number.isFinite)));
     const operatoreIds = Array.from(new Set(appointments.map((appointment: any) => Number(appointment.idOperatore)).filter(Number.isFinite)));
 
-    const [
-      relationsResult,
-      clientiResult,
-      operatoriResult
-    ] = await Promise.all([
+    const [relationsResult, clientiResult, operatoriResult] = await Promise.all([
       db
         .from("appuntamentiservizi")
         .select("idAppuntamento, idServizio, prezzoPersonalizzato, durataPersonalizzata")
@@ -463,7 +404,6 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
   }
 });
 
-// POST /api/cassa/registra
 router.post("/registra", async (req: Request, res: Response) => {
   try {
     const { idCliente, idOperatore, idAppuntamento, totale, metodo, prodotti, servizi } = req.body;
@@ -480,86 +420,48 @@ router.post("/registra", async (req: Request, res: Response) => {
 
     const prodottiVenduti = normalizeCassaProducts(Array.isArray(prodotti) ? prodotti : []);
     const serviziVenduti = normalizeCassaServices(Array.isArray(servizi) ? servizi : []);
-    const hasProdottiVenduti = prodottiVenduti.length > 0;
+    const expectedTotal = calculateExpectedTotal(prodottiVenduti, serviziVenduti);
+    const receivedTotal = roundCurrency(Number(totale));
+
+    if (expectedTotal !== receivedTotal) {
+      return res.status(400).json({
+        message: "Totale non coerente con prodotti e servizi",
+        expectedTotal,
+        receivedTotal
+      });
+    }
+
+    const normalizedCustomerId = idCliente ? Number(idCliente) : -1;
+    const normalizedOperatorId = idOperatore ? Number(idOperatore) : null;
+    const normalizedAppointmentId = idAppuntamento ? Number(idAppuntamento) : null;
+
+    if (serviziVenduti.length > 0 && (!Number.isFinite(normalizedOperatorId) || (normalizedOperatorId ?? 0) <= 0)) {
+      return res.status(400).json({
+        message: "Operatore obbligatorio per registrare servizi"
+      });
+    }
 
     let idVendita: number;
 
-    if (hasProdottiVenduti) {
-      // Quando la vendita da gestionale include prodotti, passiamo dalla RPC
-      // così vengono aggiornati stock, vendite e dettagli prodotto.
-      const { data: checkoutData, error: checkoutError } = await db
-        .rpc("complete_checkout_sicuro", {
-          p_id_cliente: idCliente ? Number(idCliente) : null,
-          p_total: Number(totale),
-          p_items: prodottiVenduti
-        })
-        .single();
-
-      if (checkoutError && !isCheckoutRpcFallbackError(checkoutError)) {
-        throw checkoutError;
+    try {
+      idVendita = await completeManagementCheckout(
+        normalizedCustomerId,
+        normalizedOperatorId,
+        normalizedAppointmentId,
+        metodoPagamento,
+        receivedTotal,
+        prodottiVenduti,
+        serviziVenduti
+      );
+    } catch (error) {
+      if (isMissingManagementCheckoutRpcError(error)) {
+        return res.status(500).json({
+          message: "Manca la funzione SQL del nuovo checkout gestionale. Applica prima la migration nel DB.",
+          error: getErrorMessage(error)
+        });
       }
 
-      idVendita = checkoutError
-        ? await completeCheckoutWithFallback(
-          idCliente ? Number(idCliente) : null,
-          Number(totale),
-          prodottiVenduti
-        )
-        : Number((checkoutData as any)?.idVendita);
-
-      if (!Number.isFinite(idVendita) || idVendita <= 0) {
-        throw new Error("checkout_result_invalid");
-      }
-    } else {
-      // Se ci sono solo servizi, registriamo la vendita senza righe prodotto.
-      // 1. Inserimento della vendita
-      const { data: venditaData, error: venditaError } = await db
-        .from("vendite")
-        .insert({
-          idCliente: idCliente ? Number(idCliente) : null,
-          totale: Number(totale),
-          data: new Date().toISOString()
-        })
-        .select("idVendita")
-        .single();
-
-      if (venditaError) {
-        throw venditaError;
-      }
-
-      idVendita = Number((venditaData as any).idVendita);
-    }
-
-    await insertDettagliVenditaServizi(
-      idVendita,
-      serviziVenduti,
-      idOperatore ? Number(idOperatore) : null,
-      idAppuntamento ? Number(idAppuntamento) : null
-    );
-
-    // 2. Inserimento del pagamento associato alla vendita
-    const { error: pagamentoError } = await db
-      .from("pagamenti")
-      .insert({
-        idVendita: idVendita,
-        metodo: metodoPagamento,
-        importo: Number(totale),
-        data: new Date().toISOString()
-      });
-
-    if (pagamentoError) {
-      throw pagamentoError;
-    }
-
-    if (idAppuntamento) {
-      const { error: appointmentUpdateError } = await db
-        .from("appuntamenti")
-        .update({ stato: "completato" })
-        .eq("idAppuntamento", Number(idAppuntamento));
-
-      if (appointmentUpdateError) {
-        throw appointmentUpdateError;
-      }
+      throw error;
     }
 
     return res.status(201).json({
@@ -568,7 +470,13 @@ router.post("/registra", async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error("Errore POST /api/cassa/registra:", err);
-    return res.status(isStockError(err) ? 409 : 500).json({
+    const statusCode = isStockError(err)
+      ? 409
+      : isInvalidTotalError(err) || isInvalidPaymentMethodError(err) || isInvalidAppointmentError(err) || isInvalidOperatorError(err)
+        ? 400
+        : 500;
+
+    return res.status(statusCode).json({
       message: "Errore durante il salvataggio della vendita",
       error: err.message
     });
