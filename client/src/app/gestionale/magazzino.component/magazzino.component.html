@@ -385,27 +385,6 @@
           </button>
         </div>
 
-        <div
-          *ngIf="feedbackMessage && (feedbackPlacement === 'create' || feedbackPlacement === 'editor')"
-          class="services-alert services-alert--inline services-alert--editor"
-          [ngClass]="feedbackType"
-          role="status"
-        >
-          <div class="services-alert__icon">
-            <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
-            <span *ngIf="feedbackType === 'error'">!</span>
-          </div>
-          <div class="services-alert__copy">
-            <strong class="services-alert__title">
-              {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
-            </strong>
-            <div class="services-alert__text">{{ feedbackMessage }}</div>
-          </div>
-          <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-          </button>
-        </div>
-
         <form *ngIf="isCreateMode" class="services-form services-form--create services-panel-form" [class.is-closing]="isCreateClosing" (ngSubmit)="saveNewProdotto()">
           <div class="services-create-header services-create-header--new">
             <span class="services-avatar services-avatar--large services-avatar--create">
@@ -473,6 +452,27 @@
                 <input [(ngModel)]="newProdotto.prezzoAcquisto" name="newPrezzoAcquisto" type="number" step="0.01" min="0" required />
               </label>
             </div>
+          </div>
+
+          <div
+            *ngIf="feedbackMessage && feedbackPlacement === 'create'"
+            class="services-alert services-alert--inline services-alert--editor services-alert--near-actions"
+            [ngClass]="feedbackType"
+            role="status"
+          >
+            <div class="services-alert__icon">
+              <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+              <span *ngIf="feedbackType === 'error'">!</span>
+            </div>
+            <div class="services-alert__copy">
+              <strong class="services-alert__title">
+                {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+              </strong>
+              <div class="services-alert__text">{{ feedbackMessage }}</div>
+            </div>
+            <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
           </div>
 
           <div class="services-editor-actions">
@@ -571,6 +571,27 @@
               <span>Prezzo vendita</span>
               <strong>{{ draftProdotto.prezzoRivendita | currency:'EUR':'symbol':'1.2-2':'it-IT' }}</strong>
             </div>
+          </div>
+
+          <div
+            *ngIf="feedbackMessage && feedbackPlacement === 'editor'"
+            class="services-alert services-alert--inline services-alert--editor services-alert--near-actions"
+            [ngClass]="feedbackType"
+            role="status"
+          >
+            <div class="services-alert__icon">
+              <i *ngIf="feedbackType === 'success'" class="bi bi-check-lg" aria-hidden="true"></i>
+              <span *ngIf="feedbackType === 'error'">!</span>
+            </div>
+            <div class="services-alert__copy">
+              <strong class="services-alert__title">
+                {{ feedbackTitle || (feedbackType === 'success' ? 'Operazione completata' : 'Operazione non riuscita') }}
+              </strong>
+              <div class="services-alert__text">{{ feedbackMessage }}</div>
+            </div>
+            <button type="button" class="services-alert__close" (click)="clearFeedback()" aria-label="Chiudi avviso">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
           </div>
 
           <div class="services-editor-actions">

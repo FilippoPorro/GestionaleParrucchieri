@@ -426,7 +426,17 @@
 
 .report-table--traffic .report-table__head,
 .report-table--traffic .report-table__row {
-  grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1.5fr;
+  grid-template-columns: 1.1fr 0.9fr 0.75fr 1fr 1.7fr;
+}
+
+.report-table--traffic .report-table__head {
+  gap: 14px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.report-table--traffic .report-table__head > span {
+  white-space: nowrap;
 }
 
 .report-table--services {
@@ -567,8 +577,8 @@
 
   .report-table--traffic .report-table__head,
   .report-table--traffic .report-table__row {
-    min-width: 760px;
-    grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr 1.5fr;
+    min-width: 780px;
+    grid-template-columns: 1.1fr 0.9fr 0.75fr 1fr 1.7fr;
   }
 }
 

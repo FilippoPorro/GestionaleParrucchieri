@@ -217,10 +217,10 @@
           <div class="report-table report-table--traffic" *ngIf="busiestDays.length > 0; else noTraffic">
             <div class="report-table__head">
               <span>Giorno</span>
-              <span>Posizione</span>
-              <span>N servizi</span>
+              <span>Classifica</span>
+              <span>Servizi</span>
               <span>Incasso</span>
-              <span>Sesso principale</span>
+              <span>Clientela prevalente</span>
             </div>
             <div class="report-table__row" *ngFor="let day of busiestDays" [class.report-table__row--top]="day.rank === 1">
               <span>{{ day.label }}</span>

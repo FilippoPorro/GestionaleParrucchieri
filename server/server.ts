@@ -372,6 +372,23 @@ function formatRomeTimestamp(date = new Date()): string {
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
 }
 
+function formatRomeTimestampAfterMinutes(minutes: number): string {
+  return formatRomeTimestamp(new Date(Date.now() + minutes * 60 * 1000));
+}
+
+async function refreshCartSessionExpiry(cartId: string, ttlMinutes = CART_TTL_MINUTES): Promise<void> {
+  const { error } = await db
+    .from("cart_sessions")
+    .update({
+      expiresAt: formatRomeTimestampAfterMinutes(ttlMinutes),
+      updatedAt: formatRomeTimestamp()
+    })
+    .eq("idCart", cartId)
+    .eq("status", "active");
+
+  if (error) throw error;
+}
+
 function getCartIdFromRequest(req: express.Request): string | null {
   const headerCartId = req.header("x-cart-id");
   const bodyCartId = typeof req.body?.cartId === "string" ? req.body.cartId : "";
@@ -829,6 +846,10 @@ app.post("/api/cart/items", async (req, res) => {
     if (error) throw error;
 
     const reservedCartId = String((data as any)?.cartId || (data as any)?.idCart || cartId || "");
+    if (reservedCartId) {
+      await refreshCartSessionExpiry(reservedCartId);
+    }
+
     const cart = reservedCartId ? await getReservedCart(reservedCartId) : null;
 
     return res.json(cart || {
@@ -867,6 +888,8 @@ app.delete("/api/cart/items/:productId", async (req, res) => {
     if (error) throw error;
 
     const reservedCartId = String((data as any)?.cartId || (data as any)?.idCart || cartId);
+    await refreshCartSessionExpiry(reservedCartId);
+
     const cart = await getReservedCart(reservedCartId);
 
     return res.json(cart || { cartId: reservedCartId, expiresAt: null, items: [] });

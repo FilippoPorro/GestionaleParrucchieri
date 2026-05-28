@@ -259,14 +259,14 @@ CREATE OR REPLACE FUNCTION public.reserve_cart_item_sicuro(
   p_qty integer,
   p_ttl_minutes integer DEFAULT 10
 )
-RETURNS TABLE ("cartId" uuid, "expiresAt" timestamp with time zone)
+RETURNS TABLE ("cartId" uuid, "expiresAt" timestamp without time zone)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
   v_cart_id uuid;
-  v_expires_at timestamp with time zone;
+  v_expires_at timestamp without time zone;
   v_stock integer;
   v_reserved_by_others integer;
   v_unit_price numeric(10, 2);
@@ -285,7 +285,7 @@ BEGIN
     FROM public.cart_sessions cs
     WHERE cs."idCart" = p_cart_id
       AND cs."status" = 'active'
-      AND cs."expiresAt" > now();
+      AND cs."expiresAt" > timezone('Europe/Rome', now());
 
     IF FOUND AND v_existing_user_id IS DISTINCT FROM p_id_utente THEN
       RAISE EXCEPTION 'cart_owner_mismatch' USING ERRCODE = 'P0001';
@@ -307,7 +307,7 @@ BEGIN
   INNER JOIN public.cart_sessions cs ON cs."idCart" = ci."idCart"
   WHERE ci."idProdotto" = p_product_id
     AND cs."status" = 'active'
-    AND cs."expiresAt" > now()
+    AND cs."expiresAt" > timezone('Europe/Rome', now())
     AND (p_cart_id IS NULL OR ci."idCart" <> p_cart_id);
 
   IF p_qty > v_stock - v_reserved_by_others THEN
@@ -315,16 +315,16 @@ BEGIN
   END IF;
 
   v_cart_id := COALESCE(p_cart_id, gen_random_uuid());
-  v_expires_at := now() + make_interval(mins => GREATEST(COALESCE(p_ttl_minutes, 10), 1));
+  v_expires_at := timezone('Europe/Rome', now()) + make_interval(mins => GREATEST(COALESCE(p_ttl_minutes, 10), 1));
 
   INSERT INTO public.cart_sessions ("idCart", "idUtente", "expiresAt", "status", "updatedAt")
-  VALUES (v_cart_id, p_id_utente, v_expires_at, 'active', now())
+  VALUES (v_cart_id, p_id_utente, v_expires_at, 'active', timezone('Europe/Rome', now()))
   ON CONFLICT ("idCart") DO UPDATE
     SET
       "idUtente" = COALESCE(EXCLUDED."idUtente", public.cart_sessions."idUtente"),
       "expiresAt" = EXCLUDED."expiresAt",
       "status" = 'active',
-      "updatedAt" = now();
+      "updatedAt" = timezone('Europe/Rome', now());
 
   IF p_qty = 0 THEN
     DELETE FROM public.cart_items
@@ -340,12 +340,12 @@ BEGIN
       );
   ELSE
     INSERT INTO public.cart_items ("idCart", "idProdotto", "quantita", "prezzoUnitario", "updatedAt")
-    VALUES (v_cart_id, p_product_id, p_qty, COALESCE(v_unit_price, 0), now())
+    VALUES (v_cart_id, p_product_id, p_qty, COALESCE(v_unit_price, 0), timezone('Europe/Rome', now()))
     ON CONFLICT ("idCart", "idProdotto") DO UPDATE
       SET
         "quantita" = EXCLUDED."quantita",
         "prezzoUnitario" = EXCLUDED."prezzoUnitario",
-        "updatedAt" = now();
+        "updatedAt" = timezone('Europe/Rome', now());
   END IF;
 
   RETURN QUERY SELECT v_cart_id AS "cartId", v_expires_at AS "expiresAt";

@@ -96,7 +96,9 @@ export class AuthService {
   }
 
   loginWithGoogle(): void {
-    window.location.href = `${this.api}/google`;
+    const authApi = this.getGoogleAuthApiUrl();
+    const frontendUrl = encodeURIComponent(window.location.origin);
+    window.location.href = `${authApi}/google?frontendUrl=${frontendUrl}`;
   }
 
   saveToken(token: string, rememberMe: boolean = true): void {
@@ -285,5 +287,16 @@ export class AuthService {
     localStorage.removeItem('cart_id');
     localStorage.removeItem('cart_expires_at');
     localStorage.removeItem('cart_total');
+  }
+
+  private getGoogleAuthApiUrl(): string {
+    const hostname = window.location.hostname;
+    const isLocalFrontend = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    if (isLocalFrontend) {
+      return 'http://localhost:3000/api/auth';
+    }
+
+    return this.api;
   }
 }

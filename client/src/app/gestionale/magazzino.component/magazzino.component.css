@@ -366,6 +366,10 @@
   min-width: 170px;
 }
 
+.services-card--editor .services-alert--near-actions {
+  margin-top: 0;
+}
+
 @media (max-width: 1180px) {
   .services-toolbar--filters {
     grid-template-columns: minmax(240px, 1fr) minmax(170px, 1fr) minmax(170px, 1fr);

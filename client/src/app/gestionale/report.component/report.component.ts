@@ -227,6 +227,13 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            left: 12,
+            right: 18,
+            top: 8
+          }
+        },
         plugins: {
           legend: {
             position: 'bottom',
@@ -330,27 +337,23 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
       return undefined;
     }
 
-    const config: ChartConfiguration<'scatter'> = {
-      type: 'scatter',
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
       data: {
+        labels: data.map((item, index) => item.label || `Sett. ${index + 1}`),
         datasets: [{
           label: 'Incassi settimanali',
-          data: data.map((item, index) => ({
-            x: index + 1,
-            y: item.value
-          })),
-          showLine: true,
+          data: data.map((item) => item.value),
           borderColor: '#d7b06f',
           backgroundColor: 'rgba(215, 176, 111, 0.18)',
           pointBackgroundColor: '#d7b06f',
           pointBorderColor: '#d7b06f',
           pointRadius: 6,
-          pointHoverRadius: 8
-          ,
+          pointHoverRadius: 8,
           pointBorderWidth: 0,
           borderWidth: 2,
-          fill: false,
-          tension: 0
+          fill: true,
+          tension: 0.28
         }]
       },
       options: {
@@ -363,11 +366,11 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
             bodyColor: '#f3dfb3',
             callbacks: {
               title: (items) => {
-                const index = (items[0]?.parsed.x || 1) - 1;
+                const index = items[0]?.dataIndex ?? 0;
                 return data[index]?.label || '';
               },
               label: (context) => {
-                const index = Number(context.parsed.x) - 1;
+                const index = context.dataIndex;
                 const point = data[index];
                 if (!point) {
                   return this.formatCurrency(Number(context.parsed.y || 0));
@@ -384,12 +387,11 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         scales: {
           x: {
+            offset: true,
             ticks: {
               color: 'rgba(248, 241, 231, 0.72)',
-              callback: (value) => {
-                const index = Number(value) - 1;
-                return index >= 0 ? `Sett. ${Number(value)}` : '';
-              }
+              maxRotation: 0,
+              autoSkip: true
             },
             grid: {
               color: 'rgba(255, 255, 255, 0.05)'

@@ -480,7 +480,7 @@
             type="button"
             class="cash-button cash-button--primary"
             (click)="registraPagamento()"
-            [disabled]="loading || receiptItems.length === 0 || !selectedOperatoreId"
+            [disabled]="loading || receiptItems.length === 0 || (hasServizi && !selectedOperatoreId)"
           >
             <i class="bi bi-check2" aria-hidden="true"></i>
             {{ activePaymentAction === 'standard' ? 'Registrazione in corso...' : 'Registra pagamento' }}
@@ -489,7 +489,7 @@
             type="button"
             class="cash-button cash-button--ghost"
             (click)="registraPagamentoConRicevuta()"
-            [disabled]="loading || receiptItems.length === 0 || !selectedOperatoreId"
+            [disabled]="loading || receiptItems.length === 0 || (hasServizi && !selectedOperatoreId)"
           >
             <i class="bi bi-receipt" aria-hidden="true"></i>
             {{ activePaymentAction === 'receipt' ? 'Registrazione in corso...' : 'Registra pagamento con ricevuta' }}
