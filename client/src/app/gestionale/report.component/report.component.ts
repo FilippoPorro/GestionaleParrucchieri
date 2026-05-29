@@ -44,6 +44,9 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
   private paymentsChart?: Chart;
   private trendChart?: Chart;
   private chartsReady = false;
+  private refreshTimerId: ReturnType<typeof setInterval> | null = null;
+  private readonly refreshIntervalMs = 10000;
+  private readonly refreshOnFocus = () => this.loadReport(false);
 
   isSidenavCollapsed = false;
   loading = true;
@@ -56,6 +59,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadReport();
+    this.startRealtimeRefresh();
   }
 
   ngAfterViewInit(): void {
@@ -64,6 +68,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopRealtimeRefresh();
     this.destroyCharts();
   }
 
@@ -164,9 +169,11 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
     }).format(value || 0);
   }
 
-  private loadReport(): void {
-    this.loading = true;
-    this.errorMessage = '';
+  private loadReport(showLoading = true): void {
+    if (showLoading) {
+      this.loading = true;
+      this.errorMessage = '';
+    }
 
     this.dashboardService.getReport(this.selectedPeriod).subscribe({
       next: (reportData) => {
@@ -177,14 +184,42 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       error: (error) => {
         console.error('Errore caricamento report:', error);
-        this.reportData = null;
+        if (showLoading || !this.reportData) {
+          this.reportData = null;
+          this.errorMessage = 'Non sono riuscito a caricare il report.';
+          this.destroyCharts();
+        }
         this.loading = false;
-        this.errorMessage = 'Non sono riuscito a caricare il report.';
-        this.destroyCharts();
         this.cdr.detectChanges();
       }
     });
   }
+
+  private startRealtimeRefresh(): void {
+    this.stopRealtimeRefresh();
+    this.refreshTimerId = setInterval(() => {
+      if (!this.loading) {
+        this.loadReport(false);
+      }
+    }, this.refreshIntervalMs);
+    window.addEventListener('focus', this.refreshOnFocus);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+  }
+
+  private stopRealtimeRefresh(): void {
+    if (this.refreshTimerId) {
+      clearInterval(this.refreshTimerId);
+      this.refreshTimerId = null;
+    }
+    window.removeEventListener('focus', this.refreshOnFocus);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+  }
+
+  private readonly handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      this.loadReport(false);
+    }
+  };
 
   private renderCharts(): void {
     if (!this.chartsReady || !this.reportData) {

@@ -2,8 +2,16 @@
   gap: 18px;
 }
 
+.staff-layout .customers-card--table {
+  min-width: 0;
+}
+
+.staff-layout .customers-table-wrap {
+  max-width: 100%;
+}
+
 .staff-table {
-  min-width: 900px;
+  min-width: 980px;
   table-layout: fixed;
 }
 
@@ -14,17 +22,17 @@
 
 .staff-table th:first-child,
 .staff-table td:first-child {
-  width: 92px;
+  width: 82px;
 }
 
 .staff-table th:nth-child(2),
 .staff-table td:nth-child(2) {
-  width: 30%;
+  width: 300px;
 }
 
 .staff-table th:nth-child(3),
 .staff-table td:nth-child(3) {
-  width: 28%;
+  width: 270px;
 }
 
 .staff-table th:nth-child(4),
@@ -42,6 +50,55 @@
 
 .staff-table .customers-actions {
   justify-content: center;
+}
+
+.staff-table .customers-cell-primary,
+.staff-table .customers-cell-contact {
+  min-width: 0;
+}
+
+.staff-table .customers-person {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.staff-table .customers-avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.staff-table .customers-person-name {
+  min-width: 0;
+}
+
+.staff-table .customers-person strong,
+.staff-table .customers-person small,
+.staff-table .customers-cell-email,
+.staff-table .customers-cell-phone {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.staff-table .customers-person small {
+  margin-top: 4px;
+}
+
+.staff-table .customers-cell-id {
+  white-space: nowrap;
+}
+
+.staff-table .customers-cell-contact {
+  display: grid;
+  gap: 4px;
 }
 
 .staff-calendar-card {
@@ -297,6 +354,27 @@
 }
 
 @media (max-width: 720px) {
+  .staff-table {
+    min-width: 760px;
+  }
+
+  .staff-table th:first-child,
+  .staff-table td:first-child {
+    width: 68px;
+  }
+
+  .staff-table th:nth-child(2),
+  .staff-table td:nth-child(2) {
+    width: 280px;
+  }
+
+  .staff-table th:nth-child(3),
+  .staff-table td:nth-child(3),
+  .staff-table th:nth-child(4),
+  .staff-table td:nth-child(4) {
+    display: none;
+  }
+
   .staff-calendar-selected,
   .staff-calendar-meta {
     width: 100%;

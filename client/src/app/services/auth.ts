@@ -173,6 +173,15 @@ export class AuthService {
     });
   }
 
+  validateResetPasswordToken(token: string): Observable<{ valid: boolean; expiresAt?: string; message?: string }> {
+    return this.http.get<{ valid: boolean; expiresAt?: string; message?: string }>(
+      `${this.api}/reset-password/validate`,
+      {
+        params: { token }
+      }
+    );
+  }
+
   getUserEmailFromToken(): string | null {
     const token = this.getToken();
 

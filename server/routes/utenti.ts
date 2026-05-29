@@ -40,6 +40,7 @@ type ClienteLookup = {
 };
 
 const router = express.Router();
+const MANAGED_CLIENT_RESET_TTL_MS = 10 * 60 * 1000;
 
 function normalizeClienteRow(row: any, source: ClienteSource): Utente | null {
   const idUtente = Number(
@@ -308,7 +309,7 @@ router.post("/clienti", async (req: Request, res: Response) => {
     const temporaryPassword = generateTemporaryPassword();
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
     const resetPasswordToken = crypto.randomBytes(32).toString("hex");
-    const resetPasswordExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const resetPasswordExpires = new Date(Date.now() + MANAGED_CLIENT_RESET_TTL_MS).toISOString();
 
     const { data, error } = await db
       .from("utenti")

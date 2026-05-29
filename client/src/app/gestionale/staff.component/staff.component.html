@@ -106,7 +106,7 @@
                 <td class="customers-cell-primary">
                   <button type="button" class="customers-person" (click)="selectOperator(utente)">
                     <span class="customers-avatar">{{ getInitials(utente) }}</span>
-                    <span>
+                    <span class="customers-person-name">
                       <strong>{{ utente.nome }} {{ utente.cognome }}</strong>
                       <small>{{ utente.email || 'Email non inserita' }}</small>
                     </span>

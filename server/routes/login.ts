@@ -2,11 +2,12 @@ import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import { db } from "../db_parrucchieri";
 import { verifyToken } from "../middleware/authMiddleware";
+import { sendHtmlMail } from "../services/mail-utils";
 
 const router = express.Router();
+const RESET_PASSWORD_TTL_MS = 10 * 60 * 1000;
 
 function getFrontendUrl(): string {
   return (process.env.FRONTEND_URL || "http://localhost:4200").replace(/\/+$/, "");
@@ -97,6 +98,20 @@ async function getUserById(idUtente: number): Promise<User | null> {
   }
 
   return data as User | null;
+}
+
+async function clearResetPasswordToken(idUtente: number): Promise<void> {
+  const { error } = await db
+    .from("utenti")
+    .update({
+      resetPasswordToken: null,
+      resetPasswordExpires: null
+    })
+    .eq("idUtente", idUtente);
+
+  if (error) {
+    throw error;
+  }
 }
 
 router.post("/login", async (req: Request, res: Response) => {
@@ -456,7 +471,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const resetPasswordExpires = new Date(Date.now() + RESET_PASSWORD_TTL_MS).toISOString();
 
     const { error: updateError } = await db
       .from("utenti")
@@ -472,18 +487,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
 
     const resetLink = buildClientUrl("/reset-password", { token: resetToken });
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: `"I Parrucchieri" <${process.env.SMTP_FROM}>`,
+    await sendHtmlMail({
       to: cleanEmail,
       subject: "Reimposta la tua password",
       html: `
@@ -610,6 +614,58 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/reset-password/validate", async (req: Request, res: Response) => {
+  try {
+    const cleanToken = String(req.query.token || "").trim();
+
+    if (!cleanToken) {
+      return res.status(400).json({
+        valid: false,
+        message: "Il link di reset non e valido"
+      });
+    }
+
+    const { data: user, error } = await db
+      .from("utenti")
+      .select("idUtente, resetPasswordExpires")
+      .eq("resetPasswordToken", cleanToken)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!user?.resetPasswordExpires) {
+      return res.status(404).json({
+        valid: false,
+        message: "Il link di reset non e piu valido"
+      });
+    }
+
+    const expiresAt = new Date(user.resetPasswordExpires);
+
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+      await clearResetPasswordToken(Number(user.idUtente));
+
+      return res.status(410).json({
+        valid: false,
+        message: "Il link di reset e scaduto. Richiedine uno nuovo"
+      });
+    }
+
+    return res.json({
+      valid: true,
+      expiresAt: user.resetPasswordExpires
+    });
+  } catch (error: any) {
+    console.error("Errore GET /reset-password/validate:", error);
+    return res.status(500).json({
+      valid: false,
+      message: "Errore server durante la verifica del link"
+    });
+  }
+});
+
 router.post("/reset-password", async (req: Request, res: Response) => {
   try {
     const { token, newPassword, confirmPassword } = req.body;
@@ -664,6 +720,8 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     }
 
     if (!user.resetPasswordExpires) {
+      await clearResetPasswordToken(user.idUtente);
+
       return res.status(400).json({
         message: "Il link di reset non è valido o è scaduto"
       });
@@ -672,7 +730,9 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     const expiresAt = new Date(user.resetPasswordExpires);
     const now = new Date();
 
-    if (expiresAt.getTime() < now.getTime()) {
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= now.getTime()) {
+      await clearResetPasswordToken(user.idUtente);
+
       return res.status(400).json({
         message: "Il link di reset è scaduto. Richiedine uno nuovo"
       });

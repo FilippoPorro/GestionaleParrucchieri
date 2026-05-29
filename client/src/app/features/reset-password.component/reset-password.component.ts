@@ -22,6 +22,9 @@ export class ResetPasswordComponent implements OnInit {
   showConfirmPassword: boolean = false;
 
   isLoading: boolean = false;
+  isCheckingToken: boolean = true;
+  isLinkInvalid: boolean = false;
+  invalidLinkMessage: string = '';
 
   alertMessage: string = '';
   alertType: AlertType = 'error';
@@ -38,9 +41,40 @@ export class ResetPasswordComponent implements OnInit {
       this.token = params['token'] || '';
 
       if (!this.token) {
-        this.showAlert('Link non valido o incompleto.', 'error');
+        this.showInvalidLink('Link non valido o incompleto.');
+        return;
+      }
+
+      this.validateToken();
+    });
+  }
+
+  private validateToken(): void {
+    this.isCheckingToken = true;
+    this.isLinkInvalid = false;
+    this.invalidLinkMessage = '';
+    this.cdr.detectChanges();
+
+    this.auth.validateResetPasswordToken(this.token.trim()).subscribe({
+      next: () => {
+        this.isCheckingToken = false;
+        this.isLinkInvalid = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isCheckingToken = false;
+        this.showInvalidLink(
+          err?.error?.message || 'Il link non e piu valido. Richiedi un nuovo recupero password.'
+        );
       }
     });
+  }
+
+  private showInvalidLink(message: string): void {
+    this.isCheckingToken = false;
+    this.isLinkInvalid = true;
+    this.invalidLinkMessage = message;
+    this.showAlert(message, 'error');
   }
 
   showAlert(message: string, type: AlertType = 'error'): void {
@@ -78,12 +112,16 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   isResetFormValid(): boolean {
-    return this.token.trim() !== '' && this.isPasswordValid();
+    return !this.isCheckingToken && !this.isLinkInvalid && this.token.trim() !== '' && this.isPasswordValid();
   }
 
   resetPasswordAction(): void {
     if (!this.token.trim()) {
-      this.showAlert('Token di reset mancante.', 'error');
+      this.showInvalidLink('Token di reset mancante.');
+      return;
+    }
+
+    if (this.isLinkInvalid) {
       return;
     }
 
@@ -123,8 +161,15 @@ export class ResetPasswordComponent implements OnInit {
       error: (err) => {
         console.error('Errore reset password:', err);
         this.isLoading = false;
+        const message = err?.error?.message || 'Impossibile aggiornare la password.';
+
+        if (err?.status === 400 || err?.status === 404 || err?.status === 410) {
+          this.showInvalidLink(message);
+          return;
+        }
+
         this.showAlert(
-          err?.error?.message || 'Impossibile aggiornare la password.',
+          message,
           'error'
         );
         this.cdr.detectChanges();

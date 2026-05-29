@@ -1,1 +1,19 @@
 @import "../clienti.component/clienti.component.css";
+
+:host .customers-table .customers-person {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+:host .customers-table .customers-person-name,
+:host .customers-table .customers-person-name strong,
+:host .customers-table .customers-person-name small {
+  min-width: 0;
+}
+
+:host .customers-table .customers-person-name strong,
+:host .customers-table .customers-person-name small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

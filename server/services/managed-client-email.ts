@@ -16,7 +16,7 @@ function buildAccountDetailsBlock(resetLink: string): string {
       <div class="mail-details-content" style="font-size:15px;line-height:1.8;color:#1a1a1a;">
         <div><strong>Accesso:</strong> email personale</div>
         <div><strong>Password:</strong> da impostare al primo accesso</div>
-        <div><strong>Validita link:</strong> 7 giorni</div>
+        <div><strong>Validita link:</strong> 10 minuti</div>
       </div>
     </div>
 
