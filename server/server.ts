@@ -108,6 +108,50 @@ function getOptionalUserIdFromRequest(req: express.Request): number | null {
   }
 }
 
+function getAuthStateFromRequest(req: express.Request): {
+  userId: number | null;
+  tokenPresent: boolean;
+  tokenInvalid: boolean;
+} {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return {
+      userId: null,
+      tokenPresent: false,
+      tokenInvalid: false
+    };
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token || !process.env.JWT_SECRET) {
+    return {
+      userId: null,
+      tokenPresent: true,
+      tokenInvalid: true
+    };
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
+      userId?: number;
+    };
+
+    return {
+      userId: decoded.userId ?? null,
+      tokenPresent: true,
+      tokenInvalid: !decoded.userId
+    };
+  } catch {
+    return {
+      userId: null,
+      tokenPresent: true,
+      tokenInvalid: true
+    };
+  }
+}
+
 function isVisibleOnSite(record: any): boolean {
   const value =
     record?.["visualizzazione sito"] ??
@@ -491,6 +535,25 @@ function isStockError(error: unknown): boolean {
   return /stock[_ ]insufficiente|cart_expired|cart_owner_mismatch/i.test(message);
 }
 
+function getCheckoutConflictMessage(error: unknown): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as any)?.message === "string"
+        ? (error as any).message
+        : "";
+
+  if (/cart_expired/i.test(message)) {
+    return "Il carrello e scaduto. Torna ai prodotti e ricrealo.";
+  }
+
+  if (/cart_owner_mismatch/i.test(message)) {
+    return "Il carrello appartiene a un'altra sessione. Svuotalo e aggiungi di nuovo i prodotti.";
+  }
+
+  return "Alcuni prodotti non sono piu disponibili nella quantita richiesta.";
+}
+
 function isMissingCheckoutRpcError(error: unknown): boolean {
   const code = typeof (error as any)?.code === "string" ? (error as any).code : "";
   const message =
@@ -511,7 +574,9 @@ function isCheckoutRpcFallbackError(error: unknown): boolean {
         ? (error as any).message
         : "";
 
-  return isMissingCheckoutRpcError(error) || /dettagliovendita/i.test(message);
+  return isMissingCheckoutRpcError(error) ||
+    /dettagliovendita/i.test(message) ||
+    /foreign key constraint.*vendite.*idCliente|vendite.*idCliente.*foreign key|violates foreign key constraint/i.test(message);
 }
 
 function isMissingCartSchemaError(error: unknown): boolean {
@@ -1074,10 +1139,12 @@ app.post("/api/products/update-stock", async (req, res) => {
 });
 
 app.post("/api/checkout/complete", async (req, res) => {
+  const checkoutStartedAt = Date.now();
   const cartItems = Array.isArray(req.body?.cartItems) ? req.body.cartItems : [];
   const total = Number(req.body?.total ?? 0);
   const customer = req.body?.customer ?? {};
-  const authenticatedUserId = getOptionalUserIdFromRequest(req);
+  const authState = getAuthStateFromRequest(req);
+  const authenticatedUserId = authState.userId;
   const cartId = getCartIdFromRequest(req);
   const customerEmail = String(customer?.email ?? "").trim();
   const customerName = String(customer?.name ?? "").trim();
@@ -1089,6 +1156,14 @@ app.post("/api/checkout/complete", async (req, res) => {
   const city = String(customer?.city ?? "").trim();
   const zip = String(customer?.zip ?? "").trim();
   const lockerLabel = String(customer?.lockerLabel ?? "").trim();
+  const checkoutLogContext = {
+    cartId: cartId ? `${cartId.slice(0, 8)}...` : null,
+    authenticatedUserId,
+    tokenPresent: authState.tokenPresent,
+    tokenInvalid: authState.tokenInvalid,
+    itemCount: cartItems.length,
+    total
+  };
 
   if (cartItems.length === 0) {
     return res.status(400).json({ message: "Carrello vuoto" });
@@ -1102,11 +1177,18 @@ app.post("/api/checkout/complete", async (req, res) => {
     return res.status(400).json({ message: "Email checkout non valida" });
   }
 
+  if (authState.tokenInvalid) {
+    console.warn("Checkout online: token autenticazione non valido", checkoutLogContext);
+    return res.status(401).json({ message: "Sessione scaduta, effettua di nuovo il login" });
+  }
+
   try {
+    console.info("Checkout online avviato", checkoutLogContext);
     const checkoutUserId = authenticatedUserId ?? GUEST_CHECKOUT_USER_ID;
     let vendita: CheckoutRpcResult | null = null;
 
     if (cartId) {
+      console.info("Checkout online: provo RPC carrello riservato", checkoutLogContext);
       const { data: cartCheckoutData, error: cartCheckoutError } = await db
         .rpc("complete_reserved_cart_checkout_sicuro", {
           p_cart_id: cartId,
@@ -1118,12 +1200,19 @@ app.post("/api/checkout/complete", async (req, res) => {
       if (!cartCheckoutError) {
         vendita = cartCheckoutData as CheckoutRpcResult | null;
       } else if (!isCheckoutRpcFallbackError(cartCheckoutError)) {
+        console.error("Checkout online: errore RPC carrello riservato", cartCheckoutError);
         throw cartCheckoutError;
+      } else {
+        console.warn("Checkout online: uso fallback dopo RPC carrello riservato", cartCheckoutError);
       }
     }
 
     if (!vendita?.idVendita) {
       const normalizedItems = normalizeCartItems(cartItems);
+      console.info("Checkout online: provo RPC checkout standard", {
+        ...checkoutLogContext,
+        normalizedItemCount: normalizedItems.length
+      });
 
       const { data: checkoutData, error: checkoutError } = await db
         .rpc("complete_checkout_sicuro", {
@@ -1134,12 +1223,16 @@ app.post("/api/checkout/complete", async (req, res) => {
         .single();
 
       if (checkoutError && !isCheckoutRpcFallbackError(checkoutError)) {
+        console.error("Checkout online: errore RPC checkout standard", checkoutError);
         throw checkoutError;
       }
 
-      vendita = checkoutError
-        ? await completeCheckoutWithFallback(checkoutUserId, total, normalizedItems)
-        : checkoutData as CheckoutRpcResult | null;
+      if (checkoutError) {
+        console.warn("Checkout online: uso fallback applicativo", checkoutError);
+        vendita = await completeCheckoutWithFallback(checkoutUserId, total, normalizedItems);
+      } else {
+        vendita = checkoutData as CheckoutRpcResult | null;
+      }
     }
 
     if (!vendita?.idVendita) {
@@ -1156,6 +1249,12 @@ app.post("/api/checkout/complete", async (req, res) => {
         console.error("Errore pulizia carrello dopo checkout:", cartCleanupError);
       }
     }
+
+    console.info("Checkout online completato, preparo mail background", {
+      ...checkoutLogContext,
+      idVendita: vendita.idVendita,
+      durationMs: Date.now() - checkoutStartedAt
+    });
 
     sendMailInBackground("Errore invio mail conferma acquisto", () =>
       sendOrderConfirmationEmail({
@@ -1180,9 +1279,16 @@ app.post("/api/checkout/complete", async (req, res) => {
       idVendita: vendita?.idVendita,
     });
   } catch (err: any) {
-    console.error(err);
+    console.error("Checkout online fallito", {
+      ...checkoutLogContext,
+      durationMs: Date.now() - checkoutStartedAt,
+      error: err
+    });
+    const isConflict = isStockError(err);
     return res.status(isStockError(err) ? 409 : 500).json({
-      message: "Errore durante il salvataggio della vendita",
+      message: isConflict
+        ? getCheckoutConflictMessage(err)
+        : "Errore durante il salvataggio della vendita",
       error: err.message,
     });
   }

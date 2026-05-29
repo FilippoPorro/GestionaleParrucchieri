@@ -1,7 +1,7 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewChecked, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
@@ -28,8 +28,9 @@ L.Icon.Default.mergeOptions({
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.css',
 })
-export class PaymentComponent implements OnInit, AfterViewChecked {
+export class PaymentComponent implements OnInit, AfterViewChecked, OnDestroy {
   private authApi = `${environment.apiUrl}/auth`;
+  private cartExpiryWatcherId: ReturnType<typeof setInterval> | null = null;
 
   cartItems: Prodotto[] = [];
   totalQuantity: number = 0;
@@ -97,7 +98,8 @@ export class PaymentComponent implements OnInit, AfterViewChecked {
     private prodottoService: ProdottoService,
     private lockerService: LockerService,
     private cdr: ChangeDetectorRef,
-    private location: Location
+    private location: Location,
+    private router: Router
   ) { }
 
   goBack(): void {
@@ -129,6 +131,14 @@ export class PaymentComponent implements OnInit, AfterViewChecked {
     }
 
     this.loadLoggedUserData();
+    this.startCartExpiryWatcher();
+  }
+
+  ngOnDestroy(): void {
+    if (this.cartExpiryWatcherId) {
+      clearInterval(this.cartExpiryWatcherId);
+      this.cartExpiryWatcherId = null;
+    }
   }
 
   ngAfterViewChecked() {
@@ -477,6 +487,32 @@ export class PaymentComponent implements OnInit, AfterViewChecked {
     this.finalTotal = this.subtotal + this.shippingCost;
   }
 
+  private startCartExpiryWatcher(): void {
+    if (this.cartExpiryWatcherId) {
+      clearInterval(this.cartExpiryWatcherId);
+    }
+
+    this.cartExpiryWatcherId = setInterval(() => {
+      if (this.isProcessing || this.paymentSuccess) {
+        return;
+      }
+
+      if (this.prodottoService.getCart().length === 0) {
+        this.redirectToEmptyCart();
+      }
+    }, 1000);
+  }
+
+  private redirectToEmptyCart(): void {
+    if (this.cartExpiryWatcherId) {
+      clearInterval(this.cartExpiryWatcherId);
+      this.cartExpiryWatcherId = null;
+    }
+
+    this.prodottoService.abandonCurrentCart();
+    this.router.navigate(['/cart']);
+  }
+
   trackById(index: number, item: Prodotto): number {
     return item.idProdotto;
   }
@@ -490,12 +526,7 @@ export class PaymentComponent implements OnInit, AfterViewChecked {
     const currentCart = this.prodottoService.getCart();
 
     if (currentCart.length === 0) {
-      this.cartItems = [];
-      this.totalQuantity = 0;
-      this.subtotal = 0;
-      this.finalTotal = 0;
-      this.paymentErrorMessage = 'Il carrello e scaduto. Torna ai prodotti per crearne uno nuovo.';
-      this.cdr.detectChanges();
+      this.redirectToEmptyCart();
       return;
     }
 
@@ -561,8 +592,15 @@ export class PaymentComponent implements OnInit, AfterViewChecked {
 
         error: (err) => {
           this.isProcessing = false;
+          const errorMessage = String(err?.error?.message || err?.message || '');
+
+          if (err?.status === 409 && /carrello.*scaduto|cart_expired/i.test(errorMessage)) {
+            this.redirectToEmptyCart();
+            return;
+          }
+
           this.paymentErrorMessage = err?.status === 409
-            ? 'Alcuni prodotti non sono piu disponibili nella quantita richiesta.'
+            ? (err?.error?.message || 'Alcuni prodotti non sono piu disponibili nella quantita richiesta.')
             : 'Pagamento non riuscito. Riprova tra qualche istante.';
           this.cdr.detectChanges();
         }

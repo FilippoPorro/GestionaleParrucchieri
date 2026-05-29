@@ -111,6 +111,9 @@ export class AuthService {
     }
 
     this._token.set(token);
+    this.prodottoService.claimCurrentCart().subscribe({
+      error: (error) => console.warn('Associazione carrello dopo login non riuscita:', error)
+    });
   }
 
   getToken(): string | null {
