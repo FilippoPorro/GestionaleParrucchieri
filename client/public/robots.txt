@@ -1,5 +1,10 @@
+# I Parrucchieri - https://sito-parrucchieri-seven.vercel.app
 User-agent: *
 Allow: /
+Allow: /home
+Allow: /services
+Allow: /products
+Allow: /appointments
+Allow: /prenotazione
 
 Sitemap: https://sito-parrucchieri-seven.vercel.app/sitemap.xml
-Sitemap: https://sito-parrucchieri-seven.vercel.app/sitemap.txt
