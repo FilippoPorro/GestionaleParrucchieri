@@ -1,8 +1,6 @@
+https://sito-parrucchieri-seven.vercel.app/
 https://sito-parrucchieri-seven.vercel.app/home
 https://sito-parrucchieri-seven.vercel.app/services
 https://sito-parrucchieri-seven.vercel.app/products
 https://sito-parrucchieri-seven.vercel.app/appointments
 https://sito-parrucchieri-seven.vercel.app/prenotazione
-https://sito-parrucchieri-seven.vercel.app/login
-https://sito-parrucchieri-seven.vercel.app/register
-https://sito-parrucchieri-seven.vercel.app/forgot-password
