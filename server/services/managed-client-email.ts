@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { createSmtpTransporter } from "./mail-utils";
 
 interface ManagedClientMailUser {
   nome: string;
@@ -8,27 +8,6 @@ interface ManagedClientMailUser {
 
 const DEFAULT_LOGO_URL =
   "https://res.cloudinary.com/duimlq34k/image/upload/v1776668316/logo-parrucchieri-oro-bianco_jkgk5v.png";
-
-function createTransporter() {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-    throw new Error("Configurazione SMTP incompleta");
-  }
-
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: false,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
-}
 
 function buildAccountDetailsBlock(resetLink: string): string {
   return `
@@ -166,7 +145,7 @@ export async function sendManagedClientPasswordEmail(cliente: ManagedClientMailU
     throw new Error("SMTP_FROM non configurato");
   }
 
-  const transporter = createTransporter();
+  const transporter = createSmtpTransporter();
 
   await transporter.sendMail({
     from: `"I Parrucchieri" <${smtpFrom}>`,

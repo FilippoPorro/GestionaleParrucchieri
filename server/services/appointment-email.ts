@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { createSmtpTransporter } from "./mail-utils";
 
 export interface AppointmentMailUser {
   idUtente: number;
@@ -38,27 +38,6 @@ function formatAppointmentDateTime(value: string): string {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
-}
-
-function createTransporter() {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-    throw new Error("Configurazione SMTP incompleta");
-  }
-
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: false,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
 }
 
 function buildAppointmentInfoBlock(params: AppointmentMailPayload): string {
@@ -202,7 +181,7 @@ async function sendMail(to: string, subject: string, html: string) {
     throw new Error("SMTP_FROM non configurato");
   }
 
-  const transporter = createTransporter();
+  const transporter = createSmtpTransporter();
 
   await transporter.sendMail({
     from: `"I Parrucchieri" <${smtpFrom}>`,

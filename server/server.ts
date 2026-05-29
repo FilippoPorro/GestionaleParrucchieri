@@ -16,7 +16,7 @@ import dashboardRoute from "./routes/dashboard";
 import cassaRoute from "./routes/cassa";
 import fornitoriRoute from "./routes/fornitori";
 import { startAppointmentReminderJob } from "./services/appointment-reminders";
-import nodemailer from "nodemailer";
+import { createSmtpTransporter, sendMailInBackground } from "./services/mail-utils";
 
 
 dotenv.config();
@@ -116,27 +116,6 @@ function isVisibleOnSite(record: any): boolean {
     record?.visualizzazione;
 
   return value === true || value === 1 || value === "true" || value === "t";
-}
-
-function createSmtpTransporter() {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT);
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-    throw new Error("Configurazione SMTP incompleta");
-  }
-
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: false,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
 }
 
 function formatCurrency(value: number): string {
@@ -1178,8 +1157,8 @@ app.post("/api/checkout/complete", async (req, res) => {
       }
     }
 
-    try {
-      await sendOrderConfirmationEmail({
+    sendMailInBackground("Errore invio mail conferma acquisto", () =>
+      sendOrderConfirmationEmail({
         name: customerName || "Cliente",
         surname: customerSurname,
         email: customerEmail,
@@ -1193,10 +1172,8 @@ app.post("/api/checkout/complete", async (req, res) => {
         cartItems,
         total,
         orderId: vendita.idVendita,
-      });
-    } catch (mailError) {
-      console.error("Errore invio mail conferma acquisto:", mailError);
-    }
+      })
+    );
 
     return res.status(201).json({
       message: "Checkout completato",

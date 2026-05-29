@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db } from "../db_parrucchieri";
 import { sendManagedClientPasswordEmail } from "../services/managed-client-email";
+import { sendMailInBackground } from "../services/mail-utils";
 
 interface Utente {
   idUtente: number;
@@ -337,7 +338,9 @@ router.post("/clienti", async (req: Request, res: Response) => {
       return res.status(500).json({ message: "Cliente creato ma non leggibile" });
     }
 
-    await sendManagedClientPasswordEmail(cliente, buildResetLink(resetPasswordToken));
+    sendMailInBackground("Errore invio mail password cliente", () =>
+      sendManagedClientPasswordEmail(cliente, buildResetLink(resetPasswordToken))
+    );
 
     return res.status(201).json(cliente);
   } catch (err: any) {

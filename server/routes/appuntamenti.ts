@@ -9,6 +9,7 @@ import {
   sendAppointmentConfirmationEmail,
   sendAppointmentUpdatedEmail
 } from "../services/appointment-email";
+import { sendMailInBackground } from "../services/mail-utils";
 
 interface Appuntamento {
   idAppuntamento: number;
@@ -587,17 +588,15 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
       Number.isFinite(Number(durataPersonalizzata)) ? Number(durataPersonalizzata) : null
     );
 
-    try {
-      await sendAppointmentConfirmationEmail({
+    sendMailInBackground("Errore invio mail conferma appuntamento", () =>
+      sendAppointmentConfirmationEmail({
         cliente: cliente as AppointmentMailUser,
         operatore: (operatore as AppointmentMailUser | null) ?? null,
         servizio: servizio ?? (note ? { idServizio: Number(idServizio || 0), nome: String(note) } : null),
         dataOraInizio,
         dataOraFine: normalizedEndDateTime
-      });
-    } catch (mailError) {
-      console.error("Errore invio mail conferma appuntamento:", mailError);
-    }
+      })
+    );
 
     return res.status(201).json(data);
   } catch (err: any) {
@@ -767,15 +766,13 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
       );
     }
 
-    try {
+    sendMailInBackground("Errore invio mail aggiornamento appuntamento", async () => {
       const mailPayload = await buildAppointmentMailPayload(data as Appuntamento);
 
       if (mailPayload) {
         await sendAppointmentUpdatedEmail(mailPayload);
       }
-    } catch (mailError) {
-      console.error("Errore invio mail aggiornamento appuntamento:", mailError);
-    }
+    });
 
     return res.json(data as Appuntamento);
   } catch (err: any) {
@@ -859,13 +856,11 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
       throw error;
     }
 
-    try {
+    sendMailInBackground("Errore invio mail eliminazione appuntamento", async () => {
       if (mailPayload) {
         await sendAppointmentCancelledEmail(mailPayload);
       }
-    } catch (mailError) {
-      console.error("Errore invio mail eliminazione appuntamento:", mailError);
-    }
+    });
 
     return res.json({ message: "Appuntamento eliminato con successo" });
   } catch (err: any) {
