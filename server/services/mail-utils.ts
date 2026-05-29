@@ -1,5 +1,13 @@
 import nodemailer from "nodemailer";
 
+export type MailSendInfo = {
+  provider: "sendgrid" | "smtp";
+  accepted?: string[];
+  rejected?: string[];
+  messageId?: string;
+  response?: string;
+};
+
 function getNumberEnv(name: string, fallback: number): number {
   const value = Number(process.env[name]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
@@ -29,10 +37,113 @@ export function createSmtpTransporter() {
   });
 }
 
-export function sendMailInBackground(label: string, send: () => Promise<void>): void {
+function getMailFrom(): string {
+  const from = process.env.SENDGRID_FROM || process.env.SMTP_FROM;
+
+  if (!from) {
+    throw new Error("SENDGRID_FROM o SMTP_FROM non configurato");
+  }
+
+  return from;
+}
+
+async function sendWithSendGrid(params: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<MailSendInfo> {
+  const apiKey = process.env.SENDGRID_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("SENDGRID_API_KEY non configurata");
+  }
+
+  const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      personalizations: [
+        {
+          to: [{ email: params.to }]
+        }
+      ],
+      from: {
+        email: getMailFrom(),
+        name: "I Parrucchieri"
+      },
+      subject: params.subject,
+      content: [
+        {
+          type: "text/html",
+          value: params.html
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`SendGrid error ${response.status}: ${body}`);
+  }
+
+  return {
+    provider: "sendgrid",
+    accepted: [params.to],
+    rejected: [],
+    messageId: response.headers.get("x-message-id") || undefined,
+    response: `${response.status} ${response.statusText}`
+  };
+}
+
+async function sendWithSmtp(params: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<MailSendInfo> {
+  const transporter = createSmtpTransporter();
+  const info = await transporter.sendMail({
+    from: `"I Parrucchieri" <${getMailFrom()}>`,
+    to: params.to,
+    subject: params.subject,
+    html: params.html
+  });
+
+  return {
+    provider: "smtp",
+    accepted: Array.isArray(info.accepted) ? info.accepted.map(String) : [],
+    rejected: Array.isArray(info.rejected) ? info.rejected.map(String) : [],
+    messageId: info.messageId,
+    response: info.response
+  };
+}
+
+export async function sendHtmlMail(params: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<MailSendInfo> {
+  if (process.env.SENDGRID_API_KEY) {
+    return sendWithSendGrid(params);
+  }
+
+  return sendWithSmtp(params);
+}
+
+export function sendMailInBackground(label: string, send: () => Promise<unknown>): void {
+  const actionLabel = label.replace(/^Errore\s+/i, "");
+
   setImmediate(() => {
-    send().catch((error) => {
-      console.error(`${label}:`, error);
-    });
+    console.info(`${actionLabel} avviato`);
+
+    send()
+      .then((info) => {
+        console.info(`${actionLabel} completato`, info);
+      })
+      .catch((error) => {
+        console.error(`${label}:`, error);
+      });
   });
 }

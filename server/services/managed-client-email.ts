@@ -1,4 +1,4 @@
-import { createSmtpTransporter } from "./mail-utils";
+import { sendHtmlMail } from "./mail-utils";
 
 interface ManagedClientMailUser {
   nome: string;
@@ -139,16 +139,7 @@ function buildManagedClientPasswordHtml(cliente: ManagedClientMailUser, resetLin
 }
 
 export async function sendManagedClientPasswordEmail(cliente: ManagedClientMailUser, resetLink: string): Promise<void> {
-  const smtpFrom = process.env.SMTP_FROM;
-
-  if (!smtpFrom) {
-    throw new Error("SMTP_FROM non configurato");
-  }
-
-  const transporter = createSmtpTransporter();
-
-  await transporter.sendMail({
-    from: `"I Parrucchieri" <${smtpFrom}>`,
+  await sendHtmlMail({
     to: cliente.email,
     subject: "Completa il tuo account I Parrucchieri",
     html: buildManagedClientPasswordHtml(cliente, resetLink)

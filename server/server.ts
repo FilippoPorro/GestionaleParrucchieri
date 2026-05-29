@@ -16,7 +16,7 @@ import dashboardRoute from "./routes/dashboard";
 import cassaRoute from "./routes/cassa";
 import fornitoriRoute from "./routes/fornitori";
 import { startAppointmentReminderJob } from "./services/appointment-reminders";
-import { createSmtpTransporter, sendMailInBackground } from "./services/mail-utils";
+import { sendHtmlMail, sendMailInBackground } from "./services/mail-utils";
 
 
 dotenv.config();
@@ -342,16 +342,7 @@ async function sendOrderConfirmationEmail(params: {
   total: number;
   orderId: number;
 }) {
-  const smtpFrom = process.env.SMTP_FROM;
-
-  if (!smtpFrom) {
-    throw new Error("SMTP_FROM non configurato");
-  }
-
-  const transporter = createSmtpTransporter();
-
-  await transporter.sendMail({
-    from: `"I Parrucchieri" <${smtpFrom}>`,
+  return sendHtmlMail({
     to: params.email,
     subject: "Conferma acquisto prodotti",
     html: buildOrderConfirmationEmail(params)

@@ -1,4 +1,4 @@
-import { createSmtpTransporter } from "./mail-utils";
+import { sendHtmlMail } from "./mail-utils";
 
 export interface AppointmentMailUser {
   idUtente: number;
@@ -175,20 +175,7 @@ function wrapMailContent(
 }
 
 async function sendMail(to: string, subject: string, html: string) {
-  const smtpFrom = process.env.SMTP_FROM;
-
-  if (!smtpFrom) {
-    throw new Error("SMTP_FROM non configurato");
-  }
-
-  const transporter = createSmtpTransporter();
-
-  await transporter.sendMail({
-    from: `"I Parrucchieri" <${smtpFrom}>`,
-    to,
-    subject,
-    html
-  });
+  return sendHtmlMail({ to, subject, html });
 }
 
 export async function sendAppointmentConfirmationEmail(params: AppointmentMailPayload) {
@@ -201,7 +188,7 @@ export async function sendAppointmentConfirmationEmail(params: AppointmentMailPa
     "Se hai bisogno di modificare la prenotazione, contattaci con anticipo."
   );
 
-  await sendMail(params.cliente.email, "Conferma appuntamento", html);
+  return sendMail(params.cliente.email, "Conferma appuntamento", html);
 }
 
 export async function sendAppointmentReminderEmail(params: AppointmentMailPayload) {
@@ -214,7 +201,7 @@ export async function sendAppointmentReminderEmail(params: AppointmentMailPayloa
     "Ti aspettiamo in salone. Se hai bisogno di modificare la prenotazione, contattaci appena possibile."
   );
 
-  await sendMail(params.cliente.email, "Promemoria appuntamento di domani", html);
+  return sendMail(params.cliente.email, "Promemoria appuntamento di domani", html);
 }
 
 export async function sendAppointmentUpdatedEmail(params: AppointmentMailPayload) {
@@ -227,7 +214,7 @@ export async function sendAppointmentUpdatedEmail(params: AppointmentMailPayload
     "Se la modifica non ti risulta corretta, contattaci appena possibile."
   );
 
-  await sendMail(params.cliente.email, "Appuntamento aggiornato", html);
+  return sendMail(params.cliente.email, "Appuntamento aggiornato", html);
 }
 
 export async function sendAppointmentCancelledEmail(params: AppointmentMailPayload) {
@@ -240,5 +227,5 @@ export async function sendAppointmentCancelledEmail(params: AppointmentMailPaylo
     "Se desideri fissare una nuova data, puoi prenotare nuovamente quando preferisci."
   );
 
-  await sendMail(params.cliente.email, "Appuntamento annullato", html);
+  return sendMail(params.cliente.email, "Appuntamento annullato", html);
 }
