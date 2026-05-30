@@ -121,8 +121,8 @@
                 *ngFor="let fornitore of filteredFornitori"
                 [class.is-selected]="selectedFornitore?.idFornitore === fornitore.idFornitore"
               >
-                <td class="customers-cell-id">#{{ fornitore.idFornitore }}</td>
-                <td class="customers-cell-primary">
+                <td class="customers-cell-id" data-label="ID">#{{ fornitore.idFornitore }}</td>
+                <td class="customers-cell-primary" data-label="Fornitore">
                   <button type="button" class="customers-person" (click)="selectFornitore(fornitore)">
                     <span class="customers-person-name">
                       <strong>{{ fornitore.nome }}</strong>
@@ -130,14 +130,14 @@
                     </span>
                   </button>
                 </td>
-                <td class="customers-cell-contact">
+                <td class="customers-cell-contact" data-label="Email">
                   <span class="customers-cell-email">{{ fornitore.email || '-' }}</span>
                 </td>
-                <td class="customers-cell-contact">
+                <td class="customers-cell-contact" data-label="Telefono">
                   <span class="customers-cell-phone">{{ fornitore.telefono || 'Telefono non inserito' }}</span>
                 </td>
-                <td class="customers-cell-date">{{ fornitore.partitaIva || '-' }}</td>
-                <td class="customers-actions-cell">
+                <td class="customers-cell-date" data-label="Partita IVA">{{ fornitore.partitaIva || '-' }}</td>
+                <td class="customers-actions-cell" data-label="Azioni">
                   <div class="customers-actions" aria-label="Azioni fornitore">
                     <button type="button" class="customers-action-button" (click)="selectFornitore(fornitore, true)" title="Modifica fornitore" aria-label="Modifica fornitore">
                       <i class="bi bi-pencil-square" aria-hidden="true"></i>

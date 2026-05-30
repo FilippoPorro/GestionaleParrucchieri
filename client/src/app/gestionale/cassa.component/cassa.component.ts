@@ -46,7 +46,7 @@ interface PosSimulationStatus {
   styleUrl: './cassa.component.css',
 })
 export class CassaComponent implements OnInit {
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
 
   // Data lists loaded from DB
   clienti: Utente[] = [];

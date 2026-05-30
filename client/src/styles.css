@@ -46,3 +46,643 @@ input[type="number"] {
   border: 3px solid white;
   box-shadow: 0 0 0 4px rgba(77, 163, 255, 0.20);
 }
+
+@media (max-width: 991.98px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px;
+  }
+
+  .navbar {
+    padding: 10px 0 !important;
+  }
+
+  .navbar .container {
+    width: min(100%, calc(100% - 24px));
+    max-width: none;
+    padding: 0;
+  }
+
+  .navbar-brand img {
+    height: 46px !important;
+  }
+
+  .navbar-toggler {
+    width: 44px;
+    height: 44px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(212, 176, 106, 0.28) !important;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.42);
+  }
+
+  .navbar-collapse {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid rgba(212, 176, 106, 0.18);
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.02)),
+      rgba(0, 0, 0, 0.92);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+  }
+
+  .navbar-nav {
+    align-items: stretch;
+    gap: 6px;
+    text-align: left;
+  }
+
+  .navbar-nav .nav-link {
+    min-height: 42px;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-nav .nav-link.active {
+    border-bottom: 0 !important;
+    background: rgba(212, 176, 106, 0.14);
+  }
+
+  .navbar-collapse > .d-flex {
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    margin-left: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(212, 176, 106, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .home-hero,
+  .products-page,
+  .services-page,
+  .service-showcase,
+  .product-showcase,
+  .cart-page,
+  .payment-page,
+  .appointments-page,
+  .login-layout,
+  .register-page,
+  .profile-page,
+  .info-page {
+    overflow-x: hidden !important;
+  }
+
+  .products-section,
+  .gestionale-section,
+  .cart-section,
+  .payment-section,
+  .appointments-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .products-section,
+  .gestionale-section,
+  .cart-section,
+  .payment-section {
+    padding-top: 104px !important;
+    padding-bottom: 42px !important;
+  }
+
+  .products-hero,
+  .services-hero,
+  .cart-hero,
+  .payment-hero,
+  .appointments-hero {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .products-title,
+  .services-title,
+  .cart-title,
+  .payment-title,
+  .appointments-title,
+  .product-showcase-title,
+  .service-showcase-title {
+    font-size: clamp(2rem, 11vw, 3.2rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  .products-title,
+  .services-title {
+    font-size: clamp(1.9rem, 8.6vw, 2.2rem) !important;
+  }
+
+  .appointments-page .appointments-subtitle,
+  .cart-empty-text {
+    max-width: 31ch !important;
+  }
+
+  .products-page .products-subtitle,
+  .services-page .services-subtitle {
+    max-width: min(31ch, 100%) !important;
+  }
+
+  .cart-page .container,
+  .payment-page .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .products-subtitle,
+  .services-subtitle,
+  .cart-subtitle,
+  .payment-subtitle,
+  .appointments-subtitle,
+  .product-showcase-text,
+  .service-showcase-text {
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+  }
+
+  .products-topbar,
+  .services-topbar {
+    padding: 0 !important;
+    margin: 26px 0 22px !important;
+  }
+
+  .products-topbar-line,
+  .services-topbar-line {
+    display: none !important;
+  }
+
+  .products-topbar-center,
+  .services-topbar-center {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    justify-items: stretch !important;
+  }
+
+  .products-count,
+  .services-count,
+  .products-search,
+  .services-search,
+  .products-filter,
+  .products-filter.custom-dropdown,
+  .products-filter .dropdown-trigger {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .products-filter .dropdown-panel,
+  .products-filter.custom-dropdown .dropdown-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  .products-grid,
+  .services-grid {
+    --bs-gutter-x: 0 !important;
+    --bs-gutter-y: 18px !important;
+  }
+
+  .products-grid > .col,
+  .services-grid > .col {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  .product-card,
+  .service-card {
+    width: 100% !important;
+  }
+
+  .product-image,
+  .service-card::before {
+    max-width: 100%;
+  }
+
+  .product-showcase,
+  .service-showcase {
+    min-height: auto !important;
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    padding: 104px 16px 38px !important;
+  }
+
+  .product-showcase-left,
+  .product-showcase-center,
+  .product-showcase-right,
+  .service-showcase-left,
+  .service-showcase-center,
+  .service-showcase-right {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .product-image-card,
+  .service-highlight-card,
+  .product-showcase-right,
+  .service-showcase-right {
+    padding: 18px !important;
+    border-radius: 14px !important;
+  }
+
+  .product-image-card img {
+    max-height: 58vh !important;
+    object-fit: contain !important;
+  }
+
+  .product-meta,
+  .service-meta {
+    gap: 8px !important;
+  }
+
+  .product-meta-pill,
+  .service-meta-pill {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .cart-layout,
+  .payment-layout,
+  .appointments-top-row {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .cart-main,
+  .cart-summary-card,
+  .cart-empty,
+  .payment-form-card,
+  .payment-summary-card,
+  .login-form-card,
+  .appointments-select-wrapper,
+  .calendar-wrapper {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .cart-empty,
+  .login-form-card,
+  .payment-form-card,
+  .payment-summary-card {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .cart-summary-card,
+  .payment-summary-card {
+    position: static !important;
+    top: auto !important;
+  }
+
+  .cart-list {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .cart-item {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 14px !important;
+  }
+
+  .cart-item-left {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .cart-item-image-wrap {
+    width: 82px !important;
+    height: 82px !important;
+  }
+
+  .cart-item-right {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .cart-price {
+    text-align: left !important;
+  }
+
+  .cart-checkout,
+  .cart-clear,
+  .cart-continue-link,
+  .pay-btn,
+  .payment-submit,
+  .back-button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .form-row,
+  .shipping-form .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .shipping-option {
+    padding: 14px !important;
+  }
+
+  .shipping-top {
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .locker-map,
+  .real-map {
+    min-height: 280px !important;
+    height: 42vh !important;
+  }
+
+  .summary-products-row {
+    grid-auto-columns: minmax(90px, 110px) !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+  }
+
+  .appointments-section {
+    padding-top: 104px !important;
+    padding-bottom: 38px !important;
+  }
+
+  .appointments-select-wrapper,
+  .calendar-wrapper,
+  .appointments-hours-card {
+    padding: 16px !important;
+  }
+
+  .appointments-hours-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .appointments-hours-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    align-items: start !important;
+  }
+
+  .appointments-hours-day,
+  .appointments-hours-value {
+    width: 100% !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .appointments-date-picker-panel {
+    width: min(340px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    left: 12px !important;
+    right: 12px !important;
+  }
+
+  .appointment-detail-modal,
+  .appointment-confirm-modal {
+    padding: 12px !important;
+    align-items: center !important;
+  }
+
+  .appointment-detail-card,
+  .appointment-confirm-card {
+    width: min(100%, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    border-radius: 14px !important;
+  }
+
+  .appointment-detail-body--grid,
+  .appointment-detail-body--absence {
+    grid-template-columns: 1fr !important;
+  }
+
+  .appointment-detail-row,
+  .appointment-detail-row--wide {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: minmax(76px, max-content) minmax(0, 1fr) !important;
+    min-height: 54px !important;
+  }
+
+  .appointment-detail-actions,
+  .appointment-confirm-actions {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .appointment-action {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+  }
+
+  :root .fc .fc-toolbar,
+  :root .fc .fc-header-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  :root .fc .fc-toolbar-title {
+    font-size: clamp(1.8rem, 10vw, 2.4rem) !important;
+    text-align: center !important;
+  }
+
+  :root .fc .fc-toolbar-chunk {
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  :root .fc .fc-button {
+    min-height: 38px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+  }
+
+  :root .fc-scroller,
+  :root .fc-view-harness {
+    overflow: auto !important;
+  }
+
+  :root .fc .fc-timegrid-slot {
+    height: 64px !important;
+  }
+
+  .login-layout {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .login-visual {
+    min-height: 34vh !important;
+    padding: 92px 18px 28px !important;
+  }
+
+  .login-panel,
+  .login-form-card {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    padding: 20px 16px 32px !important;
+  }
+
+  .login-visual-title,
+  .login-title {
+    font-size: clamp(1.8rem, 9vw, 2.8rem) !important;
+    line-height: 1.06 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-section,
+  .gestionale-section,
+  .cart-section,
+  .payment-section,
+  .appointments-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+
+  .products-title,
+  .services-title,
+  .cart-title,
+  .payment-title,
+  .appointments-title,
+  .product-showcase-title,
+  .service-showcase-title {
+    font-size: clamp(1.85rem, 12vw, 2.7rem) !important;
+  }
+
+  .products-title,
+  .services-title {
+    font-size: clamp(1.75rem, 7.6vw, 2rem) !important;
+  }
+
+  .products-hero,
+  .services-hero,
+  .cart-hero,
+  .payment-hero,
+  .appointments-hero,
+  .cart-main,
+  .cart-summary-card,
+  .cart-empty,
+  .payment-form-card,
+  .payment-summary-card,
+  .login-form-card,
+  .appointments-select-wrapper,
+  .calendar-wrapper {
+    width: calc(100vw - 18px) !important;
+    max-width: calc(100vw - 18px) !important;
+  }
+
+  .cart-item-left {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+  }
+
+  .cart-item-image-wrap {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .cart-item-right {
+    grid-template-columns: 1fr !important;
+    justify-items: stretch !important;
+  }
+
+  .cart-quantity,
+  .cart-remove {
+    justify-self: stretch !important;
+  }
+
+  .appointment-action {
+    flex-basis: 100% !important;
+  }
+
+  .cart-toast-container {
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+  }
+
+  .cart-toast {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}

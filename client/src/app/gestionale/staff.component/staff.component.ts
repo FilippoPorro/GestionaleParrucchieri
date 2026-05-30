@@ -67,7 +67,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     6: { name: 'Sabato', intervals: [{ start: '07:00', end: '18:00' }] }
   };
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   staff: Utente[] = [];
   selectedOperator: number | null = null;
   searchTerm = '';

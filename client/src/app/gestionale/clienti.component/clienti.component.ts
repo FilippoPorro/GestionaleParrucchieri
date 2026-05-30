@@ -37,7 +37,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
   private createCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly panelCloseAnimationMs = 240;
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   clienti: Utente[] = [];
   selectedCliente: Utente | null = null;
   draftCliente: Utente | null = null;

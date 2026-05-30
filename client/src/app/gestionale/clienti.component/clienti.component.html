@@ -124,8 +124,8 @@
                 *ngFor="let cliente of filteredClienti"
                 [class.is-selected]="selectedCliente?.idUtente === cliente.idUtente"
               >
-                <td class="customers-cell-id">#{{ cliente.idUtente }}</td>
-                <td class="customers-cell-primary">
+                <td class="customers-cell-id" data-label="ID">#{{ cliente.idUtente }}</td>
+                <td class="customers-cell-primary" data-label="Cliente">
                   <button type="button" class="customers-person" (click)="selectCliente(cliente)">
                     <span class="customers-person-name">
                       <strong>{{ cliente.nome || '-' }}</strong>
@@ -133,15 +133,15 @@
                     </span>
                   </button>
                 </td>
-                <td class="customers-cell-contact">
+                <td class="customers-cell-contact" data-label="Email">
                   <span class="customers-cell-email">{{ cliente.email || '-' }}</span>
                 </td>
-                <td class="customers-cell-contact">
+                <td class="customers-cell-contact" data-label="Telefono">
                   <span class="customers-cell-phone">{{ cliente.telefono || 'Telefono non inserito' }}</span>
                 </td>
-                <td class="customers-cell-date">{{ cliente.sesso === 'm' ? 'Maschio' : cliente.sesso === 'f' ? 'Femmina' : '-' }}</td>
-                <td class="customers-cell-date">{{ formatDate(cliente.data_nascita) }}</td>
-                <td class="customers-actions-cell">
+                <td class="customers-cell-date" data-label="Sesso">{{ cliente.sesso === 'm' ? 'Maschio' : cliente.sesso === 'f' ? 'Femmina' : '-' }}</td>
+                <td class="customers-cell-date" data-label="Data nascita">{{ formatDate(cliente.data_nascita) }}</td>
+                <td class="customers-actions-cell" data-label="Azioni">
                   <div class="customers-actions" aria-label="Azioni cliente">
                     <button type="button" class="customers-action-button" (click)="selectCliente(cliente, true)" title="Modifica cliente" aria-label="Modifica cliente">
                       <i class="bi bi-pencil-square" aria-hidden="true"></i>

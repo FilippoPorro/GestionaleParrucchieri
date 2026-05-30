@@ -31,7 +31,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly panelCloseAnimationMs = 240;
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   prodotti: Prodotto[] = [];
   selectedProdotto: Prodotto | null = null;
   draftProdotto: Prodotto | null = null;

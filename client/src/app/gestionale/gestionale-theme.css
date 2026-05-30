@@ -546,3 +546,560 @@ body {
     font-size: clamp(2rem, 8vw, 3.1rem) !important;
   }
 }
+
+@media (max-width: 980px) {
+  .management-layout,
+  .management-layout *,
+  .management-layout *::before,
+  .management-layout *::after {
+    box-sizing: border-box;
+  }
+
+  .management-layout,
+  .management-layout__content {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .management-layout__content,
+  .management-layout.is-sidenav-collapsed .management-layout__content {
+    margin-left: 0 !important;
+    padding: 74px 14px 28px !important;
+  }
+
+  .management-layout__toggle,
+  .management-layout.is-sidenav-collapsed .management-layout__toggle {
+    position: fixed !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 120 !important;
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .management-layout__sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 110 !important;
+    width: min(86vw, 320px) !important;
+    max-width: 320px !important;
+    height: 100dvh !important;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 0.28s ease, opacity 0.2s ease, visibility 0s linear 0s !important;
+  }
+
+  .management-layout.is-sidenav-collapsed .management-layout__sidebar {
+    transform: translateX(calc(-100% - 16px)) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 0.28s ease, opacity 0.2s ease, visibility 0s linear 0.2s !important;
+  }
+
+  .management-layout:not(.is-sidenav-collapsed)::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+
+  .management-sidenav {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    padding: 18px 14px !important;
+  }
+
+  .management-layout .management-hero {
+    min-height: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    padding: 18px !important;
+  }
+
+  .management-layout .management-hero h1 {
+    font-size: clamp(2rem, 10vw, 3.1rem) !important;
+    line-height: 1.02 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .management-layout .management-hero__copy {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .management-layout .management-hero__stats,
+  .management-stats,
+  .cash-stats {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .management-layout .management-hero__badge {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 82px !important;
+    padding: 12px !important;
+  }
+
+  .management-layout .management-hero__badge strong {
+    font-size: clamp(1.15rem, 6vw, 1.65rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .management-layout .services-layout,
+  .management-layout .customers-layout,
+  .management-layout .cash-layout,
+  .management-layout .management-panels {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    margin-top: 16px !important;
+  }
+
+  .management-layout .services-card,
+  .management-layout .customers-card,
+  .management-layout .cash-card,
+  .management-layout .management-panel,
+  .management-layout .cash-stat-card,
+  .management-layout .management-stat-card,
+  .management-layout .staff-calendar-wrapper {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 16px !important;
+  }
+
+  .management-layout .services-card__head,
+  .management-layout .customers-card__head,
+  .management-layout .cash-card__head,
+  .management-layout .management-panel__head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .management-layout .services-card__head h2,
+  .management-layout .customers-card__head h2,
+  .management-layout .cash-card__head h2,
+  .management-layout .management-panel__head h2 {
+    font-size: clamp(1.55rem, 7vw, 2.2rem) !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .management-layout .services-head-actions,
+  .management-layout .customers-head-actions,
+  .management-layout .cash-card__head > button,
+  .management-layout .services-toolbar,
+  .management-layout .customers-toolbar {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .management-layout .services-icon-button,
+  .management-layout .services-action-button,
+  .management-layout .services-button,
+  .management-layout .customers-icon-button,
+  .management-layout .customers-action-button,
+  .management-layout .customers-button,
+  .management-layout .cash-icon-button,
+  .management-layout .cash-button {
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  .management-layout .services-search,
+  .management-layout .customers-search,
+  .management-layout .services-filter,
+  .management-layout .customers-filter,
+  .management-layout .services-filter select,
+  .management-layout .customers-filter select,
+  .management-layout .cash-field,
+  .management-layout .cash-add-row,
+  .management-layout .cash-select,
+  .management-layout .cash-input {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .management-layout .services-form__grid,
+  .management-layout .services-form__grid--create,
+  .management-layout .customers-form__grid,
+  .management-layout .cash-add-article-grid,
+  .management-layout .cash-payment-grid,
+  .management-layout .cash-total-box,
+  .management-layout .report-grid,
+  .management-layout .management-focus-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .management-layout .services-create-shell,
+  .management-layout .customers-create-shell,
+  .management-layout .services-editor-profile,
+  .management-layout .customers-editor-profile {
+    grid-template-columns: 1fr !important;
+  }
+
+  .management-layout .services-field,
+  .management-layout .customers-field,
+  .management-layout .cash-field {
+    min-width: 0 !important;
+  }
+
+  .management-layout .services-field--wide,
+  .management-layout .services-field--full,
+  .management-layout .services-create-field--wide,
+  .management-layout .services-create-field--full,
+  .management-layout .services-edit-field--wide,
+  .management-layout .customers-field--wide,
+  .management-layout .customers-field--full {
+    grid-column: 1 / -1 !important;
+  }
+
+  .management-layout .services-editor-actions,
+  .management-layout .customers-editor-actions,
+  .management-layout .services-pagination,
+  .management-layout .customers-pagination {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .management-layout .services-table-wrap,
+  .management-layout .customers-table-wrap {
+    overflow: visible !important;
+  }
+
+  .management-layout .services-table,
+  .management-layout .customers-table,
+  .management-layout .staff-table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .management-layout .services-table thead,
+  .management-layout .customers-table thead,
+  .management-layout .staff-table thead {
+    display: none !important;
+  }
+
+  .management-layout .services-table,
+  .management-layout .services-table tbody,
+  .management-layout .services-table tr,
+  .management-layout .services-table td,
+  .management-layout .customers-table,
+  .management-layout .customers-table tbody,
+  .management-layout .customers-table tr,
+  .management-layout .customers-table td,
+  .management-layout .staff-table,
+  .management-layout .staff-table tbody,
+  .management-layout .staff-table tr,
+  .management-layout .staff-table td {
+    display: block !important;
+  }
+
+  .management-layout .services-table tr,
+  .management-layout .customers-table tr,
+  .management-layout .staff-table tr {
+    margin-bottom: 12px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(212, 176, 106, 0.14) !important;
+    border-radius: 8px !important;
+  }
+
+  .management-layout .services-table td,
+  .management-layout .customers-table td,
+  .management-layout .staff-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 9px 0 !important;
+    border: 0 !important;
+  }
+
+  .management-layout .services-table td + td,
+  .management-layout .customers-table td + td,
+  .management-layout .staff-table td + td {
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  }
+
+  .management-layout .services-table td[data-label]::before,
+  .management-layout .customers-table td[data-label]::before,
+  .management-layout .staff-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: rgba(255, 226, 175, 0.68);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .management-layout .services-person,
+  .management-layout .customers-person,
+  .management-layout .staff-table .customers-person {
+    width: 100% !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+  }
+
+  .management-layout .services-actions,
+  .management-layout .customers-actions {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .management-layout .services-actions .services-action-button,
+  .management-layout .customers-actions .customers-action-button {
+    flex: 1 1 0 !important;
+  }
+
+  .cash-appointments-list,
+  .cash-receipt-list {
+    overflow: visible !important;
+  }
+
+  .cash-appointment-row,
+  .cash-receipt-item {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .cash-appointment-row__time,
+  .cash-appointment-row__main,
+  .cash-appointment-row__total,
+  .cash-receipt-item__actions {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .cash-appointment-row__total,
+  .cash-receipt-item__actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .cash-receipt-list__head {
+    display: none !important;
+  }
+
+  .appointment-detail-modal,
+  .appointment-confirm-modal,
+  .services-modal,
+  .customers-modal {
+    inset: 0 !important;
+    padding: 12px !important;
+    align-items: center !important;
+  }
+
+  .appointment-detail-card,
+  .appointment-confirm-card,
+  .services-modal__panel,
+  .customers-modal__panel {
+    width: min(100%, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+  }
+
+  .appointment-detail-body--grid,
+  .appointment-detail-body--absence {
+    grid-template-columns: 1fr !important;
+  }
+
+  .appointment-detail-row,
+  .appointment-detail-row--wide {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: minmax(76px, max-content) minmax(0, 1fr) !important;
+  }
+
+  .appointment-edit-datetime-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .appointment-detail-actions,
+  .appointment-confirm-actions {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .appointment-action {
+    flex: 1 1 0 !important;
+    justify-content: center !important;
+  }
+
+  .appointments-section.management-appointments-section,
+  .management-appointments-section .appointments-hero,
+  .management-appointments-section .appointments-select-wrapper,
+  .management-appointments-section .calendar-wrapper,
+  .staff-calendar-wrapper {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .management-appointments-section .appointments-top-row {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .management-appointments-section .appointments-calendar-meta {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .management-layout .staff-calendar-wrapper .fc .fc-toolbar,
+  .management-appointments-section .fc .fc-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .management-layout .staff-calendar-wrapper .fc-toolbar-title,
+  .management-appointments-section .fc-toolbar-title {
+    font-size: clamp(1.65rem, 9vw, 2.4rem) !important;
+    text-align: center !important;
+  }
+
+  .management-layout .staff-calendar-wrapper .fc-toolbar-chunk,
+  .management-appointments-section .fc-toolbar-chunk {
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .management-layout .staff-calendar-wrapper .fc-scroller,
+  .management-appointments-section .fc-scroller {
+    overflow: auto !important;
+  }
+
+  .management-layout .services-filter-menu,
+  .management-layout .cash-search-dropdown,
+  .management-appointments-section .booking-dropdown-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    max-height: min(320px, calc(100dvh - 180px)) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    z-index: 180 !important;
+  }
+
+  .management-layout .cash-search-select-container,
+  .management-layout .services-filter,
+  .management-appointments-section .booking-dropdown {
+    min-width: 0 !important;
+  }
+
+  .management-appointments-section .calendar-wrapper {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    overscroll-behavior-x: contain !important;
+  }
+
+  .management-appointments-section .fc-view-harness,
+  .management-appointments-section .fc-scrollgrid-section,
+  .management-appointments-section .fc-scrollgrid-section table,
+  .management-appointments-section .fc-col-header,
+  .management-appointments-section .fc-timegrid-body,
+  .management-appointments-section .fc-timegrid-body table,
+  .management-appointments-section .fc-timegrid-cols table,
+  .management-layout .staff-calendar-wrapper .fc-view-harness,
+  .management-layout .staff-calendar-wrapper .fc-scrollgrid-section,
+  .management-layout .staff-calendar-wrapper .fc-scrollgrid-section table,
+  .management-layout .staff-calendar-wrapper .fc-col-header,
+  .management-layout .staff-calendar-wrapper .fc-timegrid-body,
+  .management-layout .staff-calendar-wrapper .fc-timegrid-body table,
+  .management-layout .staff-calendar-wrapper .fc-timegrid-cols table {
+    min-width: 720px !important;
+  }
+
+  .management-appointments-section .fc-col-header-cell-cushion,
+  .management-appointments-section .operator-day-header,
+  .management-layout .staff-calendar-wrapper .fc-col-header-cell-cushion,
+  .management-layout .staff-calendar-wrapper .operator-day-header {
+    display: inline-flex !important;
+    max-width: 112px !important;
+    min-height: 28px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+    line-height: 1.12 !important;
+    font-size: 10px !important;
+    letter-spacing: 0 !important;
+  }
+
+  .management-appointments-section .appointments-date-picker-panel,
+  .appointment-edit-date-picker-panel {
+    position: fixed !important;
+    top: 74px !important;
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 92px) !important;
+    overflow-y: auto !important;
+    transform: none !important;
+    z-index: 240 !important;
+  }
+
+  .appointment-services-picker {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: min(320px, calc(100dvh - 180px)) !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .management-layout__content,
+  .management-layout.is-sidenav-collapsed .management-layout__content {
+    padding: 70px 10px 24px !important;
+  }
+
+  .management-layout .management-hero,
+  .management-layout .services-card,
+  .management-layout .customers-card,
+  .management-layout .cash-card,
+  .management-layout .management-panel,
+  .management-layout .cash-stat-card,
+  .management-layout .management-stat-card,
+  .management-layout .staff-calendar-wrapper {
+    padding: 14px !important;
+  }
+
+  .management-layout .management-hero__stats,
+  .management-stats,
+  .cash-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .management-layout .management-hero__badge {
+    min-height: 74px !important;
+  }
+
+  .management-layout .services-icon-button,
+  .management-layout .customers-icon-button,
+  .management-layout .cash-icon-button,
+  .management-layout .services-button,
+  .management-layout .customers-button,
+  .management-layout .cash-button,
+  .appointment-action {
+    width: 100% !important;
+  }
+}

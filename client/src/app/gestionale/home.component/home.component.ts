@@ -52,7 +52,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
   private contentResizeObserver?: ResizeObserver;
   private isRestoringContentScroll = true;
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   quickReminders: DashboardQuickReminder[] = [
     {
       title: 'Caricamento promemoria',

@@ -102,8 +102,8 @@
                 *ngFor="let utente of filteredStaff"
                 [class.is-selected]="selectedOperator === utente.idUtente"
               >
-                <td class="customers-cell-id">#{{ utente.idUtente }}</td>
-                <td class="customers-cell-primary">
+                <td class="customers-cell-id" data-label="ID">#{{ utente.idUtente }}</td>
+                <td class="customers-cell-primary" data-label="Operatore">
                   <button type="button" class="customers-person" (click)="selectOperator(utente)">
                     <span class="customers-avatar">{{ getInitials(utente) }}</span>
                     <span class="customers-person-name">
@@ -112,17 +112,17 @@
                     </span>
                   </button>
                 </td>
-                <td class="customers-cell-contact">
+                <td class="customers-cell-contact" data-label="Contatti">
                   <span class="customers-cell-email">{{ utente.email || '-' }}</span>
                   <span class="customers-cell-phone">{{ utente.telefono || 'Telefono non inserito' }}</span>
                 </td>
-                <td class="customers-cell-date">{{ formatDate(utente.data_nascita) }}</td>
-                <td>
+                <td class="customers-cell-date" data-label="Data nascita">{{ formatDate(utente.data_nascita) }}</td>
+                <td data-label="Ruolo">
                   <span class="customers-role-badge staff-role-badge" [class.staff-role-badge--titolare]="utente.ruolo === 'titolare'">
                     {{ utente.ruolo || 'operatore' }}
                   </span>
                 </td>
-                <td class="customers-actions-cell">
+                <td class="customers-actions-cell" data-label="Agenda">
                   <div class="customers-actions" aria-label="Agenda personale">
                     <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
                       <i class="bi bi-calendar3" aria-hidden="true"></i>

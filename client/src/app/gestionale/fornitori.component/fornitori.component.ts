@@ -27,7 +27,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly panelCloseAnimationMs = 240;
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   fornitori: Fornitore[] = [];
   selectedFornitore: Fornitore | null = null;
   draftFornitore: Fornitore | null = null;

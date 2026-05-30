@@ -72,7 +72,7 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
   private readonly initialCalendarView = this.getInitialCalendarView();
   private readonly initialCalendarDate = this.getSavedCalendarDate() ?? new Date();
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   operatori: Utente[] = [];
   clienti: Utente[] = [];
   selectedOperator: number | null = null;

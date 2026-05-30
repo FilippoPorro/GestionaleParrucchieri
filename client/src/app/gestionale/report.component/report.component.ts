@@ -48,7 +48,7 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly refreshIntervalMs = 10000;
   private readonly refreshOnFocus = () => this.loadReport(false);
 
-  isSidenavCollapsed = false;
+  isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
   loading = true;
   errorMessage = '';
   selectedPeriod: ReportPeriod = 90;
