@@ -37,6 +37,17 @@
   padding-bottom: 80px;
 }
 
+@media (min-width: 1400px) {
+  .products-section.container {
+    width: min(calc(100% - 96px), 1640px);
+    max-width: 1640px;
+  }
+
+  .products-section .products-hero {
+    max-width: 1040px;
+  }
+}
+
 .products-hero {
   max-width: 820px;
   margin: 0 auto 14px auto;

@@ -83,7 +83,7 @@
                 <div class="services-group-subtitle">Puoi aggiungerli subito alla tua prenotazione online.</div>
             </div>
 
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 services-grid">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xxl-4 g-4 services-grid">
                 @for(service of servicesBySite; track service.idServizio) {
                 <div class="col">
                     <app-service-card [service]="service"></app-service-card>
@@ -101,7 +101,7 @@
                 <div class="services-group-subtitle">Per questi servizi il salone preferisce il contatto diretto.</div>
             </div>
 
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 services-grid">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xxl-4 g-4 services-grid">
                 @for(service of servicesByPhone; track service.idServizio) {
                 <div class="col">
                     <app-service-card [service]="service"></app-service-card>
@@ -119,7 +119,7 @@
                 <div class="services-group-subtitle">Vengono prenotati solo dopo una valutazione con il salone.</div>
             </div>
 
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 services-grid">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xxl-4 g-4 services-grid">
                 @for(service of servicesByConsultation; track service.idServizio) {
                 <div class="col">
                     <app-service-card [service]="service"></app-service-card>

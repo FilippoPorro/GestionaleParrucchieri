@@ -53,10 +53,16 @@
             <p class="customers-card__eyebrow">Archivio</p>
             <h2>Titolari e operatori</h2>
           </div>
-          <button type="button" class="customers-icon-button" (click)="loadStaff()" [disabled]="isLoadingStaff" title="Aggiorna personale">
-            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-            <span>{{ isLoadingStaff ? 'Carico' : 'Aggiorna' }}</span>
-          </button>
+          <div class="staff-head-actions">
+            <button type="button" class="customers-icon-button customers-icon-button--primary" (click)="startCreateStaff()" title="Aggiungi personale">
+              <i class="bi bi-person-plus" aria-hidden="true"></i>
+              <span>Aggiungi</span>
+            </button>
+            <button type="button" class="customers-icon-button" (click)="loadStaff()" [disabled]="isLoadingStaff" title="Aggiorna personale">
+              <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+              <span>{{ isLoadingStaff ? 'Carico' : 'Aggiorna' }}</span>
+            </button>
+          </div>
         </div>
 
         <div class="customers-toolbar">
@@ -94,7 +100,7 @@
                 <th>Contatti</th>
                 <th>Data nascita</th>
                 <th>Ruolo</th>
-                <th>Agenda</th>
+                <th>Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -122,10 +128,13 @@
                     {{ utente.ruolo || 'operatore' }}
                   </span>
                 </td>
-                <td class="customers-actions-cell" data-label="Agenda">
-                  <div class="customers-actions" aria-label="Agenda personale">
+                <td class="customers-actions-cell" data-label="Azioni">
+                  <div class="customers-actions" aria-label="Azioni personale">
                     <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
                       <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="customers-action-button" (click)="selectStaffForEdit(utente, $event)" title="Modifica personale" aria-label="Modifica personale">
+                      <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
@@ -133,6 +142,119 @@
             </tbody>
           </table>
         </div>
+      </article>
+
+      <article class="customers-card customers-card--editor staff-editor-panel" id="modifica-personale">
+        <div class="customers-card__head">
+          <div>
+            <p class="customers-card__eyebrow">{{ isStaffModalOpen ? (staffFormMode === 'create' ? 'Inserimento' : 'Dettaglio') : 'Dettaglio' }}</p>
+            <h2>
+              {{
+                isStaffModalOpen
+                  ? (staffFormMode === 'create' ? 'Inserisci nuovo personale' : 'Modifica personale selezionato')
+                  : 'Seleziona una scheda da modificare'
+              }}
+            </h2>
+          </div>
+          <button *ngIf="isStaffModalOpen" type="button" class="customers-icon-button customers-icon-button--ghost" (click)="closeStaffEditor()" title="Chiudi dettaglio">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+            <span>Chiudi</span>
+          </button>
+        </div>
+
+        <div *ngIf="!isStaffModalOpen" class="customers-empty-state customers-empty-state--editor">
+          <i class="bi bi-person-badge" aria-hidden="true"></i>
+          Seleziona una persona dalla tabella per modificarla oppure aggiungi un nuovo operatore o titolare.
+        </div>
+
+        <form
+          *ngIf="isStaffModalOpen"
+          class="customers-form customers-panel-form"
+          [class.customers-form--create]="staffFormMode === 'create'"
+          [class.customers-form--edit]="staffFormMode === 'edit'"
+          (ngSubmit)="saveStaff()"
+        >
+          <div class="customers-create-header" [class.customers-create-header--new]="staffFormMode === 'create'" [class.customers-edit-header]="staffFormMode === 'edit'">
+            <span class="customers-avatar customers-avatar--large customers-avatar--create">
+              {{ getInitials(staffForm) }}
+            </span>
+            <div>
+              <strong>{{ staffForm.nome || 'Nuovo' }} {{ staffForm.cognome || 'personale' }}</strong>
+              <span>{{ staffForm.email || 'Account operatore/titolare' }}</span>
+              <div class="customers-profile-tags">
+                <span class="customers-profile-tag">
+                  <i class="bi bi-person-gear" aria-hidden="true"></i>
+                  {{ staffForm.ruolo }}
+                </span>
+                <span class="customers-profile-tag" [class.is-muted]="!staffForm.telefono">
+                  <i class="bi bi-telephone" aria-hidden="true"></i>
+                  {{ staffForm.telefono || 'Telefono da inserire' }}
+                </span>
+                <span *ngIf="staffFormMode === 'create'" class="customers-profile-tag">
+                  <i class="bi bi-envelope-check" aria-hidden="true"></i>
+                  Password via email
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="customers-create-shell">
+            <div class="customers-form__grid customers-form__grid--create">
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Nome</span>
+                <input type="text" name="staffNome" [(ngModel)]="staffForm.nome" [disabled]="isSavingStaff" required />
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Cognome</span>
+                <input type="text" name="staffCognome" [(ngModel)]="staffForm.cognome" [disabled]="isSavingStaff" required />
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--full">
+                <span>Email</span>
+                <input type="email" name="staffEmail" [(ngModel)]="staffForm.email" [disabled]="isSavingStaff" required />
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Telefono</span>
+                <input type="tel" name="staffTelefono" [(ngModel)]="staffForm.telefono" [disabled]="isSavingStaff" />
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Data nascita</span>
+                <input type="date" name="staffDataNascita" [(ngModel)]="staffForm.data_nascita" [disabled]="isSavingStaff" />
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Sesso</span>
+                <select name="staffSesso" [(ngModel)]="staffForm.sesso" [disabled]="isSavingStaff">
+                  <option value="">Non indicato</option>
+                  <option value="f">Femmina</option>
+                  <option value="m">Maschio</option>
+                </select>
+              </label>
+
+              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <span>Ruolo</span>
+                <select name="staffRuolo" [(ngModel)]="staffForm.ruolo" [disabled]="isSavingStaff">
+                  <option value="operatore">Operatore</option>
+                  <option value="titolare">Titolare</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="customers-editor-actions">
+            <button type="submit" class="customers-button customers-button--save" [disabled]="isSavingStaff">
+              <i class="bi bi-check2" aria-hidden="true"></i>
+              {{ isSavingStaff ? 'Salvataggio...' : 'Salva' }}
+            </button>
+            <button type="button" class="customers-button customers-button--ghost" (click)="closeStaffEditor()" [disabled]="isSavingStaff">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+              Annulla
+            </button>
+          </div>
+        </form>
       </article>
 
       <article #calendarSection class="customers-card staff-calendar-card">
@@ -249,8 +371,8 @@
   >
     <div class="appointment-detail-head">
       <div>
-        <p class="appointment-detail-kicker" *ngIf="!isPermissionAppointment(selectedAppointment)">Appuntamento</p>
-        <h3 class="appointment-detail-title">{{ isPermissionAppointment(selectedAppointment) ? 'Permesso' : selectedAppointmentLabel }}</h3>
+        <p class="appointment-detail-kicker">{{ isPermissionAppointment(selectedAppointment) ? getAbsenceTypeLabel(selectedAppointment) : 'Appuntamento' }}</p>
+        <h3 class="appointment-detail-title">{{ isPermissionAppointment(selectedAppointment) ? getAbsenceTypeLabel(selectedAppointment) : selectedAppointmentLabel }}</h3>
       </div>
       <button type="button" class="appointment-detail-close" (click)="closeAppointmentDetail()" aria-label="Chiudi dettaglio">
         <i class="bi bi-x-lg"></i>
@@ -289,15 +411,21 @@
       </div>
 
       <div class="appointment-detail-row appointment-detail-row--wide">
-        <span class="appointment-detail-label">Note</span>
-        <strong class="appointment-detail-value">{{ selectedAppointment.note || 'Nessuna nota inserita' }}</strong>
+        <span class="appointment-detail-label">{{ isFerieAppointment(selectedAppointment) ? 'Descrizione' : 'Note' }}</span>
+        <strong class="appointment-detail-value">
+          {{ isFerieAppointment(selectedAppointment) ? (getFerieDescription(selectedAppointment) || 'Nessuna descrizione inserita') : (selectedAppointment.note || 'Nessuna nota inserita') }}
+        </strong>
       </div>
     </div>
 
     <div *ngIf="isPermissionAppointment(selectedAppointment)" class="appointment-detail-actions">
+      <button type="button" class="appointment-action secondary with-icon" (click)="openAbsenceEditModal()">
+        <i class="bi bi-pencil-square"></i>
+        Modifica {{ isFerieAppointment(selectedAppointment) ? 'ferie' : 'permesso' }}
+      </button>
       <button type="button" class="appointment-action danger with-icon" (click)="openDeleteConfirmModal()">
         <i class="bi bi-trash"></i>
-        Elimina permesso
+        Elimina {{ isFerieAppointment(selectedAppointment) ? 'ferie' : 'permesso' }}
       </button>
     </div>
   </div>
@@ -391,7 +519,7 @@
     <div class="permission-head">
       <div>
         <p class="appointment-detail-kicker" style="color: #e74c3c;">Attenzione</p>
-        <h3 class="appointment-detail-title">Elimina permesso</h3>
+        <h3 class="appointment-detail-title">Elimina {{ isFerieAppointment(selectedAppointment) ? 'ferie' : 'permesso' }}</h3>
       </div>
       <button type="button" class="appointment-detail-close" (click)="closeDeleteConfirmModal()" aria-label="Chiudi">
         <i class="bi bi-x-lg"></i>
@@ -400,7 +528,9 @@
 
     <div class="permission-body">
       <p style="color: #fff4d3; font-size: 14px; margin: 0; line-height: 1.5;">
-        Sei sicuro di voler eliminare definitivamente questo permesso? L'operazione non può essere annullata.
+        Sei sicuro di voler eliminare definitivamente
+        {{ isFerieAppointment(selectedAppointment) ? 'queste ferie? Verranno rimossi tutti i giorni consecutivi dello stesso intervallo.' : 'questo permesso?' }}
+        L'operazione non puo essere annullata.
       </p>
     </div>
 
@@ -411,7 +541,85 @@
       </button>
       <button type="button" class="appointment-action danger with-icon" (click)="confirmDeletePermission()">
         <i class="bi bi-trash3"></i>
-        Elimina
+        Elimina {{ isFerieAppointment(selectedAppointment) ? 'ferie' : 'permesso' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isAbsenceEditModalOpen" class="permission-modal" (click)="closeAbsenceEditModal()">
+  <div class="permission-card" [class.ferie-card]="absenceEditForm.type === 'ferie'" role="dialog" aria-modal="true" aria-label="Modifica assenza" (click)="$event.stopPropagation()">
+    <div class="permission-head">
+      <div>
+        <p class="appointment-detail-kicker">{{ absenceEditForm.type === 'ferie' ? 'Ferie' : 'Permesso' }}</p>
+        <h3 class="appointment-detail-title">Modifica {{ absenceEditForm.type === 'ferie' ? 'ferie' : 'permesso' }}</h3>
+      </div>
+      <button type="button" class="appointment-detail-close" (click)="closeAbsenceEditModal()" aria-label="Chiudi popup">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="permission-body">
+      <div class="permission-time-row">
+        <label class="appointment-detail-field">
+          <span>{{ absenceEditForm.type === 'ferie' ? 'Data inizio' : 'Data' }}</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-calendar-date"></i>
+            <input type="date" [min]="minDate" [(ngModel)]="absenceEditForm.startDate" (change)="onAbsenceEditStartDateChange()" [disabled]="isSavingAbsenceEdit" />
+          </div>
+        </label>
+
+        <label *ngIf="absenceEditForm.type === 'ferie'" class="appointment-detail-field">
+          <span>Data fine</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-calendar-date-fill"></i>
+            <input type="date" [min]="minDate" [(ngModel)]="absenceEditForm.endDate" [disabled]="isSavingAbsenceEdit" />
+          </div>
+        </label>
+      </div>
+
+      <div class="permission-time-row" *ngIf="absenceEditForm.type === 'permesso'">
+        <label class="appointment-detail-field">
+          <span>Ora inizio</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-clock"></i>
+            <select class="appointment-time-select" [(ngModel)]="absenceEditForm.startTime" (change)="onAbsenceEditStartTimeChange()" [disabled]="isSavingAbsenceEdit">
+              <option *ngFor="let time of absenceEditStartTimes" [value]="time">{{ time }}</option>
+            </select>
+            <i class="bi bi-chevron-down appointment-select-arrow"></i>
+          </div>
+        </label>
+
+        <label class="appointment-detail-field">
+          <span>Ora fine</span>
+          <div class="appointment-field-control with-icon">
+            <i class="bi bi-clock-history"></i>
+            <select class="appointment-time-select" [(ngModel)]="absenceEditForm.endTime" [disabled]="isSavingAbsenceEdit">
+              <option *ngFor="let time of absenceEditEndTimes" [value]="time">{{ time }}</option>
+            </select>
+            <i class="bi bi-chevron-down appointment-select-arrow"></i>
+          </div>
+        </label>
+      </div>
+
+      <label class="appointment-detail-field">
+        <span>{{ absenceEditForm.type === 'ferie' ? 'Descrizione' : 'Note / Causale' }}</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-card-text"></i>
+          <input type="text" [(ngModel)]="absenceEditForm.note" [disabled]="isSavingAbsenceEdit" />
+        </div>
+      </label>
+    </div>
+
+    <div class="appointment-detail-actions" style="margin-top: 24px;">
+      <button type="button" class="appointment-action secondary with-icon" [disabled]="isSavingAbsenceEdit" (click)="closeAbsenceEditModal()">
+        <i class="bi bi-x-circle"></i>
+        Annulla
+      </button>
+
+      <button type="button" class="appointment-action success with-icon" [disabled]="isSavingAbsenceEdit" (click)="saveAbsenceEdit()">
+        <i class="bi bi-check2-circle"></i>
+        {{ isSavingAbsenceEdit ? 'Salvataggio...' : 'Salva modifica' }}
       </button>
     </div>
   </div>
@@ -448,6 +656,19 @@
           </div>
         </label>
       </div>
+
+      <label class="appointment-detail-field">
+        <span>Descrizione</span>
+        <div class="appointment-field-control with-icon">
+          <i class="bi bi-card-text"></i>
+          <input
+            type="text"
+            [(ngModel)]="ferieForm.description"
+            placeholder="Es. Ferie estive, chiusura personale..."
+            [disabled]="isCreatingEmptySlot"
+          />
+        </div>
+      </label>
     </div>
 
     <div class="appointment-detail-actions" style="margin-top: 24px;">

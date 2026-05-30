@@ -30,6 +30,14 @@ export class UtentiService {
     );
   }
 
+  createOperatore(operatore: Partial<Utente>): Observable<Utente> {
+    return this.http.post<Utente>(`${this.api}/operatori`, operatore);
+  }
+
+  updateOperatore(idUtente: number, operatore: Partial<Utente>): Observable<Utente> {
+    return this.http.put<Utente>(`${this.api}/operatori/${idUtente}`, operatore);
+  }
+
   getClienti(): Observable<Utente[]> {
     return this.http.get<Utente[] | { clienti: Utente[] }>(
       `${this.api}/clienti`

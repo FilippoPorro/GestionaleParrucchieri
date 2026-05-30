@@ -28,6 +28,12 @@
   margin: 0 auto;
 }
 
+@media (min-width: 1400px) {
+  .container {
+    width: min(calc(100% - 96px), 1560px);
+  }
+}
+
 .payment-section {
   position: relative;
   z-index: 2;

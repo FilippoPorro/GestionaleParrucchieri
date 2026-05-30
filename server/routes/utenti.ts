@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db } from "../db_parrucchieri";
+import { verifyToken } from "../middleware/authMiddleware";
 import { sendManagedClientPasswordEmail } from "../services/managed-client-email";
 import { sendMailInBackground } from "../services/mail-utils";
 
@@ -41,6 +42,36 @@ type ClienteLookup = {
 
 const router = express.Router();
 const MANAGED_CLIENT_RESET_TTL_MS = 10 * 60 * 1000;
+
+function isTitolareRole(role: unknown): boolean {
+  return String(role ?? "").trim().toLowerCase() === "titolare";
+}
+
+function normalizeStaffRole(value: unknown): "operatore" | "titolare" | null {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized === "operatore" || normalized === "titolare" ? normalized : null;
+}
+
+function normalizeUserRow(row: any): Utente | null {
+  const idUtente = Number(row?.idUtente ?? 0);
+
+  if (!Number.isFinite(idUtente) || idUtente <= 0) {
+    return null;
+  }
+
+  return {
+    idUtente,
+    nome: String(row?.nome ?? "").trim(),
+    cognome: String(row?.cognome ?? "").trim(),
+    email: String(row?.email ?? "").trim(),
+    telefono: row?.telefono != null ? String(row.telefono).trim() : null,
+    data_nascita: row?.data_nascita != null ? String(row.data_nascita).trim() : null,
+    sesso: normalizeSesso(row?.sesso),
+    ruolo: String(row?.ruolo ?? "").trim(),
+    photoURL: row?.photoURL ?? row?.picture ?? row?.avatar_url ?? row?.avatar ?? null,
+    mustChangePassword: !!row?.mustChangePassword
+  };
+}
 
 function normalizeClienteRow(row: any, source: ClienteSource): Utente | null {
   const idUtente = Number(
@@ -529,6 +560,171 @@ router.get("/operatori", async (_req: Request, res: Response) => {
     return res.json({
       operatori: (data || []) as Utente[]
     });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/operatori", verifyToken, async (req: any, res: Response) => {
+  try {
+    if (!isTitolareRole(req.user?.ruolo)) {
+      return res.status(403).json({ message: "Solo i titolari possono aggiungere personale" });
+    }
+
+    const nome = String(req.body?.nome ?? "").trim();
+    const cognome = String(req.body?.cognome ?? "").trim();
+    const email = String(req.body?.email ?? "").trim().toLowerCase();
+    const telefono = String(req.body?.telefono ?? "").trim();
+    const data_nascita = String(req.body?.data_nascita ?? "").trim();
+    const sesso = normalizeSesso(req.body?.sesso);
+    const ruolo = normalizeStaffRole(req.body?.ruolo);
+
+    if (!nome || !cognome || !email || !ruolo) {
+      return res.status(400).json({ message: "Nome, cognome, email e ruolo sono obbligatori" });
+    }
+
+    const { data: existingUser, error: existingError } = await db
+      .from("utenti")
+      .select("idUtente")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Esiste gia un utente con questa email" });
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+    const resetPasswordToken = crypto.randomBytes(32).toString("hex");
+    const resetPasswordExpires = new Date(Date.now() + MANAGED_CLIENT_RESET_TTL_MS).toISOString();
+
+    const { data, error } = await db
+      .from("utenti")
+      .insert({
+        nome,
+        cognome,
+        email,
+        password: hashedPassword,
+        telefono: telefono || null,
+        data_nascita: data_nascita || null,
+        sesso,
+        ruolo,
+        mustChangePassword: true,
+        resetPasswordToken,
+        resetPasswordExpires
+      })
+      .select("idUtente, nome, cognome, email, telefono, data_nascita, sesso, ruolo, mustChangePassword")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const operatore = normalizeUserRow(data);
+
+    if (!operatore) {
+      return res.status(500).json({ message: "Persona creata ma non leggibile" });
+    }
+
+    sendMailInBackground("Errore invio mail password personale", () =>
+      sendManagedClientPasswordEmail(operatore, buildResetLink(resetPasswordToken))
+    );
+
+    return res.status(201).json(operatore);
+  } catch (err: any) {
+    if (isMissingManagedPasswordColumnError(err)) {
+      return res.status(500).json({
+        message: "Prima di inserire personale dal gestionale devi eseguire la migrazione db/managed_client_password_flow.sql in Supabase, poi ricaricare lo schema cache."
+      });
+    }
+
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.put("/operatori/:id", verifyToken, async (req: any, res: Response) => {
+  try {
+    if (!isTitolareRole(req.user?.ruolo)) {
+      return res.status(403).json({ message: "Solo i titolari possono modificare il personale" });
+    }
+
+    const idUtente = Number(req.params.id);
+    const nome = String(req.body?.nome ?? "").trim();
+    const cognome = String(req.body?.cognome ?? "").trim();
+    const email = String(req.body?.email ?? "").trim().toLowerCase();
+    const telefono = String(req.body?.telefono ?? "").trim();
+    const data_nascita = String(req.body?.data_nascita ?? "").trim();
+    const sesso = normalizeSesso(req.body?.sesso);
+    const ruolo = normalizeStaffRole(req.body?.ruolo);
+
+    if (!Number.isFinite(idUtente) || idUtente <= 0) {
+      return res.status(400).json({ message: "Persona non valida" });
+    }
+
+    if (!nome || !cognome || !email || !ruolo) {
+      return res.status(400).json({ message: "Nome, cognome, email e ruolo sono obbligatori" });
+    }
+
+    const { data: existingStaff, error: existingStaffError } = await db
+      .from("utenti")
+      .select("idUtente, ruolo")
+      .eq("idUtente", idUtente)
+      .in("ruolo", ["operatore", "titolare"])
+      .maybeSingle();
+
+    if (existingStaffError) {
+      throw existingStaffError;
+    }
+
+    if (!existingStaff) {
+      return res.status(404).json({ message: "Persona non trovata" });
+    }
+
+    const { data: existingEmail, error: existingEmailError } = await db
+      .from("utenti")
+      .select("idUtente")
+      .eq("email", email)
+      .neq("idUtente", idUtente)
+      .maybeSingle();
+
+    if (existingEmailError) {
+      throw existingEmailError;
+    }
+
+    if (existingEmail) {
+      return res.status(400).json({ message: "Esiste gia un utente con questa email" });
+    }
+
+    const { data, error } = await db
+      .from("utenti")
+      .update({
+        nome,
+        cognome,
+        email,
+        telefono: telefono || null,
+        data_nascita: data_nascita || null,
+        sesso,
+        ruolo
+      })
+      .eq("idUtente", idUtente)
+      .select("idUtente, nome, cognome, email, telefono, data_nascita, sesso, ruolo, mustChangePassword")
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    const operatore = normalizeUserRow(data);
+
+    if (!operatore) {
+      return res.status(404).json({ message: "Persona non trovata" });
+    }
+
+    return res.json(operatore);
   } catch (err: any) {
     return res.status(500).json({ message: err.message });
   }

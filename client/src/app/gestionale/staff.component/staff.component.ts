@@ -6,6 +6,7 @@ import { CalendarOptions, EventContentArg, EventInput } from '@fullcalendar/core
 import interactionPlugin from '@fullcalendar/interaction';
 import itLocale from '@fullcalendar/core/locales/it';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import { forkJoin } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 import { Appuntamento } from '../../models/appuntamento.model';
 import { Utente } from '../../models/utente.model';
@@ -34,6 +35,26 @@ interface CalendarPickerDay {
 
 interface PermissionSlotForm {
   date: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  note: string;
+}
+
+interface StaffForm {
+  idUtente: number | null;
+  nome: string;
+  cognome: string;
+  email: string;
+  telefono: string;
+  data_nascita: string;
+  sesso: 'm' | 'f' | '';
+  ruolo: 'operatore' | 'titolare';
+}
+
+interface AbsenceEditForm {
+  type: 'ferie' | 'permesso';
+  startDate: string;
   endDate: string;
   startTime: string;
   endTime: string;
@@ -96,9 +117,17 @@ export class StaffComponent implements OnInit, OnDestroy {
   appointmentDetailToneClass = 'tone-my';
   isPermissionModalOpen = false;
   isFerieModalOpen = false;
+  isStaffModalOpen = false;
+  isSavingStaff = false;
+  staffFormMode: 'create' | 'edit' = 'create';
+  staffForm: StaffForm = this.getEmptyStaffForm();
+  isAbsenceEditModalOpen = false;
+  isSavingAbsenceEdit = false;
+  absenceEditForm: AbsenceEditForm = this.getEmptyAbsenceEditForm();
   ferieForm = {
     startDate: '',
-    endDate: ''
+    endDate: '',
+    description: ''
   };
   permissionSlotForm: PermissionSlotForm = {
     date: '',
@@ -109,6 +138,8 @@ export class StaffComponent implements OnInit, OnDestroy {
   };
   availableStartTimes: string[] = [];
   availableEndTimes: string[] = [];
+  absenceEditStartTimes: string[] = [];
+  absenceEditEndTimes: string[] = [];
   minDate = '';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarMessageTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -291,7 +322,6 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   loadStaff(): void {
     this.isLoadingStaff = true;
-    this.clearFeedback();
     this.refreshView();
 
     this.utentiService.getOperatori().pipe(timeout(8000)).subscribe({
@@ -323,6 +353,257 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.selectedOperator = utente.idUtente;
     this.loadAppointments();
     this.scrollToCalendarSection();
+  }
+
+  startCreateStaff(): void {
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono aggiungere personale.', 'error', 'Permesso negato');
+      return;
+    }
+
+    this.staffFormMode = 'create';
+    this.staffForm = this.getEmptyStaffForm();
+    this.isStaffModalOpen = true;
+    this.refreshView();
+    this.scrollToStaffEditor();
+  }
+
+  selectStaffForEdit(utente: Utente, event?: Event): void {
+    event?.stopPropagation();
+
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono modificare il personale.', 'error', 'Permesso negato');
+      return;
+    }
+
+    this.staffFormMode = 'edit';
+    this.staffForm = {
+      idUtente: utente.idUtente,
+      nome: utente.nome || '',
+      cognome: utente.cognome || '',
+      email: utente.email || '',
+      telefono: utente.telefono || '',
+      data_nascita: this.normalizeDateInput(utente.data_nascita),
+      sesso: utente.sesso === 'm' || utente.sesso === 'f' ? utente.sesso : '',
+      ruolo: this.normalizeRole(utente.ruolo) === 'titolare' ? 'titolare' : 'operatore'
+    };
+    this.isStaffModalOpen = true;
+    this.refreshView();
+    this.scrollToStaffEditor();
+  }
+
+  closeStaffEditor(): void {
+    if (this.isSavingStaff) {
+      return;
+    }
+
+    this.isStaffModalOpen = false;
+    this.staffForm = this.getEmptyStaffForm();
+    this.refreshView();
+  }
+
+  saveStaff(): void {
+    const payload = {
+      nome: this.staffForm.nome.trim(),
+      cognome: this.staffForm.cognome.trim(),
+      email: this.staffForm.email.trim().toLowerCase(),
+      telefono: this.staffForm.telefono.trim() || null,
+      data_nascita: this.staffForm.data_nascita || null,
+      sesso: this.staffForm.sesso || null,
+      ruolo: this.staffForm.ruolo
+    };
+
+    if (!payload.nome || !payload.cognome || !payload.email || !payload.ruolo) {
+      this.showFeedback('Nome, cognome, email e ruolo sono obbligatori.', 'error', 'Campi mancanti');
+      return;
+    }
+
+    this.isSavingStaff = true;
+    this.clearFeedback();
+    this.refreshView();
+
+    const request = this.staffFormMode === 'edit' && this.staffForm.idUtente
+      ? this.utentiService.updateOperatore(this.staffForm.idUtente, payload)
+      : this.utentiService.createOperatore(payload);
+
+    request.subscribe({
+      next: (savedStaff) => {
+        this.isSavingStaff = false;
+        this.isStaffModalOpen = false;
+        this.staffForm = this.getEmptyStaffForm();
+        this.selectedOperator = savedStaff.idUtente;
+        this.showFeedback(
+          this.staffFormMode === 'edit' ? 'Persona aggiornata con successo.' : 'Persona aggiunta con successo.',
+          'success',
+          this.staffFormMode === 'edit' ? 'Personale aggiornato' : 'Personale aggiunto'
+        );
+        this.loadStaff();
+      },
+      error: (error) => {
+        this.isSavingStaff = false;
+        this.showFeedback(
+          error?.error?.message || 'Non riesco a salvare questa persona.',
+          'error',
+          'Salvataggio non riuscito'
+        );
+        this.refreshView();
+      }
+    });
+  }
+
+  openAbsenceEditModal(): void {
+    if (!this.selectedAppointment || !this.isPermissionAppointment(this.selectedAppointment)) {
+      return;
+    }
+
+    if (!this.authService.isTitolare()) {
+      this.showFeedback('Solo i titolari possono modificare ferie e permessi.', 'error', 'Permesso negato');
+      return;
+    }
+
+    const isFerie = this.isFerieAppointment(this.selectedAppointment);
+    const start = new Date(this.selectedAppointment.dataOraInizio);
+    const end = new Date(this.selectedAppointment.dataOraFine);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      this.showFeedback('Non riesco a leggere le date di questa assenza.', 'error', 'Date non valide');
+      return;
+    }
+
+    if (isFerie) {
+      const interval = this.getFerieIntervalAppointments(this.selectedAppointment);
+      const intervalStart = interval.length ? new Date(interval[0].dataOraInizio) : start;
+      const intervalEnd = interval.length ? new Date(interval[interval.length - 1].dataOraFine) : end;
+
+      this.absenceEditForm = {
+        type: 'ferie',
+        startDate: this.formatDateForInput(intervalStart),
+        endDate: this.formatDateForInput(intervalEnd),
+        startTime: '00:00',
+        endTime: '23:59',
+        note: this.getFerieDescription(this.selectedAppointment)
+      };
+    } else {
+      this.absenceEditForm = {
+        type: 'permesso',
+        startDate: this.formatDateForInput(start),
+        endDate: this.formatDateForInput(start),
+        startTime: this.formatTimeForInput(start),
+        endTime: this.formatTimeForInput(end),
+        note: this.selectedAppointment.note || ''
+      };
+      this.updateAbsenceEditAvailableTimes();
+    }
+
+    this.isAbsenceEditModalOpen = true;
+    this.refreshView();
+  }
+
+  closeAbsenceEditModal(): void {
+    if (this.isSavingAbsenceEdit) {
+      return;
+    }
+
+    this.isAbsenceEditModalOpen = false;
+    this.absenceEditForm = this.getEmptyAbsenceEditForm();
+    this.absenceEditStartTimes = [];
+    this.absenceEditEndTimes = [];
+    this.refreshView();
+  }
+
+  onAbsenceEditStartDateChange(): void {
+    if (!this.absenceEditForm.endDate || this.absenceEditForm.endDate < this.absenceEditForm.startDate) {
+      this.absenceEditForm.endDate = this.absenceEditForm.startDate;
+    }
+
+    if (this.absenceEditForm.type === 'permesso') {
+      this.updateAbsenceEditAvailableTimes();
+    }
+  }
+
+  saveAbsenceEdit(): void {
+    if (!this.selectedAppointment || !this.isPermissionAppointment(this.selectedAppointment)) {
+      return;
+    }
+
+    if (this.absenceEditForm.type === 'ferie') {
+      this.saveFerieEdit();
+      return;
+    }
+
+    this.savePermissionEdit();
+  }
+
+  private savePermissionEdit(): void {
+    if (!this.selectedAppointment) {
+      return;
+    }
+
+    const start = this.buildDateFromPermissionForm(this.absenceEditForm.startDate, this.absenceEditForm.startTime);
+    const end = this.buildDateFromPermissionForm(this.absenceEditForm.startDate, this.absenceEditForm.endTime);
+
+    if (!start || !end || end <= start) {
+      this.showFeedback('Completa data e orari del permesso.', 'error', 'Campi mancanti');
+      return;
+    }
+
+    this.isSavingAbsenceEdit = true;
+    this.refreshView();
+
+    this.appuntamentoService.aggiornaAppuntamento(this.selectedAppointment.idAppuntamento, {
+      dataOraInizio: this.toLocalDateTimeString(start),
+      dataOraFine: this.toLocalDateTimeString(end),
+      note: this.absenceEditForm.note.trim() || null,
+      stato: this.selectedAppointment.stato || 'prenotato'
+    }).subscribe({
+      next: () => {
+        this.isSavingAbsenceEdit = false;
+        this.closeAbsenceEditModal();
+        this.closeAppointmentDetail();
+        this.showFeedback('Permesso aggiornato con successo.', 'success', 'Modifica completata');
+        this.loadAppointments();
+      },
+      error: (error) => {
+        this.isSavingAbsenceEdit = false;
+        this.showFeedback(error?.error?.message || 'Non riesco a modificare il permesso.', 'error', 'Modifica non riuscita');
+        this.refreshView();
+      }
+    });
+  }
+
+  private saveFerieEdit(): void {
+    if (!this.selectedAppointment) {
+      return;
+    }
+
+    if (!this.absenceEditForm.startDate || !this.absenceEditForm.endDate || this.absenceEditForm.endDate < this.absenceEditForm.startDate) {
+      this.showFeedback('Completa data inizio e data fine delle ferie.', 'error', 'Campi mancanti');
+      return;
+    }
+
+    const description = this.absenceEditForm.note.trim();
+
+    this.isSavingAbsenceEdit = true;
+    this.refreshView();
+
+    this.appuntamentoService.aggiornaIntervalloFerie(this.selectedAppointment.idAppuntamento, {
+      dataInizio: this.absenceEditForm.startDate,
+      dataFine: this.absenceEditForm.endDate,
+      note: description ? `Ferie: ${description}` : 'Ferie'
+    }).subscribe({
+      next: () => {
+        this.isSavingAbsenceEdit = false;
+        this.closeAbsenceEditModal();
+        this.closeAppointmentDetail();
+        this.showFeedback('Ferie aggiornate con successo.', 'success', 'Modifica completata');
+        this.loadAppointments();
+      },
+      error: (error) => {
+        this.isSavingAbsenceEdit = false;
+        this.showFeedback(error?.error?.message || 'Non riesco a modificare le ferie.', 'error', 'Modifica non riuscita');
+        this.refreshView();
+      }
+    });
   }
 
   private loadAppointments(): void {
@@ -482,7 +763,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     const calendarEnd = this.getCalendarEventEnd(normalizedStart, normalizedEnd);
     const isPastAppointment = this.isPastAppointment(appointment);
     const isPermission = this.isPermissionAppointment(appointment);
-    const isFerie = isPermission && appointment.note === 'Ferie';
+    const isFerie = this.isFerieAppointment(appointment);
     const serviceName = isFerie ? 'Ferie' : (isPermission ? 'Permesso' : this.getAppointmentLabel(appointment));
 
     return {
@@ -499,15 +780,37 @@ export class StaffComponent implements OnInit, OnDestroy {
         actualEnd: normalizedEnd,
         displayTitle: serviceName,
         serviceName,
-        serviceDescription: appointment.note || '',
+        serviceDescription: isFerie ? this.getFerieDescription(appointment) : (appointment.note || ''),
         operatorName: this.selectedOperatorLabel,
         isVisible: true
       }
     };
   }
 
-  isPermissionAppointment(appointment: Appuntamento): boolean {
-    return !appointment.idCliente;
+  isPermissionAppointment(appointment: Appuntamento | null): boolean {
+    return !!appointment && !appointment.idCliente;
+  }
+
+  isFerieAppointment(appointment: Appuntamento | null): boolean {
+    return !!appointment && this.isPermissionAppointment(appointment) && /^ferie\b/i.test(String(appointment.note ?? '').trim());
+  }
+
+  getAbsenceTypeLabel(appointment: Appuntamento | null): string {
+    if (!appointment) {
+      return 'Permesso';
+    }
+
+    return this.isFerieAppointment(appointment) ? 'Ferie' : 'Permesso';
+  }
+
+  getFerieDescription(appointment: Appuntamento | null): string {
+    const note = String(appointment?.note ?? '').trim();
+
+    if (!/^ferie\b/i.test(note)) {
+      return note;
+    }
+
+    return note.replace(/^ferie\s*:?\s*/i, '').trim();
   }
 
   openPermissionModal(start: Date, end: Date): void {
@@ -581,7 +884,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     const todayStr = this.formatDateForInput(new Date());
     this.ferieForm = {
       startDate: todayStr,
-      endDate: todayStr
+      endDate: todayStr,
+      description: ''
     };
     this.isFerieModalOpen = true;
     this.refreshView();
@@ -594,7 +898,8 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.isFerieModalOpen = false;
     this.ferieForm = {
       startDate: '',
-      endDate: ''
+      endDate: '',
+      description: ''
     };
     this.refreshView();
   }
@@ -638,7 +943,10 @@ export class StaffComponent implements OnInit, OnDestroy {
       current.setDate(current.getDate() + 1);
     }
 
-    this.createEmptySlots(datesToCreate, 'Ferie', () => {
+    const description = this.ferieForm.description.trim();
+    const ferieNote = description ? `Ferie: ${description}` : 'Ferie';
+
+    this.createEmptySlots(datesToCreate, ferieNote, () => {
       this.closeFerieModal();
     });
   }
@@ -663,7 +971,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.clearFeedback();
     this.refreshView();
 
-    const requests = slots.map(slot => 
+    const requests = slots.map(slot =>
       this.appuntamentoService.creaSlotVuoto({
         idOperatore: this.selectedOperator!,
         dataOraInizio: this.toLocalDateTimeString(slot.start),
@@ -672,35 +980,31 @@ export class StaffComponent implements OnInit, OnDestroy {
       })
     );
 
-    import('rxjs').then(({ forkJoin }) => {
-      forkJoin(requests).subscribe({
-        next: () => {
-          const successMsg = slots.length > 1
-            ? `${slots.length} fasce orarie bloccate con successo.`
-            : 'Permesso creato con successo.';
-          this.showFeedback(successMsg, 'success', 'Salvataggio completato');
-          this.isCreatingEmptySlot = false;
-          
-          if (onSuccess) {
-            onSuccess();
-          } else {
-            this.closePermissionModal();
-          }
-          this.loadAppointments();
-        },
-        error: (error) => {
-          this.isCreatingEmptySlot = false;
-          this.showFeedback(
-            error?.error?.message || 'Non riesco ad aggiungere i permessi o ferie selezionati.',
-            'error',
-            'Spazio non salvato'
-          );
-          this.refreshView();
+    forkJoin(requests).subscribe({
+      next: () => {
+        const isFerie = /^ferie\b/i.test(String(note ?? '').trim());
+        const successMsg = isFerie
+          ? (slots.length > 1 ? `${slots.length} giorni di ferie salvati con successo.` : 'Ferie salvata con successo.')
+          : 'Permesso creato con successo.';
+        this.showFeedback(successMsg, 'success', 'Salvataggio completato');
+        this.isCreatingEmptySlot = false;
+
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          this.closePermissionModal();
         }
-      });
-    }).catch(err => {
-      this.isCreatingEmptySlot = false;
-      this.refreshView();
+        this.loadAppointments();
+      },
+      error: (error) => {
+        this.isCreatingEmptySlot = false;
+        this.showFeedback(
+          error?.error?.message || 'Non riesco ad aggiungere i permessi o ferie selezionati.',
+          'error',
+          'Spazio non salvato'
+        );
+        this.refreshView();
+      }
     });
   }
 
@@ -925,18 +1229,110 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.isLoadingCalendar = true;
     this.refreshView();
 
-    this.appuntamentoService.eliminaAppuntamento(this.selectedAppointment.idAppuntamento).subscribe({
-      next: () => {
-        this.showFeedback('Permesso eliminato con successo.', 'success', 'Permesso eliminato');
+    const isFerie = this.isFerieAppointment(this.selectedAppointment);
+    const request = isFerie
+      ? this.appuntamentoService.eliminaIntervalloFerie(this.selectedAppointment.idAppuntamento)
+      : this.appuntamentoService.eliminaAppuntamento(this.selectedAppointment.idAppuntamento);
+
+    request.subscribe({
+      next: (result) => {
+        const deletedCount = 'deletedCount' in result && Number.isFinite(Number(result.deletedCount))
+          ? Number(result.deletedCount)
+          : 1;
+        this.showFeedback(
+          isFerie
+            ? (deletedCount > 1 ? `Eliminati ${deletedCount} giorni di ferie.` : 'Ferie eliminata con successo.')
+            : 'Permesso eliminato con successo.',
+          'success',
+          isFerie ? 'Ferie eliminate' : 'Permesso eliminato'
+        );
         this.closeAppointmentDetail();
         this.loadAppointments();
       },
       error: (error) => {
         this.isLoadingCalendar = false;
-        this.showFeedback('Impossibile eliminare il permesso.', 'error', 'Errore eliminazione');
+        this.showFeedback(
+          error?.error?.message || (isFerie ? 'Impossibile eliminare le ferie.' : 'Impossibile eliminare il permesso.'),
+          'error',
+          'Errore eliminazione'
+        );
         this.refreshView();
       }
     });
+  }
+
+  updateAbsenceEditAvailableTimes(): void {
+    const selectedDate = this.parseInputDate(this.absenceEditForm.startDate);
+    if (!selectedDate) {
+      this.absenceEditStartTimes = [];
+      this.absenceEditEndTimes = [];
+      return;
+    }
+
+    const daySchedule = this.openingSchedule[selectedDate.getDay()];
+    if (!daySchedule || daySchedule.intervals.length === 0) {
+      this.absenceEditStartTimes = [];
+      this.absenceEditEndTimes = [];
+      return;
+    }
+
+    const starts: string[] = [];
+    const ends: string[] = [];
+
+    for (const interval of daySchedule.intervals) {
+      const startMin = this.timeToMinutes(interval.start);
+      const endMin = this.timeToMinutes(interval.end);
+
+      for (let min = startMin; min < endMin; min += 30) {
+        starts.push(this.minutesToTime(min));
+      }
+
+      for (let min = startMin + 30; min <= endMin; min += 30) {
+        ends.push(this.minutesToTime(min));
+      }
+    }
+
+    this.absenceEditStartTimes = starts;
+    this.absenceEditEndTimes = ends;
+
+    if (!this.absenceEditStartTimes.includes(this.absenceEditForm.startTime)) {
+      this.absenceEditForm.startTime = this.absenceEditStartTimes[0] || '';
+    }
+
+    this.onAbsenceEditStartTimeChange();
+  }
+
+  onAbsenceEditStartTimeChange(): void {
+    const startMin = this.timeToMinutes(this.absenceEditForm.startTime);
+    const selectedDate = this.parseInputDate(this.absenceEditForm.startDate);
+
+    if (!selectedDate) {
+      return;
+    }
+
+    const daySchedule = this.openingSchedule[selectedDate.getDay()];
+    if (!daySchedule) {
+      return;
+    }
+
+    const validEnds: string[] = [];
+    for (const interval of daySchedule.intervals) {
+      const intervalStart = this.timeToMinutes(interval.start);
+      const intervalEnd = this.timeToMinutes(interval.end);
+
+      if (startMin >= intervalStart && startMin < intervalEnd) {
+        for (let min = startMin + 30; min <= intervalEnd; min += 30) {
+          validEnds.push(this.minutesToTime(min));
+        }
+        break;
+      }
+    }
+
+    this.absenceEditEndTimes = validEnds;
+
+    if (!this.absenceEditEndTimes.includes(this.absenceEditForm.endTime)) {
+      this.absenceEditForm.endTime = this.absenceEditEndTimes[0] || '';
+    }
   }
 
   onAppointmentModalOverlayClick(event: MouseEvent): void {
@@ -1092,6 +1488,75 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private normalizeRole(role?: string | null): string {
     return String(role ?? '').trim().toLowerCase();
+  }
+
+  private normalizeDateInput(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+
+    return String(value).slice(0, 10);
+  }
+
+  private getEmptyStaffForm(): StaffForm {
+    return {
+      idUtente: null,
+      nome: '',
+      cognome: '',
+      email: '',
+      telefono: '',
+      data_nascita: '',
+      sesso: '',
+      ruolo: 'operatore'
+    };
+  }
+
+  private getEmptyAbsenceEditForm(): AbsenceEditForm {
+    return {
+      type: 'permesso',
+      startDate: '',
+      endDate: '',
+      startTime: '',
+      endTime: '',
+      note: ''
+    };
+  }
+
+  private getFerieIntervalAppointments(selectedAppointment: Appuntamento): Appuntamento[] {
+    const selectedNote = String(selectedAppointment.note ?? '').trim();
+    const ferieEvents = this.events
+      .map((event) => event.extendedProps?.['appointment'] as Appuntamento | undefined)
+      .filter((appointment): appointment is Appuntamento =>
+        !!appointment &&
+        appointment.idOperatore === selectedAppointment.idOperatore &&
+        String(appointment.note ?? '').trim() === selectedNote &&
+        this.isFerieAppointment(appointment)
+      )
+      .sort((a, b) => new Date(a.dataOraInizio).getTime() - new Date(b.dataOraInizio).getTime());
+    const selectedIndex = ferieEvents.findIndex((appointment) => appointment.idAppuntamento === selectedAppointment.idAppuntamento);
+
+    if (selectedIndex < 0) {
+      return [selectedAppointment];
+    }
+
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const dayStart = (value: string): number => {
+      const parsed = new Date(value);
+      parsed.setHours(0, 0, 0, 0);
+      return parsed.getTime();
+    };
+    let firstIndex = selectedIndex;
+    let lastIndex = selectedIndex;
+
+    while (firstIndex > 0 && dayStart(ferieEvents[firstIndex].dataOraInizio) - dayStart(ferieEvents[firstIndex - 1].dataOraFine) <= oneDayMs) {
+      firstIndex--;
+    }
+
+    while (lastIndex < ferieEvents.length - 1 && dayStart(ferieEvents[lastIndex + 1].dataOraInizio) - dayStart(ferieEvents[lastIndex].dataOraFine) <= oneDayMs) {
+      lastIndex++;
+    }
+
+    return ferieEvents.slice(firstIndex, lastIndex + 1);
   }
 
   private showFeedback(message: string, type: 'success' | 'error', title: string): void {
@@ -1366,6 +1831,16 @@ export class StaffComponent implements OnInit, OnDestroy {
     }, 80);
   }
 
+  private scrollToStaffEditor(): void {
+    setTimeout(() => {
+      const editor = document.getElementById('modifica-personale');
+      editor?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 80);
+  }
+
   private getCalendarScrollTimeForNow(): string {
     const now = new Date();
     const minutesNow = now.getHours() * 60 + now.getMinutes();
@@ -1469,12 +1944,24 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private getAppointmentToneClass(appointment: Appuntamento): string {
+    if (this.isFerieAppointment(appointment)) {
+      return 'tone-ferie';
+    }
+
+    if (this.isPermissionAppointment(appointment)) {
+      return 'tone-permission';
+    }
+
     return this.isPastAppointment(appointment) || appointment.stato === 'completato'
       ? 'tone-past'
       : 'tone-my';
   }
 
   private buildAppointmentLabel(appointment: Appuntamento): string {
+    if (this.isFerieAppointment(appointment)) {
+      return 'Ferie';
+    }
+
     return this.getAppointmentLabel(appointment);
   }
 

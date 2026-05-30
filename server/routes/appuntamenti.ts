@@ -772,6 +772,261 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
   }
 });
 
+router.delete("/ferie/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
+  try {
+    const idAppuntamento = parseInt(req.params.idAppuntamento, 10);
+    const userRole = req.user?.ruolo;
+
+    if (isNaN(idAppuntamento)) {
+      return res.status(400).json({ message: "idAppuntamento non valido" });
+    }
+
+    if (!isTitolareRole(userRole)) {
+      return res.status(403).json({ message: "Solo i titolari possono eliminare le ferie" });
+    }
+
+    const { data: selectedAbsence, error: selectedError } = await db
+      .from("appuntamenti")
+      .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, note")
+      .eq("idAppuntamento", idAppuntamento)
+      .maybeSingle();
+
+    if (selectedError) {
+      throw selectedError;
+    }
+
+    if (!selectedAbsence) {
+      return res.status(404).json({ message: "Ferie non trovate" });
+    }
+
+    const ferieNote = String((selectedAbsence as any).note ?? "").trim();
+
+    if ((selectedAbsence as any).idCliente || !/^ferie\b/i.test(ferieNote)) {
+      return res.status(400).json({ message: "Lo slot selezionato non e una ferie" });
+    }
+
+    const { data: ferieSlots, error: ferieSlotsError } = await db
+      .from("appuntamenti")
+      .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, note")
+      .eq("idOperatore", (selectedAbsence as any).idOperatore)
+      .is("idCliente", null)
+      .eq("note", ferieNote)
+      .order("dataOraInizio", { ascending: true });
+
+    if (ferieSlotsError) {
+      throw ferieSlotsError;
+    }
+
+    const slots = ((ferieSlots || []) as any[]).filter((slot) => /^ferie\b/i.test(String(slot.note ?? "").trim()));
+    const selectedIndex = slots.findIndex((slot) => Number(slot.idAppuntamento) === idAppuntamento);
+
+    if (selectedIndex < 0) {
+      return res.status(404).json({ message: "Ferie non trovate" });
+    }
+
+    const dayStart = (value: string): number => {
+      const parsed = new Date(value);
+      parsed.setHours(0, 0, 0, 0);
+      return parsed.getTime();
+    };
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    let firstIndex = selectedIndex;
+    let lastIndex = selectedIndex;
+
+    while (firstIndex > 0) {
+      const previousEndDay = dayStart(slots[firstIndex - 1].dataOraFine);
+      const currentStartDay = dayStart(slots[firstIndex].dataOraInizio);
+
+      if (currentStartDay - previousEndDay > oneDayMs) {
+        break;
+      }
+
+      firstIndex--;
+    }
+
+    while (lastIndex < slots.length - 1) {
+      const currentEndDay = dayStart(slots[lastIndex].dataOraFine);
+      const nextStartDay = dayStart(slots[lastIndex + 1].dataOraInizio);
+
+      if (nextStartDay - currentEndDay > oneDayMs) {
+        break;
+      }
+
+      lastIndex++;
+    }
+
+    const idsToDelete = slots
+      .slice(firstIndex, lastIndex + 1)
+      .map((slot) => Number(slot.idAppuntamento))
+      .filter(Number.isFinite);
+
+    if (idsToDelete.length === 0) {
+      return res.status(404).json({ message: "Ferie non trovate" });
+    }
+
+    const { error: servicesCleanupError } = await db
+      .from("appuntamentiservizi")
+      .delete()
+      .in("idAppuntamento", idsToDelete);
+
+    if (servicesCleanupError) {
+      throw servicesCleanupError;
+    }
+
+    const { error } = await db
+      .from("appuntamenti")
+      .delete()
+      .in("idAppuntamento", idsToDelete);
+
+    if (error) {
+      throw error;
+    }
+
+    return res.json({
+      message: idsToDelete.length > 1 ? "Intervallo ferie eliminato con successo" : "Ferie eliminata con successo",
+      deletedCount: idsToDelete.length
+    });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+router.put("/ferie/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
+  try {
+    const idAppuntamento = parseInt(req.params.idAppuntamento, 10);
+    const userRole = req.user?.ruolo;
+    const dataInizio = String(req.body?.dataInizio ?? "").trim();
+    const dataFine = String(req.body?.dataFine ?? dataInizio).trim();
+    const note = String(req.body?.note ?? "Ferie").trim() || "Ferie";
+
+    if (isNaN(idAppuntamento)) {
+      return res.status(400).json({ message: "idAppuntamento non valido" });
+    }
+
+    if (!isTitolareRole(userRole)) {
+      return res.status(403).json({ message: "Solo i titolari possono modificare le ferie" });
+    }
+
+    const startDay = new Date(`${dataInizio}T00:00:00`);
+    const endDay = new Date(`${dataFine}T00:00:00`);
+
+    if (Number.isNaN(startDay.getTime()) || Number.isNaN(endDay.getTime()) || endDay < startDay) {
+      return res.status(400).json({ message: "Date ferie non valide" });
+    }
+
+    const { data: selectedAbsence, error: selectedError } = await db
+      .from("appuntamenti")
+      .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, note")
+      .eq("idAppuntamento", idAppuntamento)
+      .maybeSingle();
+
+    if (selectedError) {
+      throw selectedError;
+    }
+
+    if (!selectedAbsence) {
+      return res.status(404).json({ message: "Ferie non trovate" });
+    }
+
+    const oldFerieNote = String((selectedAbsence as any).note ?? "").trim();
+
+    if ((selectedAbsence as any).idCliente || !/^ferie\b/i.test(oldFerieNote)) {
+      return res.status(400).json({ message: "Lo slot selezionato non e una ferie" });
+    }
+
+    const { data: ferieSlots, error: ferieSlotsError } = await db
+      .from("appuntamenti")
+      .select("idAppuntamento, idCliente, idOperatore, dataOraInizio, dataOraFine, note")
+      .eq("idOperatore", (selectedAbsence as any).idOperatore)
+      .is("idCliente", null)
+      .eq("note", oldFerieNote)
+      .order("dataOraInizio", { ascending: true });
+
+    if (ferieSlotsError) {
+      throw ferieSlotsError;
+    }
+
+    const slots = ((ferieSlots || []) as any[]).filter((slot) => /^ferie\b/i.test(String(slot.note ?? "").trim()));
+    const selectedIndex = slots.findIndex((slot) => Number(slot.idAppuntamento) === idAppuntamento);
+
+    if (selectedIndex < 0) {
+      return res.status(404).json({ message: "Ferie non trovate" });
+    }
+
+    const dayStart = (value: string): number => {
+      const parsed = new Date(value);
+      parsed.setHours(0, 0, 0, 0);
+      return parsed.getTime();
+    };
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    let firstIndex = selectedIndex;
+    let lastIndex = selectedIndex;
+
+    while (firstIndex > 0 && dayStart(slots[firstIndex].dataOraInizio) - dayStart(slots[firstIndex - 1].dataOraFine) <= oneDayMs) {
+      firstIndex--;
+    }
+
+    while (lastIndex < slots.length - 1 && dayStart(slots[lastIndex + 1].dataOraInizio) - dayStart(slots[lastIndex].dataOraFine) <= oneDayMs) {
+      lastIndex++;
+    }
+
+    const idsToReplace = slots
+      .slice(firstIndex, lastIndex + 1)
+      .map((slot) => Number(slot.idAppuntamento))
+      .filter(Number.isFinite);
+
+    const { error: servicesCleanupError } = await db
+      .from("appuntamentiservizi")
+      .delete()
+      .in("idAppuntamento", idsToReplace);
+
+    if (servicesCleanupError) {
+      throw servicesCleanupError;
+    }
+
+    const { error: deleteError } = await db
+      .from("appuntamenti")
+      .delete()
+      .in("idAppuntamento", idsToReplace);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    const createdSlots: Appuntamento[] = [];
+    const cursor = new Date(startDay);
+    const toLocalDateTimeString = (date: Date): string => {
+      const pad = (part: number): string => String(part).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+
+    while (cursor <= endDay) {
+      const slotStart = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 0, 0, 0);
+      const slotEnd = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate(), 23, 59, 59);
+      const slot = await createBlankStaffSlot({
+        idOperatore: Number((selectedAbsence as any).idOperatore),
+        dataOraInizio: toLocalDateTimeString(slotStart),
+        dataOraFine: toLocalDateTimeString(slotEnd),
+        note
+      });
+
+      if (!slot) {
+        return res.status(409).json({ message: "Le nuove ferie si sovrappongono a un appuntamento esistente" });
+      }
+
+      createdSlots.push(slot as Appuntamento);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return res.json({
+      message: "Ferie aggiornate con successo",
+      ferie: createdSlots
+    });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
 router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
   try {
     const idAppuntamento = parseInt(req.params.idAppuntamento, 10);

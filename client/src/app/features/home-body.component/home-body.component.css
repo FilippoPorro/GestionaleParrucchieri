@@ -39,6 +39,45 @@
   align-items: center;
 }
 
+@media (min-width: 1400px) {
+  .gestionale-section.container {
+    width: min(calc(100% - 96px), 1640px);
+    max-width: 1640px;
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(560px, 640px);
+    gap: clamp(46px, 5vw, 92px);
+  }
+
+  .gestionale-section .hero-title {
+    font-size: clamp(46px, 3vw, 58px);
+  }
+
+  .gestionale-section .hero-lead {
+    max-width: 760px;
+    font-size: 17px;
+  }
+
+  .gestionale-section .hero-image {
+    max-width: 640px;
+    height: clamp(370px, 22vw, 430px);
+  }
+
+  .gestionale-section .services-section {
+    margin-top: 46px;
+  }
+
+  .gestionale-section .services-grid {
+    gap: 22px;
+  }
+
+  .gestionale-section .service-img,
+  .gestionale-section .service-img-shampoo {
+    height: 220px;
+  }
+}
+
 @media (max-width: 992px){
   .hero-grid{ grid-template-columns: 1fr; text-align: center; }
   .hero-media{ order: -1; margin-bottom: 18px; }

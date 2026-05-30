@@ -37,6 +37,13 @@ body {
   align-items: center;
 }
 
+@media (min-width: 1400px) {
+  .navbar .container {
+    width: min(calc(100% - 96px), 1640px);
+    max-width: 1640px;
+  }
+}
+
 .navbar-brand {
   display: inline-flex;
   align-items: center;

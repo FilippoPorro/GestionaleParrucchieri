@@ -32,6 +32,12 @@ export interface AggiornaAppuntamentoPayload {
   stato?: string;
 }
 
+export interface AggiornaFeriePayload {
+  dataInizio: string;
+  dataFine: string;
+  note?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -63,6 +69,17 @@ export class AppuntamentoService {
 
   eliminaAppuntamento(idAppuntamento: number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.api}/${idAppuntamento}`);
+  }
+
+  eliminaIntervalloFerie(idAppuntamento: number): Observable<{ message: string; deletedCount: number }> {
+    return this.http.delete<{ message: string; deletedCount: number }>(`${this.api}/ferie/${idAppuntamento}`);
+  }
+
+  aggiornaIntervalloFerie(
+    idAppuntamento: number,
+    payload: AggiornaFeriePayload
+  ): Observable<{ message: string; ferie: Appuntamento[] }> {
+    return this.http.put<{ message: string; ferie: Appuntamento[] }>(`${this.api}/ferie/${idAppuntamento}`, payload);
   }
 
   getAppuntamentiCount(data: string): Observable<number> {

@@ -85,7 +85,7 @@
         </div>
 
         @if (getFilteredProducts(allProducts).length > 0) {
-          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 products-grid">
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xxl-4 g-4 products-grid">
             @for (product of getFilteredProducts(allProducts); track product.idProdotto) {
                 <div class="col">
                   <app-product-card [product]="product" (addProductToCart)="onAddToCart($event)">

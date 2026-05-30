@@ -10,6 +10,19 @@
   max-width: 100%;
 }
 
+.staff-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.staff-add-button {
+  border-color: rgba(93, 172, 121, 0.38) !important;
+  color: #deffeb !important;
+}
+
 .staff-table {
   min-width: 980px;
   table-layout: fixed;
@@ -44,7 +57,7 @@
 
 .staff-table th:last-child,
 .staff-table td:last-child {
-  width: 92px;
+  width: 124px;
   text-align: center;
 }
 
@@ -332,6 +345,34 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
+.appointment-detail-card.tone-my .appointment-detail-row {
+  border-color: rgba(212, 176, 106, 0.2) !important;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.1), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.28) !important;
+}
+
+.appointment-detail-card.tone-ferie .appointment-detail-row {
+  border-color: rgba(52, 152, 219, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(52, 152, 219, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.28) !important;
+}
+
+.appointment-detail-card.tone-permission .appointment-detail-row {
+  border-color: rgba(46, 204, 113, 0.26) !important;
+  background:
+    linear-gradient(180deg, rgba(46, 204, 113, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.28) !important;
+}
+
+.appointment-detail-card.tone-past .appointment-detail-row {
+  border-color: rgba(190, 90, 90, 0.24) !important;
+  background:
+    linear-gradient(180deg, rgba(190, 90, 90, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.28) !important;
+}
+
 :host ::ng-deep .add-ferie-btn {
   background: rgba(212, 176, 106, 0.1) !important;
   border-color: rgba(212, 176, 106, 0.22) !important;
@@ -461,6 +502,11 @@
 .permission-card.ferie-card::before {
   background: linear-gradient(180deg, #52a7db, rgba(82, 167, 219, 0.18));
   box-shadow: 0 0 14px rgba(82, 167, 219, 0.2);
+}
+
+.permission-card.staff-editor-card::before {
+  background: linear-gradient(180deg, #f2d18b, rgba(242, 209, 139, 0.18));
+  box-shadow: 0 0 14px rgba(242, 209, 139, 0.2);
 }
 
 .permission-card:has(.appointment-detail-kicker:nth-child(1)) .permission-head {
