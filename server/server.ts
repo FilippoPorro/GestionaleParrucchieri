@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import passport from "./config/passport";
 import dotenv from "dotenv";
-import { connectDatabase, db } from "./db_parrucchieri";
+import { connectDatabase, db, isDatabaseConnected } from "./db_parrucchieri";
 import aiRoute from "./routes/api-ai";
 import loginRoute from "./routes/login";
 import googleAuthRoute from "./routes/google-auth";
@@ -20,10 +20,22 @@ import { sendHtmlMail, sendMailInBackground } from "./services/mail-utils";
 
 
 dotenv.config();
+const startedAt = new Date();
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[process] Unhandled rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("[process] Uncaught exception:", error);
+});
+
 connectDatabase().then(() => {
+  console.log("[startup] Supabase connection verified");
   startAppointmentReminderJob();
 }).catch(err => {
-  process.exit(1);
+  console.error("[startup] Supabase connection check failed:", err);
+  console.error("[startup] Server remains online; API routes will report DB errors until Supabase recovers.");
 });
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -61,7 +73,11 @@ app.get("/api/health", (_req, res) => {
   res.status(200).json({
     ok: true,
     service: "gestionale-parrucchieri-api",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    startedAt: startedAt.toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
+    databaseConnected: isDatabaseConnected(),
+    port: PORT
   });
 });
 
@@ -1247,5 +1263,6 @@ app.post("/api/checkout/complete", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[startup] Server listening on 0.0.0.0:${PORT}`);
 });
