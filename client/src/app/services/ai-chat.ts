@@ -59,7 +59,6 @@ export class AiChatService {
           : []
       };
     } catch (error: any) {
-      console.error('AI CHAT SERVICE ERROR:', error);
 
       if (error?.message === 'TIMEOUT') {
         return {

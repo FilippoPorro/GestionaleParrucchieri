@@ -21,10 +21,8 @@ import { sendHtmlMail, sendMailInBackground } from "./services/mail-utils";
 
 dotenv.config();
 connectDatabase().then(() => {
-  console.log("Database connesso nel server");
   startAppointmentReminderJob();
 }).catch(err => {
-  console.error("Errore connessione database:", err);
   process.exit(1);
 });
 const app = express();
@@ -54,7 +52,6 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET as string,
 });
 app.use("/", (req, res, next) => {
-  console.log(`----> ${req.method}: ${req.originalUrl}`);
   next();
 });
 
@@ -686,7 +683,6 @@ app.get("/api/imgProdotti", async (req, res) => {
       .execute();
 
     const images = result.resources.map((img: any) => img.secure_url);
-    console.log(images);
     res.json(images);
   } catch {
     res.status(500).send("Errore Cloudinary");
@@ -754,7 +750,6 @@ app.get("/api/prodotti", async (req, res) => {
       )
     })));
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Errore server" });
   }
 });
@@ -787,7 +782,6 @@ app.get("/api/cart", async (req, res) => {
     const cart = await getReservedCart(cartId);
     return res.json(cart || { cartId: null, expiresAt: null, items: [] });
   } catch (err: any) {
-    console.error("Errore GET /api/cart:", err);
     return res.status(500).json({ message: "Errore caricamento carrello", error: err.message });
   }
 });
@@ -821,7 +815,6 @@ app.get("/api/cart/active", async (req, res) => {
     const cart = await getReservedCart(cartId);
     return res.json(cart || { cartId: null, expiresAt: null, items: [] });
   } catch (err: any) {
-    console.error("Errore GET /api/cart/active:", err);
     return res.status(500).json({ message: "Errore caricamento carrello", error: err.message });
   }
 });
@@ -852,7 +845,6 @@ app.post("/api/cart/claim", async (req, res) => {
     const cart = await getReservedCart(cartId);
     return res.json(cart || { cartId: null, expiresAt: null, items: [] });
   } catch (err: any) {
-    console.error("Errore POST /api/cart/claim:", err);
     return res.status(500).json({ message: "Errore associazione carrello", error: err.message });
   }
 });
@@ -893,7 +885,6 @@ app.post("/api/cart/items", async (req, res) => {
       items: []
     });
   } catch (err: any) {
-    console.error("Errore POST /api/cart/items:", err);
     return res.status(isStockError(err) ? 409 : 500).json({
       message: isStockError(err) ? "Stock insufficiente" : "Errore aggiornamento carrello",
       error: err.message
@@ -929,7 +920,6 @@ app.delete("/api/cart/items/:productId", async (req, res) => {
 
     return res.json(cart || { cartId: reservedCartId, expiresAt: null, items: [] });
   } catch (err: any) {
-    console.error("Errore DELETE /api/cart/items/:productId:", err);
     return res.status(500).json({ message: "Errore rimozione prodotto", error: err.message });
   }
 });
@@ -958,7 +948,6 @@ app.delete("/api/cart", async (req, res) => {
 
     return res.json({ message: "Carrello svuotato" });
   } catch (err: any) {
-    console.error("Errore DELETE /api/cart:", err);
     return res.status(500).json({ message: "Errore svuotamento carrello", error: err.message });
   }
 });
@@ -989,7 +978,6 @@ app.post("/api/prodotti", async (req, res) => {
     if (error) throw error;
     res.status(201).json(data);
   } catch (err: any) {
-    console.error("Errore POST /api/prodotti:", err);
     res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -1030,7 +1018,6 @@ app.put("/api/prodotti/:id", async (req, res) => {
 
     res.json(data);
   } catch (err: any) {
-    console.error("Errore PUT /api/prodotti/:id:", err);
     res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -1055,7 +1042,6 @@ app.delete("/api/prodotti/:id", async (req, res) => {
 
     res.json({ message: "Prodotto eliminato con successo" });
   } catch (err: any) {
-    console.error("Errore DELETE /api/prodotti/:id:", err);
     res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -1103,7 +1089,6 @@ app.post("/api/register", async (req, res) => {
 
     res.status(201).json({ message: "Account creato!" });
   } catch (err: any) {
-    console.error(err);
     res.status(500).json({ message: "Errore server", error: err.message });
   }
 });
@@ -1121,7 +1106,6 @@ app.post("/api/products/update-stock", async (req, res) => {
 
     res.json({ message: "Stock aggiornato" });
   } catch (err: any) {
-    console.error(err);
     res.status(isStockError(err) ? 409 : 500).json({
       message: "Errore aggiornamento stock",
       error: err.message,
@@ -1169,17 +1153,14 @@ app.post("/api/checkout/complete", async (req, res) => {
   }
 
   if (authState.tokenInvalid) {
-    console.warn("Checkout online: token autenticazione non valido", checkoutLogContext);
     return res.status(401).json({ message: "Sessione scaduta, effettua di nuovo il login" });
   }
 
   try {
-    console.info("Checkout online avviato", checkoutLogContext);
     const checkoutUserId = authenticatedUserId ?? GUEST_CHECKOUT_USER_ID;
     let vendita: CheckoutRpcResult | null = null;
 
     if (cartId) {
-      console.info("Checkout online: provo RPC carrello riservato", checkoutLogContext);
       const { data: cartCheckoutData, error: cartCheckoutError } = await db
         .rpc("complete_reserved_cart_checkout_sicuro", {
           p_cart_id: cartId,
@@ -1191,19 +1172,13 @@ app.post("/api/checkout/complete", async (req, res) => {
       if (!cartCheckoutError) {
         vendita = cartCheckoutData as CheckoutRpcResult | null;
       } else if (!isCheckoutRpcFallbackError(cartCheckoutError)) {
-        console.error("Checkout online: errore RPC carrello riservato", cartCheckoutError);
         throw cartCheckoutError;
       } else {
-        console.warn("Checkout online: uso fallback dopo RPC carrello riservato", cartCheckoutError);
       }
     }
 
     if (!vendita?.idVendita) {
       const normalizedItems = normalizeCartItems(cartItems);
-      console.info("Checkout online: provo RPC checkout standard", {
-        ...checkoutLogContext,
-        normalizedItemCount: normalizedItems.length
-      });
 
       const { data: checkoutData, error: checkoutError } = await db
         .rpc("complete_checkout_sicuro", {
@@ -1214,12 +1189,10 @@ app.post("/api/checkout/complete", async (req, res) => {
         .single();
 
       if (checkoutError && !isCheckoutRpcFallbackError(checkoutError)) {
-        console.error("Checkout online: errore RPC checkout standard", checkoutError);
         throw checkoutError;
       }
 
       if (checkoutError) {
-        console.warn("Checkout online: uso fallback applicativo", checkoutError);
         vendita = await completeCheckoutWithFallback(checkoutUserId, total, normalizedItems);
       } else {
         vendita = checkoutData as CheckoutRpcResult | null;
@@ -1237,15 +1210,9 @@ app.post("/api/checkout/complete", async (req, res) => {
         .eq("idCart", cartId);
 
       if (cartCleanupError) {
-        console.error("Errore pulizia carrello dopo checkout:", cartCleanupError);
       }
     }
 
-    console.info("Checkout online completato, preparo mail background", {
-      ...checkoutLogContext,
-      idVendita: vendita.idVendita,
-      durationMs: Date.now() - checkoutStartedAt
-    });
 
     sendMailInBackground("Errore invio mail conferma acquisto", () =>
       sendOrderConfirmationEmail({
@@ -1270,11 +1237,6 @@ app.post("/api/checkout/complete", async (req, res) => {
       idVendita: vendita?.idVendita,
     });
   } catch (err: any) {
-    console.error("Checkout online fallito", {
-      ...checkoutLogContext,
-      durationMs: Date.now() - checkoutStartedAt,
-      error: err
-    });
     const isConflict = isStockError(err);
     return res.status(isStockError(err) ? 409 : 500).json({
       message: isConflict
@@ -1286,5 +1248,4 @@ app.post("/api/checkout/complete", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server attivo su http://localhost:${PORT}`);
 });

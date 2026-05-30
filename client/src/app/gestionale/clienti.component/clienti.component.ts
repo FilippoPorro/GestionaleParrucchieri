@@ -178,7 +178,6 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore caricamento clienti:', err);
         this.showFeedback(
           'Impossibile caricare i clienti. Controlla che il backend sia avviato e collegato a Supabase.',
           'error',
@@ -356,7 +355,6 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore aggiornamento cliente:', err);
         this.showFeedback(
           err?.error?.message || 'Aggiornamento cliente non riuscito.',
           'error',
@@ -417,7 +415,6 @@ export class ClientiComponent implements OnInit, OnDestroy {
         }, this.panelCloseAnimationMs);
       },
       error: (err: any) => {
-        console.error('Errore inserimento cliente:', err);
         this.showFeedback(
           err?.error?.message || 'Inserimento cliente non riuscito.',
           'error',
@@ -451,7 +448,6 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore eliminazione cliente:', err);
         this.showFeedback(
           err?.error?.message || 'Eliminazione cliente non riuscita.',
           'error',

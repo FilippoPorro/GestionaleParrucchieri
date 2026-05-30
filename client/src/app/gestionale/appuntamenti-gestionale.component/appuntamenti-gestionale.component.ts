@@ -243,7 +243,6 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         this.loadAppointments();
       },
       error: (error) => {
-        console.error('Errore caricamento dati calendario gestionale:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare operatori e clienti.');
         this.cdr.detectChanges();
@@ -562,7 +561,6 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Errore caricamento appuntamenti gestionale:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare gli appuntamenti.');
         this.cdr.detectChanges();
@@ -1277,7 +1275,6 @@ export class AppuntamentiGestionaleComponent implements OnInit, AfterViewInit, O
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Errore caricamento appuntamenti di tutti gli operatori:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare gli appuntamenti degli operatori.');
         this.cdr.detectChanges();

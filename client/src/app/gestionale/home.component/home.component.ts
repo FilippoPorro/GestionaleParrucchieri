@@ -134,7 +134,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy, OnInit {
         this.scheduleNextDashboardRefresh();
       },
       error: (error) => {
-        console.error('Errore nel recupero delle statistiche dashboard:', error);
         this.scheduleNextDashboardRefresh();
       }
     });

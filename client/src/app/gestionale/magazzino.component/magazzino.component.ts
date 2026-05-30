@@ -271,7 +271,6 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore caricamento prodotti:', err);
         this.showFeedback(
           'Impossibile caricare i prodotti. Controlla il backend.',
           'error',
@@ -409,7 +408,6 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore aggiornamento prodotto:', err);
         this.showFeedback(
           err?.error?.message || 'Aggiornamento prodotto non riuscito.',
           'error',
@@ -466,7 +464,6 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         }, this.panelCloseAnimationMs);
       },
       error: (err: any) => {
-        console.error('Errore inserimento prodotto:', err);
         this.showFeedback(
           err?.error?.message || 'Inserimento prodotto non riuscito.',
           'error',
@@ -503,7 +500,6 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore eliminazione prodotto:', err);
         this.showFeedback(
           err?.error?.message || 'Eliminazione prodotto non riuscita.',
           'error',

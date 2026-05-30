@@ -155,7 +155,6 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err) => {
-        console.error('Errore caricamento fornitori:', err);
         this.showFeedback(
           'Impossibile caricare i fornitori. Controlla che il backend sia avviato e collegato a Supabase.',
           'error',
@@ -328,7 +327,6 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err) => {
-        console.error('Errore aggiornamento fornitore:', err);
         this.showFeedback(
           err?.error?.message || 'Aggiornamento fornitore non riuscito.',
           'error',
@@ -376,7 +374,6 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         }, this.panelCloseAnimationMs);
       },
       error: (err) => {
-        console.error('Errore inserimento fornitore:', err);
         this.showFeedback(
           err?.error?.message || 'Inserimento fornitore non riuscito.',
           'error',
@@ -416,7 +413,6 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err) => {
-        console.error('Errore eliminazione fornitore:', err);
         this.showFeedback(
           err?.error?.message || 'Eliminazione fornitore non riuscita.',
           'error',

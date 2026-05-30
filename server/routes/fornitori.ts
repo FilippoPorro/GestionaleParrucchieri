@@ -61,7 +61,6 @@ router.get("/", async (_req: Request, res: Response) => {
 
     return res.json({ fornitori });
   } catch (err: any) {
-    console.error("Errore GET /fornitori:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -92,7 +91,6 @@ router.post("/", async (req: Request, res: Response) => {
 
     return res.status(201).json(fornitore);
   } catch (err: any) {
-    console.error("Errore POST /fornitori:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -129,7 +127,6 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     return res.json(fornitore);
   } catch (err: any) {
-    console.error("Errore PUT /fornitori/:id:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -159,7 +156,6 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.json({ message: "Fornitore eliminato con successo" });
   } catch (err: any) {
-    console.error("Errore DELETE /fornitori/:id:", err);
     return res.status(500).json({ message: err.message });
   }
 });

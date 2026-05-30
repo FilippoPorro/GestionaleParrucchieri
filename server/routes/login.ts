@@ -158,7 +158,6 @@ router.post("/login", async (req: Request, res: Response) => {
       }
     });
   } catch (err: any) {
-    console.error("Errore POST /login:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -192,7 +191,6 @@ router.get("/me", verifyToken, async (req: any, res: Response) => {
         null
     });
   } catch (error: any) {
-    console.error("Errore GET /me:", error);
     return res.status(500).json({ message: "Errore server" });
   }
 });
@@ -239,7 +237,6 @@ router.put("/me", verifyToken, async (req: any, res: Response) => {
 
     return res.json({ message: "Dati aggiornati con successo" });
   } catch (error: any) {
-    console.error("Errore PUT /me:", error);
     return res.status(500).json({ message: "Errore server" });
   }
 });
@@ -315,7 +312,6 @@ router.post("/register", async (req: Request, res: Response) => {
     });
 
   } catch (err: any) {
-    console.error("Errore POST /register:", err);
     return res.status(500).json({
       message: "Errore server"
     });
@@ -359,7 +355,6 @@ router.post("/verify-password", verifyToken, async (req: any, res: Response) => 
       message: "Identità verificata con successo"
     });
   } catch (error: any) {
-    console.error("Errore POST /verify-password:", error);
     return res.status(500).json({
       message: "Errore server"
     });
@@ -444,7 +439,6 @@ router.post("/change-password", verifyToken, async (req: any, res: Response) => 
       message: "Password aggiornata con successo"
     });
   } catch (error: any) {
-    console.error("Errore POST /change-password:", error);
     return res.status(500).json({
       message: "Errore server"
     });
@@ -607,7 +601,6 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       message: "Se l’email esiste, riceverai un link per reimpostare la password"
     });
   } catch (error: any) {
-    console.error("Errore POST /forgot-password:", error);
     return res.status(500).json({
       message: "Errore server durante il recupero password"
     });
@@ -658,7 +651,6 @@ router.get("/reset-password/validate", async (req: Request, res: Response) => {
       expiresAt: user.resetPasswordExpires
     });
   } catch (error: any) {
-    console.error("Errore GET /reset-password/validate:", error);
     return res.status(500).json({
       valid: false,
       message: "Errore server durante la verifica del link"
@@ -768,7 +760,6 @@ router.post("/reset-password", async (req: Request, res: Response) => {
       message: "Password aggiornata con successo"
     });
   } catch (error: any) {
-    console.error("Errore POST /reset-password:", error);
     return res.status(500).json({
       message: "Errore server durante il reset della password"
     });

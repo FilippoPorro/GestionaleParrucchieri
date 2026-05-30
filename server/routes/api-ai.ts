@@ -842,7 +842,6 @@ async function getSuggestedServices(lastUser: string): Promise<ServiceCard[]> {
 
         return [];
     } catch (err) {
-        console.error("Errore ricerca servizi:", err);
         return [];
     }
 }
@@ -902,7 +901,6 @@ async function getBestMatchingServices(
 
         return takeDiverseServices(scored, 3);
     } catch (err) {
-        console.error("Errore matching servizi:", err);
         return [];
     }
 }
@@ -1001,7 +999,6 @@ async function getBestMatchingProducts(lastUser: string): Promise<ProductCard[]>
 
         return takeDiverseProducts(fallbackProducts, 4);
     } catch (err) {
-        console.error("Errore matching prodotti:", err);
         return [];
     }
 }
@@ -1257,10 +1254,8 @@ function buildProfessionalReply(
 
 router.post("/", async (req, res) => {
     try {
-        console.log("POST /api/chat ricevuta");
 
         if (!process.env.HF_TOKEN) {
-            console.log("HF_TOKEN mancante");
             return res.status(500).json({
                 reply: "HF_TOKEN mancante nel file .env",
                 services: [],
@@ -1271,7 +1266,6 @@ router.post("/", async (req, res) => {
         const model = process.env.HF_MODEL || "katanemo/Arch-Router-1.5B:hf-inference";
         const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
 
-        console.log("Messages ricevuti:", messages);
 
         const allServices = await getAllServices();
 
@@ -1283,7 +1277,6 @@ router.post("/", async (req, res) => {
         const directProductConcern = detectProductConcern(lastUser);
         const directIntent = detectIntent(lastUser);
 
-        console.log("Ultimo messaggio utente:", lastUser);
 
         const hairKeywords = [
             "capelli", "taglio", "piega", "phon", "piastra", "ricci", "lisci", "frangia", "scalato",
@@ -1320,7 +1313,6 @@ router.post("/", async (req, res) => {
         ].some(k => lastUser.includes(k));
 
         if (lastUser && !isHairRelated && !genericOk) {
-            console.log("Domanda fuori tema");
             return res.json({
                 reply:
                     "Posso aiutarti solo con informazioni e consigli sui servizi del salone, sui capelli, sulla barba e sui prodotti.\n" +
@@ -1400,9 +1392,6 @@ router.post("/", async (req, res) => {
             services = await getSuggestedServices(lastUser);
         }
 
-        console.log("Intent:", intent);
-        console.log("RequestType:", requestType);
-        console.log("Services trovati:", services);
         if (requestType === "list") {
             return res.json({
                 reply: "Ecco alcuni servizi disponibili nel salone:",
@@ -1465,7 +1454,6 @@ REGOLE:
 ${servicesContext}
 `;
 
-        console.log("Invio richiesta a Hugging Face...");
 
         const completion = await Promise.race([
             hf.chat.completions.create({
@@ -1482,7 +1470,6 @@ ${servicesContext}
             ),
         ]);
 
-        console.log("Risposta Hugging Face ricevuta");
 
         const reply = completion.choices?.[0]?.message?.content ?? "";
 
@@ -1493,7 +1480,6 @@ ${servicesContext}
         });
     } catch (err: any) {
         const msg = String(err?.message || err);
-        console.error("HF CHAT ERROR:", err);
 
         if (msg.includes("HF_TIMEOUT")) {
             return res.status(504).json({

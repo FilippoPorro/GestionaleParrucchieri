@@ -101,7 +101,6 @@ router.get(
       { session: false },
       (err: unknown, user?: JwtUser) => {
         if (err) {
-          console.error("Errore passport callback Google:", err);
           return res.redirect(buildClientRedirect("/login", {
             googleError: "true",
             reason: "callback"
@@ -119,7 +118,6 @@ router.get(
           const token = generateToken(user);
           return res.redirect(buildClientRedirect("/login", { token }, frontendUrl));
         } catch (tokenError) {
-          console.error("Errore generazione token Google:", tokenError);
           return res.redirect(buildClientRedirect("/login", {
             googleError: "true",
             reason: "token"

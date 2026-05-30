@@ -74,7 +74,6 @@ router.get("/", async (req: Request, res: Response) => {
 
     return res.json(servizi || []);
   } catch (err: any) {
-    console.error("Errore GET /servizi:", err);
     return res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -108,7 +107,6 @@ router.post("/", async (req: Request, res: Response) => {
 
     return res.status(201).json(data);
   } catch (err: any) {
-    console.error("Errore POST /servizi:", err);
     return res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -152,7 +150,6 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     return res.json(data);
   } catch (err: any) {
-    console.error("Errore PUT /servizi/:id:", err);
     return res.status(500).json({ message: err.message || "Errore server" });
   }
 });
@@ -181,7 +178,6 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     return res.json({ message: "Servizio eliminato con successo" });
   } catch (err: any) {
-    console.error("Errore DELETE /servizi/:id:", err);
     return res.status(500).json({ message: err.message || "Errore server" });
   }
 });

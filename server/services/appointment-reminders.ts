@@ -178,14 +178,9 @@ async function runReminderJob(): Promise<void> {
       try {
         await processAppointmentReminder(appointment);
       } catch (appointmentError) {
-        console.error(
-          `Errore invio reminder per appuntamento ${appointment.idAppuntamento}:`,
-          appointmentError
-        );
       }
     }
   } catch (error) {
-    console.error("Errore job reminder appuntamenti:", error);
   } finally {
     lastReminderCheckAt = new Date();
     reminderJobRunning = false;

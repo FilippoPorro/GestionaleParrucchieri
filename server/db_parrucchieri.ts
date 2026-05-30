@@ -47,12 +47,10 @@ export async function connectDatabase(): Promise<SupabaseClient> {
     .limit(1);
 
   if (error) {
-    console.error("Errore connessione database:", error);
     throw new Error(`Connessione a Supabase fallita: ${error.message}`);
   }
 
   connectionChecked = true;
-  console.log("Connessione a Supabase riuscita");
 
   return db;
 }

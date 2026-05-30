@@ -488,7 +488,6 @@ router.get("/stats", async (_req: Request, res: Response) => {
       }
     });
   } catch (err: any) {
-    console.error("Errore GET /dashboard/stats:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -1219,7 +1218,6 @@ router.get("/report", async (req: Request, res: Response) => {
       }
     });
   } catch (err: any) {
-    console.error("Errore GET /dashboard/report:", err);
     return res.status(500).json({ message: err.message });
   }
 });

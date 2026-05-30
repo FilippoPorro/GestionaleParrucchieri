@@ -303,7 +303,6 @@ export class StaffComponent implements OnInit, OnDestroy {
         this.loadAppointments();
       },
       error: (error) => {
-        console.error('Errore caricamento staff:', error);
         this.isLoadingStaff = false;
         this.showFeedback(
           'Impossibile caricare lo staff. Controlla che backend e database siano disponibili.',
@@ -347,7 +346,6 @@ export class StaffComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (error) => {
-        console.error('Errore caricamento calendario staff:', error);
         this.isLoadingCalendar = false;
         this.showFeedback('Non riesco a caricare gli appuntamenti dello staff selezionato.', 'error', 'Calendario non disponibile');
         this.refreshView();
@@ -691,7 +689,6 @@ export class StaffComponent implements OnInit, OnDestroy {
           this.loadAppointments();
         },
         error: (error) => {
-          console.error('Errore creazione permessi staff:', error);
           this.isCreatingEmptySlot = false;
           this.showFeedback(
             error?.error?.message || 'Non riesco ad aggiungere i permessi o ferie selezionati.',
@@ -702,7 +699,6 @@ export class StaffComponent implements OnInit, OnDestroy {
         }
       });
     }).catch(err => {
-      console.error('Errore nel caricamento dinamico di rxjs forkJoin:', err);
       this.isCreatingEmptySlot = false;
       this.refreshView();
     });
@@ -936,7 +932,6 @@ export class StaffComponent implements OnInit, OnDestroy {
         this.loadAppointments();
       },
       error: (error) => {
-        console.error('Errore eliminazione permesso:', error);
         this.isLoadingCalendar = false;
         this.showFeedback('Impossibile eliminare il permesso.', 'error', 'Errore eliminazione');
         this.refreshView();

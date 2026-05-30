@@ -355,7 +355,6 @@ router.get("/count", async (req: Request, res: Response) => {
 
     return res.json({ totale: count ?? 0 });
   } catch (err: any) {
-    console.error("Errore GET /appuntamenti/count:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -450,7 +449,6 @@ router.get("/", async (req: Request, res: Response) => {
 
     return res.json({ appuntamenti: appointmentsWithServices });
   } catch (err: any) {
-    console.error("Errore GET /appuntamenti:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -547,9 +545,6 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
 
     if (createAppointmentError) {
       if (isMissingRpcError(createAppointmentError)) {
-        console.warn(
-          "Funzione create_appuntamento_sicuro non disponibile: uso fallback applicativo."
-        );
 
         data = await createAppointmentFallback({
           idCliente,
@@ -600,7 +595,6 @@ router.post("/", verifyToken, async (req: any, res: Response) => {
 
     return res.status(201).json(data);
   } catch (err: any) {
-    console.error("Errore POST /appuntamenti:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -656,7 +650,6 @@ router.post("/slot-vuoto", verifyToken, async (req: any, res: Response) => {
 
     return res.status(201).json(slot);
   } catch (err: any) {
-    console.error("Errore POST /appuntamenti/slot-vuoto:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -754,7 +747,6 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
         .eq("tipo", "email_reminder_24h");
 
       if (reminderResetError) {
-        console.error("Errore reset reminder appuntamento:", reminderResetError);
       }
     }
 
@@ -776,7 +768,6 @@ router.put("/:idAppuntamento", verifyToken, async (req: any, res: Response) => {
 
     return res.json(data as Appuntamento);
   } catch (err: any) {
-    console.error("Errore PUT /appuntamenti/:idAppuntamento:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -826,7 +817,6 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
     try {
       mailPayload = await buildAppointmentMailPayload(appointment as Appuntamento);
     } catch (mailPayloadError) {
-      console.error("Errore preparazione mail eliminazione appuntamento:", mailPayloadError);
     }
 
     const { error: reminderCleanupError } = await db
@@ -835,7 +825,6 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
       .eq("idAppuntamento", idAppuntamento);
 
     if (reminderCleanupError) {
-      console.error("Errore pulizia notifiche email appuntamento:", reminderCleanupError);
     }
 
     const { error: servicesCleanupError } = await db
@@ -864,7 +853,6 @@ router.delete("/:idAppuntamento", verifyToken, async (req: any, res: Response) =
 
     return res.json({ message: "Appuntamento eliminato con successo" });
   } catch (err: any) {
-    console.error("Errore DELETE /appuntamenti/:idAppuntamento:", err);
     return res.status(500).json({ message: err.message });
   }
 });

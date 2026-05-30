@@ -88,7 +88,6 @@ export class PasswordDimenticataComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Errore forgot password:', err);
         this.isLoading = false;
         this.showAlert(
           err?.error?.message || 'Errore durante l’invio del link di reset.',

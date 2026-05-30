@@ -188,7 +188,6 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore caricamento servizi:', err);
         this.showFeedback(
           'Impossibile caricare i servizi. Controlla il backend.',
           'error',
@@ -333,7 +332,6 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore aggiornamento servizio:', err);
         this.showFeedback(
           err?.error?.message || 'Aggiornamento servizio non riuscito.',
           'error',
@@ -389,7 +387,6 @@ export class ServiziComponent implements OnInit, OnDestroy {
         }, this.panelCloseAnimationMs);
       },
       error: (err: any) => {
-        console.error('Errore inserimento servizio:', err);
         this.showFeedback(
           err?.error?.message || 'Inserimento servizio non riuscito.',
           'error',
@@ -426,7 +423,6 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.refreshView();
       },
       error: (err: any) => {
-        console.error('Errore eliminazione servizio:', err);
         this.showFeedback(
           err?.error?.message || 'Eliminazione servizio non riuscita.',
           'error',

@@ -159,7 +159,7 @@ export class PrenotaAppuntamentoComponent implements OnInit {
         this.loadServiziDisponibili();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error(err)
+      error: (err) => void 0
     });
 
     this.loadManagementClienti();
@@ -647,7 +647,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
           }, 1500);
         },
         error: (err: any) => {
-          console.error(err);
           this.isSubmitting = false;
           if (err?.status === 401) {
             this.showBookingAlert(
@@ -863,7 +862,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error(err);
         this.servizi = [];
         this.appuntamentiOperatore = [];
         this.form.idServizio = null;
@@ -893,7 +891,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error(err);
         this.hasLoadedManagementClienti = false;
       }
     });
@@ -1026,7 +1023,6 @@ export class PrenotaAppuntamentoComponent implements OnInit {
 
       return JSON.parse(atob(normalizedPayload)) as T;
     } catch (error) {
-      console.error('Errore decodifica token prenotazione:', error);
       this.showBookingAlert(
         'Sessione non valida. Effettua di nuovo il login.',
         'error',

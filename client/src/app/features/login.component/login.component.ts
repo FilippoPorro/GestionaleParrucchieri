@@ -175,7 +175,6 @@ export class LoginComponent implements OnInit {
 
     this.auth.login(this.email, this.password, this.rememberMe).subscribe({
       next: (res) => {
-        console.log(res);
 
         if (this.rememberMe) {
           localStorage.setItem('rememberedEmail', this.email);
@@ -193,7 +192,6 @@ export class LoginComponent implements OnInit {
         }, 800);
       },
       error: (err) => {
-        console.error('Errore login:', err);
         this.isLoading = false;
 
         if (err.status === 404) {

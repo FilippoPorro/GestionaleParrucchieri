@@ -93,7 +93,6 @@ export class CartComponent implements OnInit {
       return;
     }
 
-    console.log(cart);
 
     this.router.navigate(['/payment']);
   }

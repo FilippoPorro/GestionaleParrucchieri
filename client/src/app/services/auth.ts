@@ -48,7 +48,6 @@ export class AuthService {
       const decodedPayload = this.decodeTokenPayload(token);
       return decodedPayload['ruolo'] ?? null;
     } catch (e) {
-      console.error('Errore decodifica token', e);
       return null;
     }
   });
@@ -67,7 +66,6 @@ export class AuthService {
       const decodedPayload = this.decodeTokenPayload(token);
       return !!decodedPayload['mustChangePassword'];
     } catch (e) {
-      console.error('Errore decodifica stato password dal token', e);
       return false;
     }
   });
@@ -112,7 +110,7 @@ export class AuthService {
 
     this._token.set(token);
     this.prodottoService.claimCurrentCart().subscribe({
-      error: (error) => console.warn('Associazione carrello dopo login non riuscita:', error)
+      error: (error) => void 0
     });
   }
 
@@ -193,7 +191,6 @@ export class AuthService {
       const decodedPayload = this.decodeTokenPayload(token);
       return typeof decodedPayload['email'] === 'string' ? decodedPayload['email'] : null;
     } catch (e) {
-      console.error('Errore decodifica email dal token', e);
       return null;
     }
   }
@@ -217,7 +214,6 @@ export class AuthService {
         ruolo: typeof decodedPayload['ruolo'] === 'string' ? decodedPayload['ruolo'] : ''
       };
     } catch (e) {
-      console.error('Errore decodifica utente dal token', e);
       return null;
     }
   }

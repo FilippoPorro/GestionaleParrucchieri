@@ -165,7 +165,6 @@ export class PaymentComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (this.map) return;
 
     if (!this.mapContainer?.nativeElement) {
-      console.error('Map container non pronto');
       return;
     }
 
@@ -240,7 +239,6 @@ export class PaymentComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Errore caricamento dati utente per checkout:', err);
         this.isLoadingUserData = false;
         this.cdr.detectChanges();
       }

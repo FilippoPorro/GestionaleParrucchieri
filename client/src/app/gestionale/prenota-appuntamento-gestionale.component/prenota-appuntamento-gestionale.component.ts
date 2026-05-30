@@ -157,7 +157,7 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
         this.loadServiziDisponibili();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error(err)
+      error: (err) => void 0
     });
 
     this.loadManagementClienti();
@@ -690,7 +690,6 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
           }, 1500);
         },
         error: (err: any) => {
-          console.error(err);
           this.isSubmitting = false;
           if (err?.status === 401) {
             this.showBookingAlert(
@@ -921,7 +920,6 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error(err);
         this.servizi = [];
         this.appuntamentiOperatore = [];
         this.form.idServizio = null;
@@ -951,7 +949,6 @@ export class PrenotaAppuntamentoGestionaleComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error(err);
         this.hasLoadedManagementClienti = false;
       }
     });

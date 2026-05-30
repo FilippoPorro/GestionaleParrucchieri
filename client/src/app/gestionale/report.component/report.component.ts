@@ -183,7 +183,6 @@ export class ReportComponent implements OnInit, AfterViewInit, OnDestroy {
         this.renderCharts();
       },
       error: (error) => {
-        console.error('Errore caricamento report:', error);
         if (showLoading || !this.reportData) {
           this.reportData = null;
           this.errorMessage = 'Non sono riuscito a caricare il report.';

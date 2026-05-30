@@ -244,7 +244,6 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
         this.loadAppointments();
       },
       error: (error) => {
-        console.error('Errore caricamento dati calendario personale:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare agenda e clienti.');
         this.cdr.detectChanges();
@@ -552,7 +551,6 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Errore caricamento appuntamenti gestionale:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare gli appuntamenti.');
         this.cdr.detectChanges();
@@ -1271,7 +1269,6 @@ export class PersonalAppointmentsCalendarComponent implements OnInit, AfterViewI
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Errore caricamento appuntamenti di tutti gli operatori:', error);
         this.isLoading = false;
         this.showCalendarMessage('Non riesco a caricare gli appuntamenti degli operatori.');
         this.cdr.detectChanges();

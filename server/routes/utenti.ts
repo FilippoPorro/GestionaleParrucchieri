@@ -156,7 +156,6 @@ async function getClientiWithSource(): Promise<{ clienti: Utente[]; source: Clie
     clientiTableRows = await getClientiFromClientiTable();
   } catch (error) {
     if (!isMissingTableError(error)) {
-      console.warn("Lettura tabella clienti fallita, provo fallback su utenti:", error);
     }
   }
 
@@ -270,7 +269,6 @@ router.get("/clienti", async (_req: Request, res: Response) => {
       clienti
     });
   } catch (err: any) {
-    console.error("Errore GET /clienti:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -345,7 +343,6 @@ router.post("/clienti", async (req: Request, res: Response) => {
 
     return res.status(201).json(cliente);
   } catch (err: any) {
-    console.error("Errore POST /clienti:", err);
 
     if (isMissingManagedPasswordColumnError(err)) {
       return res.status(500).json({
@@ -446,7 +443,6 @@ router.put("/clienti/:id", async (req: Request, res: Response) => {
 
     return res.json(cliente);
   } catch (err: any) {
-    console.error("Errore PUT /clienti/:id:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -513,7 +509,6 @@ router.delete("/clienti/:id", async (req: Request, res: Response) => {
 
     return res.json({ message: "Cliente eliminato con successo" });
   } catch (err: any) {
-    console.error("Errore DELETE /clienti/:id:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -535,7 +530,6 @@ router.get("/operatori", async (_req: Request, res: Response) => {
       operatori: (data || []) as Utente[]
     });
   } catch (err: any) {
-    console.error("Errore GET /operatori:", err);
     return res.status(500).json({ message: err.message });
   }
 });

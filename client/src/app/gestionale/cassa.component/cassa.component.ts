@@ -133,28 +133,28 @@ export class CassaComponent implements OnInit {
       next: (res) => {
         this.clienti = res;
       },
-      error: (err) => console.error("Errore caricamento clienti:", err)
+      error: (err) => void 0
     });
 
     this.utentiService.getOperatori().subscribe({
       next: (res) => {
         this.operatori = res;
       },
-      error: (err) => console.error("Errore caricamento operatori:", err)
+      error: (err) => void 0
     });
 
     this.serviziService.getServizi().subscribe({
       next: (res) => {
         this.servizi = res;
       },
-      error: (err) => console.error("Errore caricamento servizi:", err)
+      error: (err) => void 0
     });
 
     this.prodottoService.getProdotti().subscribe({
       next: (res) => {
         this.prodotti = res;
       },
-      error: (err) => console.error("Errore caricamento prodotti:", err)
+      error: (err) => void 0
     });
   }
 
@@ -165,7 +165,7 @@ export class CassaComponent implements OnInit {
         this.scontriniOggi = res.scontriniOggi;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Errore caricamento statistiche cassa:", err)
+      error: (err) => void 0
     });
   }
 
@@ -175,7 +175,7 @@ export class CassaComponent implements OnInit {
         this.appuntamentiDaIncassare = res.appuntamenti || [];
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Errore caricamento appuntamenti da incassare:", err)
+      error: (err) => void 0
     });
   }
 
@@ -558,7 +558,6 @@ export class CassaComponent implements OnInit {
       this.discountMode = draft.discountMode === 'percent' ? 'percent' : 'euro';
       this.discount = Number.isFinite(Number(draft.discount)) ? Math.max(0, Number(draft.discount)) : 0;
     } catch (err) {
-      console.error('Errore ripristino scontrino in corso:', err);
       this.clearReceiptDraft();
     }
   }
@@ -584,7 +583,6 @@ export class CassaComponent implements OnInit {
 
       localStorage.setItem(this.draftStorageKey, JSON.stringify(draft));
     } catch (err) {
-      console.error('Errore salvataggio scontrino in corso:', err);
     }
   }
 
@@ -592,7 +590,6 @@ export class CassaComponent implements OnInit {
     try {
       localStorage.removeItem(this.draftStorageKey);
     } catch (err) {
-      console.error('Errore pulizia scontrino in corso:', err);
     }
   }
 
@@ -851,7 +848,6 @@ export class CassaComponent implements OnInit {
           try {
             this.generateWordDocument();
           } catch (err) {
-            console.error("Errore durante la generazione del file Word:", err);
           }
         }
 
@@ -899,7 +895,6 @@ export class CassaComponent implements OnInit {
         this.errorMessage = err?.status === 409
           ? 'Alcuni prodotti non sono piu disponibili nella quantita richiesta.'
           : 'Pagamento non riuscito. Riprova tra qualche istante.';
-        console.error(err);
         this.cdr.detectChanges();
       }
     });

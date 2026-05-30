@@ -159,7 +159,6 @@ export class ResetPasswordComponent implements OnInit {
         }, 1400);
       },
       error: (err) => {
-        console.error('Errore reset password:', err);
         this.isLoading = false;
         const message = err?.error?.message || 'Impossibile aggiornare la password.';
 

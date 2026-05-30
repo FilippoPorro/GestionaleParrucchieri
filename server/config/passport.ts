@@ -108,7 +108,6 @@ async function persistGooglePhotoURL(idUtente: number, photoURL: string | null):
     .eq("idUtente", idUtente);
 
   if (error && !isMissingPhotoColumnError(error)) {
-    console.warn("Impossibile salvare la foto profilo Google:", error);
   }
 }
 
@@ -135,23 +134,7 @@ passport.use(
         const nome = extractedNames.nome?.trim() || fallbackNames.nome;
         const cognome = extractedNames.cognome?.trim() || fallbackNames.cognome;
 
-        console.log("GOOGLE RAW PROFILE:", {
-          id: profile.id,
-          displayName: profile.displayName,
-          givenName: profile.name?.givenName,
-          familyName: profile.name?.familyName,
-          jsonGivenName: (profile as any)._json?.given_name,
-          jsonFamilyName: (profile as any)._json?.family_name,
-          email,
-          googleId,
-          photo: fotoProfilo
-        });
 
-        console.log("DATI FINALI USATI:", {
-          nome,
-          cognome,
-          email
-        });
 
         if (!email) {
           return done(new Error("Email Google non disponibile"));
@@ -183,7 +166,6 @@ passport.use(
             .single();
 
           if (insertError) {
-            console.error("Errore inserimento utente Google:", insertError);
             throw insertError;
           }
 
@@ -223,7 +205,6 @@ passport.use(
 
         return done(null, existingUser);
       } catch (error) {
-        console.error("Errore autenticazione Google:", error);
         return done(error);
       }
     }

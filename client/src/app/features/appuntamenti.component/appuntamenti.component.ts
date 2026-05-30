@@ -263,7 +263,7 @@ export class AppuntamentiComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Errore caricando operatori e clienti:", err)
+      error: (err) => void 0
     });
 
 
@@ -387,7 +387,7 @@ export class AppuntamentiComponent implements OnInit {
           this.closeAppointmentDetail();
           this.rebuildCalendarEvents();
         },
-        error: (err) => console.error("Errore caricando appuntamenti:", err)
+        error: (err) => void 0
       });
   }
 

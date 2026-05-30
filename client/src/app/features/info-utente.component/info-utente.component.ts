@@ -319,7 +319,6 @@ export class InfoUtenteComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Errore recupero profilo:', err);
         this.errorMessage =
           err?.error?.message || 'Impossibile recuperare i dati utente.';
         this.isLoading = false;
@@ -785,7 +784,6 @@ export class InfoUtenteComponent implements OnInit {
         this.loadUserData();
       },
       error: (err) => {
-        console.error('Errore modifica password:', err);
         this.isChangingPassword = false;
         this.changePasswordMessage = '';
         this.showChangePasswordError(
@@ -881,7 +879,6 @@ export class InfoUtenteComponent implements OnInit {
         this.loadUserData();
       },
       error: (err) => {
-        console.error('Errore aggiornamento profilo:', err);
         this.isSaving = false;
         this.errorMessage =
           err?.error?.message || 'Errore durante il salvataggio dei dati.';

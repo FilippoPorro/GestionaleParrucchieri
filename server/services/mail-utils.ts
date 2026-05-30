@@ -136,14 +136,11 @@ export function sendMailInBackground(label: string, send: () => Promise<unknown>
   const actionLabel = label.replace(/^Errore\s+/i, "");
 
   setImmediate(() => {
-    console.info(`${actionLabel} avviato`);
 
     send()
       .then((info) => {
-        console.info(`${actionLabel} completato`, info);
       })
       .catch((error) => {
-        console.error(`${label}:`, error);
       });
   });
 }

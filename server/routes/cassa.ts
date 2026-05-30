@@ -255,7 +255,6 @@ router.get("/stats", async (_req: Request, res: Response) => {
       scontriniOggi: venditeResult.count ?? 0
     });
   } catch (err: any) {
-    console.error("Errore GET /api/cassa/stats:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -399,7 +398,6 @@ router.get("/appuntamenti-da-incassare", async (_req: Request, res: Response) =>
 
     return res.json({ appuntamenti });
   } catch (err: any) {
-    console.error("Errore GET /api/cassa/appuntamenti-da-incassare:", err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -469,7 +467,6 @@ router.post("/registra", async (req: Request, res: Response) => {
       idVendita
     });
   } catch (err: any) {
-    console.error("Errore POST /api/cassa/registra:", err);
     const statusCode = isStockError(err)
       ? 409
       : isInvalidTotalError(err) || isInvalidPaymentMethodError(err) || isInvalidAppointmentError(err) || isInvalidOperatorError(err)
