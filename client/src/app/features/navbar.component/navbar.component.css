@@ -185,8 +185,47 @@ body {
 
 
 @media (max-width: 768px) {
+  .navbar {
+    min-height: 64px;
+    padding: 8px 0;
+  }
+
   .navbar .container {
-    justify-content: space-between;
+    width: min(100%, calc(100% - 28px));
+    display: grid;
+    grid-template-columns: auto 44px;
+    align-items: center;
+    justify-content: normal;
+    column-gap: 14px;
+    padding: 0;
+  }
+
+  .navbar-brand {
+    height: 48px;
+    justify-self: start;
+  }
+
+  .navbar-brand img {
+    height: 40px;
+  }
+
+  .navbar-toggler {
+    justify-self: end;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+
+  .navbar-toggler-icon {
+    width: 24px;
+    height: 24px;
+    background-position: center;
+    background-size: 24px 24px;
+  }
+
+  .navbar-collapse {
+    grid-column: 1 / -1;
   }
 
   .navbar-nav .nav-link {

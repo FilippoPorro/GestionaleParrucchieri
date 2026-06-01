@@ -29,9 +29,18 @@
     </div>
 
     <section class="services-section">
-      <h2 class="section-title">I nostri servizi</h2>
+      <div class="services-section-head">
+        <h2 class="section-title">I nostri servizi</h2>
+      </div>
 
-      <div class="services-grid">
+      <div
+        class="services-grid"
+        #servicesCarousel
+        (scroll)="handleServicesScroll()"
+        (pointerdown)="pauseServicesCarousel()"
+        (pointerup)="resumeServicesCarousel()"
+        (pointercancel)="resumeServicesCarousel()"
+        (pointerleave)="resumeServicesCarousel()">
         <article class="service-card">
           <img src="https://res.cloudinary.com/duimlq34k/image/upload/v1776329435/SnapInsta.to_483579914_1180046660649742_388332933257248350_n_rpoxxz.jpg" alt="Taglio"
             class="service-img-shampoo" />
@@ -39,7 +48,7 @@
             <h3>Taglio & Styling</h3>
             <p>Consulenza personalizzata, tagli moderni e classici per uomo e donna. Styling professionale per ogni
               occasione.</p>
-            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di più →</a>
+            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di pi&ugrave; &rarr;</a>
           </div>
         </article>
 
@@ -50,7 +59,7 @@
             <h3>Colore & Balayage</h3>
             <p>Colorazioni su misura, tecniche balayage e schiariture con prodotti professionali e trattamento di
               mantenimento.</p>
-            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di più →</a>
+            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di pi&ugrave; &rarr;</a>
           </div>
         </article>
 
@@ -61,7 +70,18 @@
             <h3>Trattamenti</h3>
             <p>Trattamenti ristrutturanti, alla cheratina, maschere rigeneranti e protocolli anti-crespo per capelli
               nutriti e lucenti.</p>
-            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di più →</a>
+            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain">Scopri di pi&ugrave; &rarr;</a>
+          </div>
+        </article>
+
+        <article class="service-card is-carousel-clone" aria-hidden="true">
+          <img src="https://res.cloudinary.com/duimlq34k/image/upload/v1776329435/SnapInsta.to_483579914_1180046660649742_388332933257248350_n_rpoxxz.jpg" alt=""
+            class="service-img-shampoo" />
+          <div class="service-body">
+            <h3>Taglio & Styling</h3>
+            <p>Consulenza personalizzata, tagli moderni e classici per uomo e donna. Styling professionale per ogni
+              occasione.</p>
+            <a [routerLink]="['/services']" routerLinkActive="active" class="link-plain" tabindex="-1">Scopri di pi&ugrave; &rarr;</a>
           </div>
         </article>
       </div>

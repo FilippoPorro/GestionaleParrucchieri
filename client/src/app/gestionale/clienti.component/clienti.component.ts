@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
 import { timeout } from 'rxjs/operators';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
@@ -25,6 +26,13 @@ interface CalendarPickerDay {
   isSelected: boolean;
 }
 
+interface ClientiEditorState {
+  mode: 'create' | 'edit';
+  selectedId?: number;
+  newCliente?: ClienteFormDraft;
+  draftCliente?: Utente;
+}
+
 @Component({
   selector: 'app-clienti.component',
   standalone: true,
@@ -33,6 +41,7 @@ interface CalendarPickerDay {
   styleUrl: './clienti.component.css',
 })
 export class ClientiComponent implements OnInit, OnDestroy {
+  private readonly editorStateStorageKey = 'gestionale.clienti.editorState';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private createCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -79,6 +88,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
 
   constructor(
     private utentiService: UtentiService,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -136,6 +146,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadClienti();
     this.syncCreateBirthDatePickerMonth(new Date());
+    this.openCreatePanelFromRoute();
   }
 
   ngOnDestroy(): void {
@@ -165,13 +176,14 @@ export class ClientiComponent implements OnInit, OnDestroy {
       next: (clienti: Utente[]) => {
         this.clienti = clienti;
         this.pendingDeleteCliente = null;
-        if (this.selectedCliente) {
+        if (!this.restorePersistedEditorState() && this.selectedCliente) {
           const updatedSelection = clienti.find((cliente: Utente) => cliente.idUtente === this.selectedCliente?.idUtente) ?? null;
           if (updatedSelection) {
             this.selectCliente(updatedSelection);
           } else {
             this.selectedCliente = null;
             this.draftCliente = null;
+            this.clearPersistedEditorState();
           }
         }
         this.isLoading = false;
@@ -205,6 +217,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
     };
     this.isEditPhoneValid = true;
     this.clearFeedback();
+    this.persistEditorState();
 
     if (scrollToEditor) {
       this.scrollToEditor();
@@ -219,6 +232,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
     if (this.selectedCliente || this.draftCliente) {
       this.isEditClosing = true;
       this.clearFeedback();
+      this.clearPersistedEditorState();
       this.refreshView();
 
       this.editCloseTimeout = setTimeout(() => {
@@ -227,6 +241,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.isCreateMode = false;
         this.isEditClosing = false;
         this.editCloseTimeout = null;
+        this.clearPersistedEditorState();
         this.refreshView();
       }, this.panelCloseAnimationMs);
 
@@ -237,6 +252,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
     this.draftCliente = null;
     this.isCreateMode = false;
     this.clearFeedback();
+    this.clearPersistedEditorState();
   }
 
   startCreateCliente(): void {
@@ -250,7 +266,16 @@ export class ClientiComponent implements OnInit, OnDestroy {
     this.isNewPhoneValid = false;
     this.closeCreateBirthDatePicker(true);
     this.clearFeedback();
+    this.persistEditorState();
     this.scrollToEditor();
+  }
+
+  private openCreatePanelFromRoute(): void {
+    if (this.route.snapshot.queryParamMap.get('create') !== 'cliente') {
+      return;
+    }
+
+    setTimeout(() => this.startCreateCliente());
   }
 
   cancelCreateCliente(): void {
@@ -260,6 +285,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
 
     this.isCreateClosing = true;
     this.clearFeedback();
+    this.clearPersistedEditorState();
     this.refreshView();
 
     this.createCloseTimeout = setTimeout(() => {
@@ -269,12 +295,14 @@ export class ClientiComponent implements OnInit, OnDestroy {
       this.isNewPhoneValid = false;
       this.closeCreateBirthDatePicker(true);
       this.createCloseTimeout = null;
+      this.clearPersistedEditorState();
       this.refreshView();
     }, this.panelCloseAnimationMs);
   }
 
   onNewPhoneNumberChange(phoneNumber: string): void {
     this.newCliente.telefono = phoneNumber || '';
+    this.persistEditorState();
   }
 
   onNewPhoneValidityChange(isValid: boolean): void {
@@ -288,6 +316,33 @@ export class ClientiComponent implements OnInit, OnDestroy {
     }
 
     this.draftCliente.telefono = phoneNumber || '';
+    this.persistEditorState();
+  }
+
+  persistEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    const state: ClientiEditorState | null = this.isCreateMode
+      ? { mode: 'create', newCliente: this.newCliente }
+      : this.selectedCliente && this.draftCliente
+        ? {
+            mode: 'edit',
+            selectedId: this.selectedCliente.idUtente,
+            draftCliente: this.draftCliente
+          }
+        : null;
+
+    try {
+      if (state) {
+        sessionStorage.setItem(this.editorStateStorageKey, JSON.stringify(state));
+      } else {
+        sessionStorage.removeItem(this.editorStateStorageKey);
+      }
+    } catch {
+      // Storage can fail in private browsing; the editor still works normally.
+    }
   }
 
   onEditPhoneValidityChange(isValid: boolean): void {
@@ -396,6 +451,7 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.isCreateClosing = true;
         this.selectedCliente = null;
         this.draftCliente = null;
+        this.clearPersistedEditorState();
         this.showFeedback(
           'Cliente inserito con successo. Abbiamo inviato la mail per impostare la password.',
           'success',
@@ -458,6 +514,76 @@ export class ClientiComponent implements OnInit, OnDestroy {
         this.refreshView();
       }
     });
+  }
+
+  private restorePersistedEditorState(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const rawState = sessionStorage.getItem(this.editorStateStorageKey);
+
+      if (!rawState) {
+        return false;
+      }
+
+      const state = JSON.parse(rawState) as ClientiEditorState;
+
+      if (state.mode === 'create' && state.newCliente) {
+        this.clearPanelCloseTimers();
+        this.isCreateMode = true;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedCliente = null;
+        this.draftCliente = null;
+        this.newCliente = {
+          ...this.createEmptyClienteDraft(),
+          ...state.newCliente
+        };
+        this.isNewPhoneValid = !!this.newCliente.telefono;
+        this.syncCreateBirthDatePickerMonth(this.parseInputDate(this.newCliente.data_nascita) ?? new Date());
+        return true;
+      }
+
+      if (state.mode === 'edit' && state.selectedId && state.draftCliente) {
+        const selectedCliente = this.clienti.find((cliente) => cliente.idUtente === state.selectedId);
+
+        if (!selectedCliente) {
+          this.clearPersistedEditorState();
+          return false;
+        }
+
+        this.clearPanelCloseTimers();
+        this.isCreateMode = false;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedCliente = selectedCliente;
+        this.draftCliente = {
+          ...selectedCliente,
+          ...state.draftCliente,
+          idUtente: selectedCliente.idUtente
+        };
+        this.isEditPhoneValid = true;
+        return true;
+      }
+    } catch {
+      this.clearPersistedEditorState();
+    }
+
+    return false;
+  }
+
+  private clearPersistedEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(this.editorStateStorageKey);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
   }
 
   getInitials(cliente: Pick<Utente, 'nome' | 'cognome'>): string {
@@ -620,12 +746,14 @@ export class ClientiComponent implements OnInit, OnDestroy {
     next.setFullYear(parsedYear, next.getMonth(), 1);
     this.syncCreateBirthDatePickerMonth(next);
     this.createBirthDatePickerMode = 'days';
+    this.persistEditorState();
   }
 
   selectCreateBirthDatePickerDay(day: CalendarPickerDay): void {
     this.newCliente.data_nascita = this.formatDateForInput(day.date);
     this.syncCreateBirthDatePickerMonth(day.date);
     this.closeCreateBirthDatePicker();
+    this.persistEditorState();
   }
 
   @HostListener('document:click', ['$event'])

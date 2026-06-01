@@ -39,7 +39,7 @@
           <span>In esaurimento</span>
           <strong>{{ prodottiInEsaurimento }}</strong>
         </div>
-        <div class="management-hero__badge management-hero__badge--muted">
+        <div *ngIf="canViewValoreGiacenze" class="management-hero__badge management-hero__badge--muted">
           <span>Valore giacenze</span>
           <strong>{{ totaleValoreMagazzino | currency:'EUR':'symbol':'1.0-0':'it-IT' }}</strong>
         </div>
@@ -385,7 +385,7 @@
           </button>
         </div>
 
-        <form *ngIf="isCreateMode" class="services-form services-form--create services-panel-form" [class.is-closing]="isCreateClosing" (ngSubmit)="saveNewProdotto()">
+        <form *ngIf="isCreateMode" class="services-form services-form--create services-panel-form" [class.is-closing]="isCreateClosing" (ngSubmit)="saveNewProdotto()" (input)="persistEditorState()" (change)="persistEditorState()">
           <div class="services-create-header services-create-header--new">
             <span class="services-avatar services-avatar--large services-avatar--create">
               {{ getInitials(newProdotto) }}
@@ -492,7 +492,7 @@
           Seleziona una scheda dalla tabella per modificarla oppure creane una nuova.
         </div>
 
-        <form *ngIf="!isCreateMode && selectedProdotto && draftProdotto" class="services-form services-form--edit services-panel-form" [class.is-closing]="isEditClosing" (ngSubmit)="saveProdotto()">
+        <form *ngIf="!isCreateMode && selectedProdotto && draftProdotto" class="services-form services-form--edit services-panel-form" [class.is-closing]="isEditClosing" (ngSubmit)="saveProdotto()" (input)="persistEditorState()" (change)="persistEditorState()">
           <div class="services-create-header services-edit-header">
             <span class="services-avatar services-avatar--large services-avatar--create">
               {{ getInitials(draftProdotto) }}

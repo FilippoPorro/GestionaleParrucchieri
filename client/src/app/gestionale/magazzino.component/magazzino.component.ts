@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { timeout } from 'rxjs/operators';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { Prodotto, ProdottoService } from '../../services/prodotto';
+import { AuthService } from '../../services/auth';
 
 interface ProdottoFormDraft {
   foto: string;
@@ -18,6 +19,13 @@ interface ProdottoFormDraft {
   categoria: string;
 }
 
+interface MagazzinoEditorState {
+  mode: 'create' | 'edit';
+  selectedId?: number;
+  newProdotto?: ProdottoFormDraft;
+  draftProdotto?: Prodotto;
+}
+
 @Component({
   selector: 'app-magazzino.component',
   standalone: true,
@@ -26,9 +34,12 @@ interface ProdottoFormDraft {
   styleUrl: './magazzino.component.css',
 })
 export class MagazzinoComponent implements OnInit, OnDestroy {
+  private readonly editorStateStorageKey = 'gestionale.magazzino.editorState';
+  private readonly stockRefreshMs = 5000;
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private createCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  private stockRefreshTimer: ReturnType<typeof setInterval> | null = null;
   private readonly panelCloseAnimationMs = 240;
 
   isSidenavCollapsed = typeof window !== 'undefined' && window.matchMedia('(max-width: 980px)').matches;
@@ -50,6 +61,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
   isCreateClosing = false;
   isEditClosing = false;
   isDeleting = false;
+  isRefreshingStock = false;
 
   feedbackMessage = '';
   feedbackType: 'success' | 'error' | '' = '';
@@ -58,16 +70,19 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
 
   constructor(
     private prodottoService: ProdottoService,
+    private auth: AuthService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadProdotti();
+    this.startStockRealtimeRefresh();
   }
 
   ngOnDestroy(): void {
     this.clearPanelCloseTimers();
+    this.stopStockRealtimeRefresh();
     if (this.feedbackTimeout) {
       clearTimeout(this.feedbackTimeout);
       this.feedbackTimeout = null;
@@ -130,7 +145,11 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
   }
 
   get totaleValoreMagazzino(): number {
-    return this.prodotti.reduce((sum, prodotto) => sum + (Number(prodotto.prezzoAcquisto) * Number(prodotto.qta)), 0);
+    return this.prodotti.reduce((sum, prodotto) => sum + (Number(prodotto.prezzoRivendita) * Number(prodotto.qta)), 0);
+  }
+
+  get canViewValoreGiacenze(): boolean {
+    return this.auth.isTitolare();
   }
 
   get totalPages(): number {
@@ -189,6 +208,11 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     this.openFilterDropdown = null;
   }
 
+  @HostListener('window:focus')
+  refreshStockOnFocus(): void {
+    this.refreshProdottiSilently();
+  }
+
   toggleFilterDropdown(dropdown: 'categoria' | 'marca', event: MouseEvent): void {
     event.stopPropagation();
     this.openFilterDropdown = this.openFilterDropdown === dropdown ? null : dropdown;
@@ -240,6 +264,32 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     }
   }
 
+  persistEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    const state: MagazzinoEditorState | null = this.isCreateMode
+      ? { mode: 'create', newProdotto: this.newProdotto }
+      : this.selectedProdotto && this.draftProdotto
+        ? {
+            mode: 'edit',
+            selectedId: this.selectedProdotto.idProdotto,
+            draftProdotto: this.draftProdotto
+          }
+        : null;
+
+    try {
+      if (state) {
+        sessionStorage.setItem(this.editorStateStorageKey, JSON.stringify(state));
+      } else {
+        sessionStorage.removeItem(this.editorStateStorageKey);
+      }
+    } catch {
+      // Storage can fail in private browsing; the editor still works normally.
+    }
+  }
+
   loadProdotti(): void {
     this.isLoading = true;
     this.clearFeedback();
@@ -258,13 +308,14 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
           if (routeSelection) {
             this.openProductFromRoute(routeSelection);
           }
-        } else if (this.selectedProdotto) {
+        } else if (!this.restorePersistedEditorState() && this.selectedProdotto) {
           const updatedSelection = this.prodotti.find((p) => p.idProdotto === this.selectedProdotto?.idProdotto) ?? null;
           if (updatedSelection) {
             this.selectProdotto(updatedSelection);
           } else {
             this.selectedProdotto = null;
             this.draftProdotto = null;
+            this.clearPersistedEditorState();
           }
         }
         this.isLoading = false;
@@ -283,6 +334,67 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     });
   }
 
+  private refreshProdottiSilently(): void {
+    if (this.isLoading || this.isRefreshingStock) {
+      return;
+    }
+
+    this.isRefreshingStock = true;
+
+    this.prodottoService.getProdotti().pipe(timeout(8000)).subscribe({
+      next: (prodotti: Prodotto[]) => {
+        this.applyRealtimeProductSnapshot(prodotti);
+        this.isRefreshingStock = false;
+        this.refreshView();
+      },
+      error: () => {
+        this.isRefreshingStock = false;
+      }
+    });
+  }
+
+  private applyRealtimeProductSnapshot(prodotti: Prodotto[]): void {
+    const selectedBefore = this.selectedProdotto;
+    const draftBefore = this.draftProdotto;
+    const sortedProducts = this.sortProdotti(prodotti);
+
+    this.prodotti = sortedProducts;
+
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    if (!selectedBefore) {
+      return;
+    }
+
+    const updatedSelected = sortedProducts.find(
+      (prodotto) => prodotto.idProdotto === selectedBefore.idProdotto
+    ) ?? null;
+
+    if (!updatedSelected) {
+      this.selectedProdotto = null;
+      this.draftProdotto = null;
+      this.clearPersistedEditorState();
+      return;
+    }
+
+    this.selectedProdotto = updatedSelected;
+
+    if (!draftBefore) {
+      return;
+    }
+
+    const draftHadUserStockChange = Number(draftBefore.qta) !== Number(selectedBefore.qta);
+
+    this.draftProdotto = {
+      ...draftBefore,
+      qta: draftHadUserStockChange ? draftBefore.qta : updatedSelected.qta
+    };
+
+    this.persistEditorState();
+  }
+
   selectProdotto(prodotto: Prodotto, scrollToEditor = false): void {
     this.clearPanelCloseTimers();
     this.isCreateClosing = false;
@@ -291,6 +403,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     this.selectedProdotto = prodotto;
     this.draftProdotto = { ...prodotto };
     this.clearFeedback();
+    this.persistEditorState();
 
     if (scrollToEditor) {
       this.scrollToEditor();
@@ -305,6 +418,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     if (this.selectedProdotto || this.draftProdotto) {
       this.isEditClosing = true;
       this.clearFeedback();
+      this.clearPersistedEditorState();
       this.refreshView();
 
       this.editCloseTimeout = setTimeout(() => {
@@ -313,6 +427,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.isCreateMode = false;
         this.isEditClosing = false;
         this.editCloseTimeout = null;
+        this.clearPersistedEditorState();
         this.refreshView();
       }, this.panelCloseAnimationMs);
 
@@ -323,6 +438,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     this.draftProdotto = null;
     this.isCreateMode = false;
     this.clearFeedback();
+    this.clearPersistedEditorState();
   }
 
   startCreateProdotto(): void {
@@ -334,6 +450,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     this.draftProdotto = null;
     this.newProdotto = this.createEmptyProdottoDraft();
     this.clearFeedback();
+    this.persistEditorState();
     this.scrollToEditor();
   }
 
@@ -344,6 +461,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
 
     this.isCreateClosing = true;
     this.clearFeedback();
+    this.clearPersistedEditorState();
     this.refreshView();
 
     this.createCloseTimeout = setTimeout(() => {
@@ -351,6 +469,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
       this.isCreateClosing = false;
       this.newProdotto = this.createEmptyProdottoDraft();
       this.createCloseTimeout = null;
+      this.clearPersistedEditorState();
       this.refreshView();
     }, this.panelCloseAnimationMs);
   }
@@ -447,6 +566,7 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
         this.isCreateClosing = true;
         this.selectedProdotto = null;
         this.draftProdotto = null;
+        this.clearPersistedEditorState();
         this.showFeedback(
           'Prodotto inserito con successo.',
           'success',
@@ -536,6 +656,87 @@ export class MagazzinoComponent implements OnInit, OnDestroy {
     if (this.editCloseTimeout) {
       clearTimeout(this.editCloseTimeout);
       this.editCloseTimeout = null;
+    }
+  }
+
+  private startStockRealtimeRefresh(): void {
+    this.stopStockRealtimeRefresh();
+    this.stockRefreshTimer = setInterval(() => this.refreshProdottiSilently(), this.stockRefreshMs);
+  }
+
+  private stopStockRealtimeRefresh(): void {
+    if (!this.stockRefreshTimer) {
+      return;
+    }
+
+    clearInterval(this.stockRefreshTimer);
+    this.stockRefreshTimer = null;
+  }
+
+  private restorePersistedEditorState(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const rawState = sessionStorage.getItem(this.editorStateStorageKey);
+
+      if (!rawState) {
+        return false;
+      }
+
+      const state = JSON.parse(rawState) as MagazzinoEditorState;
+
+      if (state.mode === 'create' && state.newProdotto) {
+        this.clearPanelCloseTimers();
+        this.isCreateMode = true;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedProdotto = null;
+        this.draftProdotto = null;
+        this.newProdotto = {
+          ...this.createEmptyProdottoDraft(),
+          ...state.newProdotto
+        };
+        return true;
+      }
+
+      if (state.mode === 'edit' && state.selectedId && state.draftProdotto) {
+        const selectedProdotto = this.prodotti.find((prodotto) => prodotto.idProdotto === state.selectedId);
+
+        if (!selectedProdotto) {
+          this.clearPersistedEditorState();
+          return false;
+        }
+
+        this.clearPanelCloseTimers();
+        this.isCreateMode = false;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedProdotto = selectedProdotto;
+        this.draftProdotto = {
+          ...selectedProdotto,
+          ...state.draftProdotto,
+          idProdotto: selectedProdotto.idProdotto
+        };
+        return true;
+      }
+    } catch {
+      this.clearPersistedEditorState();
+    }
+
+    return false;
+  }
+
+  private clearPersistedEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(this.editorStateStorageKey);
+    } catch {
+      // Ignore storage cleanup failures.
     }
   }
 

@@ -748,6 +748,11 @@ form .custom-alert.success {
 }
 
 @media (max-width: 768px) {
+  .login-visual {
+    background-size: auto 100vh;
+    background-attachment: fixed;
+  }
+
   .login-visual-inner {
     padding: 14px 14px 0;
   }

@@ -5,6 +5,15 @@
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-color: #050403;
+}
+
+@media (max-width: 768px) {
+  :host {
+    background-size: cover, auto 100vh;
+    background-attachment: fixed, fixed;
+  }
 }
 
 .management-layout {

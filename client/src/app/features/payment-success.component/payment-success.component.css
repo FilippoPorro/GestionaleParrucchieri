@@ -12,6 +12,15 @@
 
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
+    background-color: #050403;
+}
+
+@media (max-width: 768px) {
+    .success-page {
+        background-size: auto 100vh;
+        background-attachment: fixed;
+    }
 }
 
 .success-page::before {

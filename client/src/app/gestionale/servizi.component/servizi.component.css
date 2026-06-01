@@ -5,6 +5,15 @@
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-color: #050403;
+}
+
+@media (max-width: 768px) {
+  :host {
+    background-size: cover, auto 100vh;
+    background-attachment: fixed, fixed;
+  }
 }
 
 .management-layout {
@@ -472,7 +481,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255, 226, 175, 0.78);
-  background: rgba(23, 18, 13, 0.96);
+  background: rgba(0, 0, 0, 0.92);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -529,7 +538,7 @@
 }
 
 .services-table th:last-child {
-  background: rgba(255, 255, 255, 0.028);
+  background: rgba(0, 0, 0, 0.92);
 }
 
 .services-table tbody tr {
@@ -549,7 +558,6 @@
 .services-person {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   min-width: 0;
   max-width: 100%;
   padding: 0;
@@ -1006,6 +1014,226 @@
   color: #fff8ec;
   font-size: 15px;
   font-family: inherit;
+}
+
+.services-select-shell {
+  position: relative;
+  display: block;
+  width: 100%;
+  color: #f2d18b;
+}
+
+.services-select-shell select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 48px;
+  cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(5, 4, 3, 0.72);
+  border-color: rgba(212, 176, 106, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.services-select-shell select option {
+  background: #0a0806;
+  color: #fff8ec;
+}
+
+.services-select-shell i {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #f2d18b;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: 50% 45%;
+  filter: drop-shadow(0 0 8px rgba(242, 209, 139, 0.18));
+  transition: transform 0.22s ease, color 0.18s ease, filter 0.18s ease;
+}
+
+.services-select-shell:hover select,
+.services-select-shell:focus-within select {
+  border-color: rgba(242, 209, 139, 0.58);
+  background:
+    linear-gradient(180deg, rgba(242, 209, 139, 0.08), rgba(255, 255, 255, 0.024)),
+    rgba(5, 4, 3, 0.78);
+}
+
+.services-select-shell:hover i,
+.services-select-shell:focus-within i {
+  color: #ffe2af;
+  filter: drop-shadow(0 0 10px rgba(242, 209, 139, 0.44));
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.services-select-shell:focus-within i {
+  animation: services-select-arrow-pulse 0.95s ease-in-out infinite;
+}
+
+.services-booking-select {
+  position: relative;
+  z-index: 5;
+}
+
+.services-booking-select.is-open {
+  z-index: 80;
+}
+
+.services-booking-select__trigger {
+  width: 100%;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(212, 176, 106, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+    rgba(5, 4, 3, 0.74);
+  color: #fff8ec;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 10px 18px rgba(0, 0, 0, 0.12);
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.services-booking-select__trigger:hover,
+.services-booking-select.is-open .services-booking-select__trigger {
+  border-color: rgba(242, 209, 139, 0.58);
+  background:
+    linear-gradient(180deg, rgba(242, 209, 139, 0.09), rgba(255, 255, 255, 0.024)),
+    rgba(5, 4, 3, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 14px 24px rgba(0, 0, 0, 0.2),
+    0 0 0 4px rgba(212, 176, 106, 0.06);
+}
+
+.services-booking-select__value,
+.services-booking-select__option span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  color: inherit;
+  font-size: inherit;
+  letter-spacing: 0;
+}
+
+.services-booking-select__value strong,
+.services-booking-select__option strong {
+  color: #fff8ec;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.services-booking-select__value small,
+.services-booking-select__option small {
+  color: rgba(248, 241, 231, 0.58);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.services-booking-select__arrow {
+  color: #f2d18b;
+  font-size: 17px;
+  line-height: 1;
+  justify-self: center;
+  transform-origin: 50% 45%;
+  filter: drop-shadow(0 0 8px rgba(242, 209, 139, 0.22));
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), color 0.18s ease, filter 0.18s ease;
+}
+
+.services-booking-select__trigger:hover .services-booking-select__arrow {
+  color: #ffe2af;
+  transform: translateY(2px);
+}
+
+.services-booking-select.is-open .services-booking-select__arrow {
+  color: #ffe2af;
+  filter: drop-shadow(0 0 12px rgba(242, 209, 139, 0.5));
+  animation: services-booking-arrow-open 0.42s ease both;
+}
+
+.services-booking-select__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(212, 176, 106, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(20, 15, 11, 0.98), rgba(8, 7, 6, 0.98)),
+    #090705;
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: services-booking-panel-in 0.18s ease both;
+}
+
+.services-booking-select__option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff8ec;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.services-booking-select__option > i {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 209, 139, 0.18);
+  background: rgba(242, 209, 139, 0.08);
+  color: #f2d18b;
+  font-size: 15px;
+}
+
+.services-booking-select__option:hover,
+.services-booking-select__option.is-selected {
+  border-color: rgba(242, 209, 139, 0.34);
+  background: rgba(242, 209, 139, 0.1);
+  transform: translateY(-1px);
+}
+
+.services-booking-select__option.is-selected > i {
+  background: linear-gradient(135deg, #f2d18b, #be8640);
+  color: #2b1c0f;
 }
 
 .services-field input[readonly] {
@@ -1718,7 +1946,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  align-self: stretch;
+  align-self: end;
   padding: 12px 14px;
   border: 1px solid rgba(242, 209, 139, 0.18);
   border-radius: 8px;
@@ -1726,21 +1954,90 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
     rgba(5, 4, 3, 0.68);
   cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.services-card--editor .services-check-field:hover,
+.services-card--editor .services-check-field:focus-within {
+  border-color: rgba(242, 209, 139, 0.5);
+  background:
+    linear-gradient(180deg, rgba(242, 209, 139, 0.08), rgba(255, 255, 255, 0.018)),
+    rgba(5, 4, 3, 0.76);
+  box-shadow: 0 0 0 4px rgba(212, 176, 106, 0.06);
 }
 
 .services-card--editor .services-check-field input {
-  width: 20px;
-  min-height: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  accent-color: #be8640;
-  cursor: pointer;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .services-card--editor .services-check-field span {
+  position: relative;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
+  color: rgba(255, 240, 205, 0.84);
   letter-spacing: 0;
   text-transform: none;
+}
+
+.services-card--editor .services-check-field span::before {
+  content: '';
+  width: 40px;
+  height: 24px;
+  flex: 0 0 40px;
+  border: 1px solid rgba(242, 209, 139, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.58);
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.34);
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.services-card--editor .services-check-field span::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(248, 241, 231, 0.74);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+  transform: translateY(-50%);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.services-card--editor .services-check-field input:checked + span {
+  color: #fff8ec;
+}
+
+.services-card--editor .services-check-field input:checked + span::before {
+  border-color: rgba(242, 209, 139, 0.72);
+  background: linear-gradient(135deg, rgba(242, 209, 139, 0.96), rgba(190, 134, 64, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 18px rgba(242, 209, 139, 0.16);
+}
+
+.services-card--editor .services-check-field input:checked + span::after {
+  background: #2b1c0f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.34);
+  transform: translate(16px, -50%);
+}
+
+.services-card--editor .services-check-field input:focus-visible + span::before {
+  outline: 2px solid rgba(242, 209, 139, 0.72);
+  outline-offset: 3px;
+}
+
+.services-card--editor .services-check-field input:disabled + span {
+  opacity: 0.58;
+  cursor: pointer;
 }
 
 .services-card--editor .services-editor-actions {
@@ -1819,6 +2116,43 @@
 @keyframes services-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes services-select-arrow-pulse {
+  0%,
+  100% {
+    transform: translateY(-50%) rotate(180deg) scale(1);
+  }
+
+  50% {
+    transform: translateY(-50%) rotate(180deg) scale(1.12);
+  }
+}
+
+@keyframes services-booking-arrow-open {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  60% {
+    transform: rotate(190deg) scale(1.16);
+  }
+
+  100% {
+    transform: rotate(180deg) scale(1.06);
+  }
+}
+
+@keyframes services-booking-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

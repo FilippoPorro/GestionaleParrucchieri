@@ -9,6 +9,7 @@ interface SideNavItem {
   label: string;
   href: string;
   description: string;
+  icon: string;
   badge?: string;
   titolareOnly?: boolean;
 }
@@ -86,47 +87,55 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
           label: 'Dashboard',
           href: '/gestionale',
           description: 'Panoramica della giornata',
+          icon: 'bi-speedometer2',
         },
         {
           label: 'Appuntamenti',
           href: '/gestionale/appuntamenti',
           description: 'Agenda, conferme e accoglienza',
+          icon: 'bi-calendar-check',
         },
         {
           label: 'Cassa',
           href: '/gestionale/cassa',
           description: 'Incassi, pagamenti e chiusura',
+          icon: 'bi-cash-coin',
         },
         {
           label: 'Clienti',
           href: '/gestionale/clienti',
           description: 'Schede cliente e storico',
+          icon: 'bi-people',
         }
       ]
     },
     {
-      title: 'Attivita',
+      title: 'Attività',
       items: [
         {
           label: 'Report',
           href: '/gestionale/report',
           description: 'Vendite, rendimento e indicatori',
+          icon: 'bi-bar-chart-line',
           titolareOnly: true,
         },
         {
           label: 'Magazzino',
           href: '/gestionale/magazzino',
           description: 'Scorte, movimenti e riordino',
+          icon: 'bi-box-seam',
         },
         {
           label: 'Servizi',
           href: '/gestionale/servizi',
           description: 'Listino, durate e disponibilita',
+          icon: 'bi-scissors',
         },
         {
           label: 'Fornitori',
           href: '/gestionale/fornitori',
           description: 'Anagrafica e ordini acquisto',
+          icon: 'bi-truck',
         }
       ]
     },
@@ -137,6 +146,7 @@ export class SidenavComponent implements AfterViewInit, OnDestroy, OnInit {
           label: 'Personale',
           href: '/gestionale/staff',
           description: 'Operatori e permessi',
+          icon: 'bi-person-badge',
           titolareOnly: true,
         }
       ]

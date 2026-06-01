@@ -18,6 +18,8 @@
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1775802464/adam-winger-VjRpkGtS55w-unsplash_btutfm.jpg") center / cover fixed,
     radial-gradient(circle at 18% 20%, rgba(212, 176, 106, 0.12), transparent 36%),
     radial-gradient(circle at 84% 72%, rgba(212, 176, 106, 0.1), transparent 40%);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-color: #050403;
   isolation: isolate;
 }
 
@@ -759,6 +761,8 @@
   background:
     linear-gradient(180deg, rgba(16, 12, 9, 0.0), rgba(16, 12, 9, 0.05)),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-color: #050403;
 }
 
 .booking-page.is-management-booking::before {
@@ -1174,6 +1178,8 @@
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.48), rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58)),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-color: #050403;
 }
 
 .booking-page.is-management-booking::before,
@@ -1318,4 +1324,16 @@
 .booking-page.is-management-booking .booking-form-subtitle,
 .booking-page.is-management-booking .booking-summary-meta {
   color: rgba(248, 241, 231, 0.72) !important;
+}
+
+@media (max-width: 768px) {
+  .booking-page {
+    background-size: auto 100vh, cover, cover;
+    background-attachment: fixed, fixed, fixed;
+  }
+
+  .booking-page.is-management-booking {
+    background-size: cover, auto 100vh !important;
+    background-attachment: fixed, fixed !important;
+  }
 }

@@ -1,7 +1,9 @@
 <aside class="management-sidenav" [class.is-collapsed]="isCollapsed">
   <div class="management-sidenav__topbar">
     <div class="management-sidenav__brand">
-      <div class="management-sidenav__brand-mark">GP</div>
+      <div class="management-sidenav__brand-mark">
+        <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+      </div>
       <div class="management-sidenav__brand-copy">
         <p class="management-sidenav__eyebrow">Gestionale</p>
         <h2>I Parrucchieri</h2>
@@ -54,7 +56,9 @@
         [attr.title]="isCollapsed ? item.label : null"
       >
         <div class="management-sidenav__link-copy">
-          <span class="management-sidenav__link-monogram">{{ item.label.slice(0, 2) }}</span>
+          <span class="management-sidenav__link-monogram">
+            <i class="bi" [ngClass]="item.icon" aria-hidden="true"></i>
+          </span>
           <div class="management-sidenav__link-head">
             <span>{{ item.label }}</span>
             <small *ngIf="item.badge">{{ item.badge }}</small>

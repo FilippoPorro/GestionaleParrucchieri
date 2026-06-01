@@ -26,9 +26,18 @@
     radial-gradient(circle at 18% 20%, rgba(212, 176, 106, 0.12), transparent 36%),
     radial-gradient(circle at 84% 72%, rgba(212, 176, 106, 0.1), transparent 40%);
   background-size: cover;
-  background-position: center;
+  background-position: center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
+  background-color: #050403;
   isolation: isolate;
+}
+
+@media (max-width: 768px) {
+  .appointments-page {
+    background-size: auto 100vh, cover, cover;
+    background-attachment: fixed;
+  }
 }
 
 .appointments-page::before {

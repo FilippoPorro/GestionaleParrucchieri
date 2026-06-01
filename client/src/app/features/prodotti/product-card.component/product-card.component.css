@@ -378,3 +378,140 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+@media (max-width: 640px) {
+  .product-card {
+    display: grid;
+    grid-template-columns: minmax(112px, 34%) minmax(0, 1fr);
+    min-height: 188px;
+    border-radius: 16px;
+  }
+
+  .product-image {
+    height: 100%;
+    min-height: 188px;
+    padding: 10px;
+    border-right: 1px solid rgba(212, 176, 106, 0.18);
+    border-bottom: 0;
+  }
+
+  .product-image-fallback {
+    gap: 10px;
+  }
+
+  .product-fallback-badge {
+    max-width: calc(100% - 14px);
+    padding: 6px 8px;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-fallback-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  .product-fallback-mark {
+    width: 24px;
+    height: 32px;
+  }
+
+  .product-fallback-meta {
+    max-width: calc(100% - 12px);
+  }
+
+  .product-fallback-name,
+  .product-fallback-category {
+    display: none;
+  }
+
+  .product-card-body {
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .product-header {
+    margin-bottom: 8px;
+  }
+
+  .product-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.22;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-description {
+    display: -webkit-box;
+    margin-bottom: 10px;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.42;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-info-row {
+    max-height: 54px;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .product-info-pill {
+    max-width: 100%;
+    padding: 5px 7px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-footer {
+    align-items: center;
+    gap: 10px;
+  }
+
+  .product-price-label {
+    font-size: 9px;
+  }
+
+  .product-price {
+    font-size: 20px;
+  }
+
+  .btn-product {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 0;
+  }
+
+  .btn-product::before {
+    margin: 0;
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 370px) {
+  .product-card {
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+
+  .product-card-body {
+    padding: 12px;
+  }
+
+  .product-price {
+    font-size: 18px;
+  }
+}
+

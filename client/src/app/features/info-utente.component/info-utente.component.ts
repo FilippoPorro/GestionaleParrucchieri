@@ -427,6 +427,10 @@ export class InfoUtenteComponent implements OnInit {
   toggleBirthDatePickerYears(): void {
     this.birthDatePickerMode = this.birthDatePickerMode === 'years' ? 'days' : 'years';
     this.cdr.detectChanges();
+
+    if (this.birthDatePickerMode === 'years') {
+      this.scrollSelectedBirthDatePickerYearIntoView();
+    }
   }
 
   previousBirthDatePickerMonth(): void {
@@ -491,19 +495,26 @@ export class InfoUtenteComponent implements OnInit {
   selectBirthDatePickerYear(year: number | string): void {
     const parsedYear = Number(year);
 
-    if (!Number.isFinite(parsedYear)) {
+    if (!Number.isFinite(parsedYear) || !this.user) {
       return;
     }
 
+    const currentDate = this.parseInputDate(this.user.data_nascita ?? '');
+    const currentMonth = currentDate?.getMonth() ?? this.birthDatePickerMonth.getMonth();
+    const currentDay = currentDate?.getDate() ?? 1;
+    const nextDate = this.createClampedDate(parsedYear, currentMonth, currentDay);
+
+    this.user.data_nascita = this.formatDateForInput(nextDate);
     this.birthDatePickerMonth = new Date(
       parsedYear,
-      this.birthDatePickerMonth.getMonth(),
+      currentMonth,
       1
     );
     this.birthDatePickerDays = this.buildCalendarPickerDays(
       this.birthDatePickerMonth
     );
     this.birthDatePickerMode = 'days';
+    this.onFieldChange();
     this.cdr.detectChanges();
   }
 
@@ -978,6 +989,23 @@ export class InfoUtenteComponent implements OnInit {
     }
   }
 
+  private scrollSelectedBirthDatePickerYearIntoView(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const selectedYear = document.querySelector(
+        '.profile-birthdate-picker .profile-date-picker-year-option.is-selected'
+      ) as HTMLElement | null;
+
+      selectedYear?.scrollIntoView({
+        block: 'center',
+        inline: 'nearest'
+      });
+    });
+  }
+
   private buildCalendarPickerDays(monthDate: Date): CalendarPickerDay[] {
     const monthStart = new Date(
       monthDate.getFullYear(),
@@ -1014,6 +1042,11 @@ export class InfoUtenteComponent implements OnInit {
     }
 
     return years;
+  }
+
+  private createClampedDate(year: number, month: number, day: number): Date {
+    const lastDayOfTargetMonth = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDayOfTargetMonth));
   }
 
   private parseInputDate(value: string): Date | null {

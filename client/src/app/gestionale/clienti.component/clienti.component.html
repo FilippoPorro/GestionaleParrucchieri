@@ -209,6 +209,8 @@
           class="customers-form customers-form--create customers-panel-form"
           [class.is-closing]="isCreateClosing"
           (ngSubmit)="saveNewCliente()"
+          (input)="persistEditorState()"
+          (change)="persistEditorState()"
         >
           <div class="customers-create-header customers-create-header--new">
             <span class="customers-avatar customers-avatar--large customers-avatar--create">
@@ -385,6 +387,8 @@
           class="customers-form customers-form--edit customers-panel-form"
           [class.is-closing]="isEditClosing"
           (ngSubmit)="saveCliente()"
+          (input)="persistEditorState()"
+          (change)="persistEditorState()"
         >
           <div class="customers-create-header customers-edit-header">
             <span class="customers-avatar customers-avatar--large customers-avatar--create">

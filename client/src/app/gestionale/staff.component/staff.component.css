@@ -24,45 +24,58 @@
 }
 
 .staff-table {
-  min-width: 980px;
+  min-width: 920px;
   table-layout: fixed;
 }
 
 .staff-table th,
 .staff-table td {
+  padding: 15px 16px;
   vertical-align: middle;
 }
 
 .staff-table th:first-child,
 .staff-table td:first-child {
-  width: 82px;
+  width: 88px;
 }
 
 .staff-table th:nth-child(2),
 .staff-table td:nth-child(2) {
-  width: 300px;
+  width: 29%;
 }
 
 .staff-table th:nth-child(3),
 .staff-table td:nth-child(3) {
-  width: 270px;
+  width: 26%;
 }
 
 .staff-table th:nth-child(4),
-.staff-table td:nth-child(4),
+.staff-table td:nth-child(4) {
+  width: 150px;
+}
+
 .staff-table th:nth-child(5),
 .staff-table td:nth-child(5) {
-  width: 150px;
+  width: 130px;
 }
 
 .staff-table th:last-child,
 .staff-table td:last-child {
-  width: 124px;
+  width: 118px;
   text-align: center;
+}
+
+.staff-table .customers-actions-cell {
+  min-width: 118px;
 }
 
 .staff-table .customers-actions {
   justify-content: center;
+  gap: 8px;
+}
+
+.staff-table .customers-action-button {
+  flex: 0 0 38px;
 }
 
 .staff-table .customers-cell-primary,
@@ -109,9 +122,8 @@
   white-space: nowrap;
 }
 
-.staff-table .customers-cell-contact {
-  display: grid;
-  gap: 4px;
+.staff-table .customers-cell-contact .customers-cell-phone {
+  margin-top: 4px;
 }
 
 .staff-calendar-card {
@@ -131,31 +143,79 @@
   position: relative;
 }
 
-.staff-calendar-selected {
-  min-width: 260px;
+.staff-calendar-head {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(220px, auto) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.staff-calendar-title {
+  min-width: 0;
+}
+
+.staff-calendar-summary {
+  display: grid;
+  gap: 5px;
+  min-width: 230px;
   padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid rgba(242, 209, 139, 0.18);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014)),
     rgba(5, 4, 3, 0.52);
-  text-align: right;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
-.staff-calendar-selected span {
-  display: block;
-  margin-bottom: 5px;
+.staff-calendar-summary span {
   color: rgba(255, 226, 175, 0.66);
   font-size: 11px;
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.staff-calendar-selected strong {
+.staff-calendar-summary strong {
   color: #fff8ec;
   font-size: 17px;
   font-weight: 800;
+  line-height: 1.15;
+}
+
+.staff-calendar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.staff-calendar-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.staff-calendar-action i {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.staff-calendar-action span {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  line-height: 1;
 }
 
 .staff-calendar-meta {
@@ -700,4 +760,400 @@
     inset 0 1px 0 rgba(255, 155, 155, 0.22),
     inset 0 0 22px rgba(233, 93, 93, 0.08),
     0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+.staff-form-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  align-items: start;
+}
+
+.staff-form-grid .staff-field {
+  grid-column: span 12;
+  min-width: 0;
+}
+
+.staff-form-grid .staff-field--half {
+  grid-column: span 6;
+}
+
+.staff-form-grid .staff-field--wide {
+  grid-column: span 7;
+}
+
+.staff-form-grid .staff-field--phone {
+  grid-column: span 5;
+}
+
+.staff-form-grid .staff-field--third {
+  grid-column: span 4;
+}
+
+.staff-birthdate-picker,
+.staff-select-picker {
+  position: relative;
+  overflow: visible;
+}
+
+.staff-password-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(71, 205, 117, 0.34);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(55, 171, 95, 0.12), rgba(55, 171, 95, 0.045)),
+    rgba(4, 17, 9, 0.54);
+  color: #dff7e7;
+  font-size: 14px;
+  line-height: 1.45;
+  animation: staffPanelIn 0.24s ease both;
+}
+
+.staff-password-notice__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: #62f196;
+  font-size: 18px;
+}
+
+.staff-picker-trigger {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 14px;
+  border: 1px solid rgba(212, 176, 106, 0.34);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02)),
+    rgba(10, 8, 6, 0.32);
+  color: #fff6e8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.staff-picker-trigger:hover,
+.staff-picker-trigger[aria-expanded="true"] {
+  border-color: rgba(242, 209, 139, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(24, 19, 14, 0.52);
+  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.12);
+}
+
+.staff-picker-trigger:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+}
+
+.staff-picker-trigger i {
+  color: #f6d99b;
+  transition: transform 0.18s ease;
+}
+
+.staff-picker-trigger[aria-expanded="true"] i.bi-chevron-down {
+  transform: rotate(180deg);
+}
+
+.staff-date-picker-panel,
+.staff-select-panel {
+  position: absolute;
+  left: 0;
+  top: auto;
+  bottom: calc(100% + 10px);
+  z-index: 80;
+  width: min(460px, calc(100vw - 64px));
+  border: 1px solid rgba(242, 209, 139, 0.28);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(48, 42, 34, 0.96), rgba(18, 15, 12, 0.96)),
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.22), transparent 42%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 22px 44px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  transform-origin: bottom center;
+  animation: staffDropdownIn 0.2s ease both;
+}
+
+.staff-date-picker-panel {
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: min(342px, calc(100vw - 40px));
+  min-width: 0;
+  max-width: calc(100vw - 40px);
+  max-height: clamp(240px, calc(100vh - 132px), 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border-radius: 24px;
+  border-color: rgba(212, 176, 106, 0.22);
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, 0.92), rgba(10, 10, 10, 0.84)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(244, 239, 231, 0.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 46px rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  animation: customersDatePickerPanelIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.staff-date-picker-panel.is-closing,
+.staff-select-panel.is-closing {
+  pointer-events: none;
+  animation: staffDropdownOut 0.16s ease both;
+}
+
+.staff-date-picker-panel.is-closing {
+  animation: customersDatePickerPanelOut 0.18s ease forwards;
+}
+
+.staff-date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.staff-date-nav,
+.staff-date-month,
+.staff-date-day,
+.staff-year-option,
+.staff-select-option {
+  border: 1px solid rgba(255, 244, 219, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.035);
+  color: #fff7e8;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.staff-date-nav {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+}
+
+.staff-date-month {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: #f4ddac;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.staff-date-month.is-active i {
+  transform: rotate(180deg);
+}
+
+.staff-date-nav:hover,
+.staff-date-month:hover,
+.staff-date-month.is-active,
+.staff-date-day:hover,
+.staff-year-option:hover,
+.staff-select-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(242, 209, 139, 0.48);
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.22), rgba(212, 176, 106, 0.08)),
+    rgba(255, 255, 255, 0.055);
+}
+
+.staff-date-weekdays,
+.staff-date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.staff-date-weekdays {
+  margin-bottom: 10px;
+}
+
+.staff-date-weekdays span {
+  color: rgba(244, 221, 172, 0.74);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.staff-date-grid {
+  gap: 7px;
+}
+
+.staff-date-day,
+.staff-year-option {
+  min-height: 38px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.staff-date-day.is-outside {
+  color: rgba(255, 243, 210, 0.34);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.staff-date-day.is-today {
+  border-color: rgba(212, 176, 106, 0.34);
+  color: #f4ddac;
+}
+
+.staff-date-day.is-selected,
+.staff-year-option.is-selected,
+.staff-select-option.is-selected {
+  border-color: #d4b06a;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.26), rgba(142, 108, 42, 0.3)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(244, 239, 231, 0.02));
+  color: #fff7e3;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 20px rgba(0, 0, 0, 0.14);
+}
+
+.staff-date-years {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 236px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 176, 106, 0.34) transparent;
+}
+
+.staff-date-years::-webkit-scrollbar {
+  width: 7px;
+}
+
+.staff-date-years::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(212, 176, 106, 0.34);
+}
+
+.staff-select-panel {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+.staff-select-option {
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 9px;
+  text-align: left;
+  font-weight: 750;
+}
+
+@keyframes staffPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes staffDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes staffDropdownOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (max-width: 1280px) {
+  .staff-calendar-head {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .staff-calendar-summary {
+    min-width: 0;
+  }
+
+  .staff-calendar-actions {
+    justify-content: flex-start;
+  }
+
+  .staff-form-grid .staff-field--wide,
+  .staff-form-grid .staff-field--phone {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 980px) {
+  .staff-form-grid .staff-field--half,
+  .staff-form-grid .staff-field--wide,
+  .staff-form-grid .staff-field--phone,
+  .staff-form-grid .staff-field--third {
+    grid-column: 1 / -1;
+  }
+
+  .staff-date-picker-panel {
+    min-width: 0;
+    width: min(342px, calc(100vw - 40px));
+  }
+
+  .staff-date-years {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

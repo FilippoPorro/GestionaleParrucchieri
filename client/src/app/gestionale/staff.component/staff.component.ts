@@ -6,6 +6,7 @@ import { CalendarOptions, EventContentArg, EventInput } from '@fullcalendar/core
 import interactionPlugin from '@fullcalendar/interaction';
 import itLocale from '@fullcalendar/core/locales/it';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import { IntlTelInputComponent } from 'intl-tel-input/angularWithUtils';
 import { forkJoin } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 import { Appuntamento } from '../../models/appuntamento.model';
@@ -61,10 +62,15 @@ interface AbsenceEditForm {
   note: string;
 }
 
+interface StaffEditorState {
+  mode: 'create' | 'edit';
+  staffForm: StaffForm;
+}
+
 @Component({
   selector: 'app-staff.component',
   standalone: true,
-  imports: [CommonModule, FormsModule, FullCalendarModule, SidenavComponent],
+  imports: [CommonModule, FormsModule, FullCalendarModule, SidenavComponent, IntlTelInputComponent],
   templateUrl: './staff.component.html',
   styleUrls: [
     '../clienti.component/clienti.component.css',
@@ -74,10 +80,12 @@ interface AbsenceEditForm {
   ],
 })
 export class StaffComponent implements OnInit, OnDestroy {
+  private readonly staffEditorStateStorageKey = 'gestionale.staff.editorState';
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
   @ViewChild('calendarSection') calendarSection?: ElementRef<HTMLElement>;
   private readonly mobileBreakpoint = 768;
   private readonly minimumAppointmentDurationMinutes = 30;
+  private readonly operatorCalendarStorageKey = 'gestionale_staff_open_operator_calendar';
   private readonly openingSchedule: Record<number, DailySchedule> = {
     0: { name: 'Domenica', intervals: [] },
     1: { name: 'Lunedi', intervals: [] },
@@ -107,6 +115,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   calendarPickerPanelStyle: Record<string, string> = {};
   readonly calendarPickerWeekdays = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do'];
   readonly calendarPickerMonthFormatter = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
+  readonly staffBirthDatePickerYears = this.buildBirthDatePickerYears();
   isMobileCalendar = false;
   events: EventInput[] = [];
   availabilityMaskEvents: EventInput[] = [];
@@ -118,9 +127,20 @@ export class StaffComponent implements OnInit, OnDestroy {
   isPermissionModalOpen = false;
   isFerieModalOpen = false;
   isStaffModalOpen = false;
+  isOperatorCalendarOpen = false;
   isSavingStaff = false;
+  isStaffPhoneValid = true;
   staffFormMode: 'create' | 'edit' = 'create';
   staffForm: StaffForm = this.getEmptyStaffForm();
+  staffBirthDatePickerOpen = false;
+  staffBirthDatePickerClosing = false;
+  staffBirthDatePickerMode: 'days' | 'years' = 'days';
+  staffBirthDatePickerMonth = new Date();
+  staffBirthDatePickerDays: CalendarPickerDay[] = [];
+  staffSexDropdownOpen = false;
+  staffSexDropdownClosing = false;
+  staffRoleDropdownOpen = false;
+  staffRoleDropdownClosing = false;
   isAbsenceEditModalOpen = false;
   isSavingAbsenceEdit = false;
   absenceEditForm: AbsenceEditForm = this.getEmptyAbsenceEditForm();
@@ -147,6 +167,9 @@ export class StaffComponent implements OnInit, OnDestroy {
   private calendarScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private appointmentDetailCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private calendarDayRolloverTimeout: ReturnType<typeof setTimeout> | null = null;
+  private staffBirthDatePickerCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  private staffSexDropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  private staffRoleDropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private visibleRangeStart: Date | null = null;
   private visibleRangeEnd: Date | null = null;
   private calendarTitleElement: HTMLElement | null = null;
@@ -163,6 +186,15 @@ export class StaffComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.toggleCalendarPicker();
+  };
+  readonly staffPhoneOptions = {
+    initialCountry: 'it' as const,
+    preferredCountries: ['it', 'gb', 'fr', 'de', 'es', 'us'],
+    separateDialCode: true,
+    nationalMode: false,
+    strictMode: true,
+    formatOnDisplay: true,
+    autoPlaceholder: 'polite' as const
   };
 
   calendarOptions: CalendarOptions = {
@@ -260,6 +292,7 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
 
     this.clearCalendarDayRollover();
+    this.clearStaffCustomInputTimers();
   }
 
   @HostListener('document:click', ['$event'])
@@ -274,6 +307,18 @@ export class StaffComponent implements OnInit, OnDestroy {
     }
 
     this.closeCalendarPicker();
+
+    if (!target?.closest('.staff-birthdate-picker')) {
+      this.closeStaffBirthDatePicker();
+    }
+
+    if (!target?.closest('.staff-sex-picker')) {
+      this.closeStaffSexDropdown();
+    }
+
+    if (!target?.closest('.staff-role-picker')) {
+      this.closeStaffRoleDropdown();
+    }
   }
 
   @HostListener('window:resize')
@@ -311,6 +356,34 @@ export class StaffComponent implements OnInit, OnDestroy {
     return this.staff.filter((utente) => this.normalizeRole(utente.ruolo) === 'operatore').length;
   }
 
+  get staffBirthDateDisplayValue(): string {
+    const selectedDate = this.parseInputDate(this.staffForm.data_nascita);
+    return selectedDate
+      ? new Intl.DateTimeFormat('it-IT').format(selectedDate)
+      : 'gg/mm/aaaa';
+  }
+
+  get staffBirthDatePickerMonthLabel(): string {
+    const label = this.calendarPickerMonthFormatter.format(this.staffBirthDatePickerMonth);
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  get staffBirthDatePickerYear(): number {
+    return this.staffBirthDatePickerMonth.getFullYear();
+  }
+
+  get staffSexDisplayValue(): string {
+    return this.staffForm.sesso === 'm'
+      ? 'Maschio'
+      : this.staffForm.sesso === 'f'
+        ? 'Femmina'
+        : 'Non indicato';
+  }
+
+  get staffRoleDisplayValue(): string {
+    return this.staffForm.ruolo === 'titolare' ? 'Titolare' : 'Operatore';
+  }
+
   get selectedOperatorLabel(): string {
     const operatore = this.staff.find((item) => item.idUtente === this.selectedOperator);
     return operatore ? `${operatore.nome} ${operatore.cognome}` : 'Seleziona staff';
@@ -326,8 +399,12 @@ export class StaffComponent implements OnInit, OnDestroy {
 
     this.utentiService.getOperatori().pipe(timeout(8000)).subscribe({
       next: (staff) => {
-        this.staff = staff;
-        this.selectedOperator = this.selectedOperator ?? staff[0]?.idUtente ?? null;
+        this.staff = this.sortStaff(staff);
+        this.restoreStaffEditorState();
+        this.restoreOperatorCalendarState();
+        if (this.selectedOperator && !staff.some((utente) => utente.idUtente === this.selectedOperator)) {
+          this.closeOperatorCalendar();
+        }
         this.isLoadingStaff = false;
         this.refreshView();
         this.loadAppointments();
@@ -345,14 +422,28 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   selectOperator(utente: Utente): void {
-    if (this.selectedOperator === utente.idUtente) {
-      this.scrollToCalendarSection();
+    if (this.selectedOperator === utente.idUtente && this.isOperatorCalendarOpen) {
+      this.closeOperatorCalendar();
       return;
     }
 
     this.selectedOperator = utente.idUtente;
+    this.isOperatorCalendarOpen = true;
+    this.persistOperatorCalendarState();
     this.loadAppointments();
     this.scrollToCalendarSection();
+  }
+
+  closeOperatorCalendar(): void {
+    this.isOperatorCalendarOpen = false;
+    this.selectedOperator = null;
+    this.events = [];
+    this.availabilityMaskEvents = [];
+    this.calendarMessage = '';
+    this.clearOperatorCalendarState();
+    this.closeCalendarPicker(true);
+    this.closeAppointmentDetail(true);
+    this.refreshView();
   }
 
   startCreateStaff(): void {
@@ -364,6 +455,9 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.staffFormMode = 'create';
     this.staffForm = this.getEmptyStaffForm();
     this.isStaffModalOpen = true;
+    this.isStaffPhoneValid = true;
+    this.resetStaffCustomInputs();
+    this.persistStaffEditorState();
     this.refreshView();
     this.scrollToStaffEditor();
   }
@@ -388,6 +482,9 @@ export class StaffComponent implements OnInit, OnDestroy {
       ruolo: this.normalizeRole(utente.ruolo) === 'titolare' ? 'titolare' : 'operatore'
     };
     this.isStaffModalOpen = true;
+    this.isStaffPhoneValid = true;
+    this.resetStaffCustomInputs();
+    this.persistStaffEditorState();
     this.refreshView();
     this.scrollToStaffEditor();
   }
@@ -399,6 +496,209 @@ export class StaffComponent implements OnInit, OnDestroy {
 
     this.isStaffModalOpen = false;
     this.staffForm = this.getEmptyStaffForm();
+    this.isStaffPhoneValid = true;
+    this.resetStaffCustomInputs();
+    this.clearStaffEditorState();
+    this.refreshView();
+  }
+
+  toggleStaffBirthDatePicker(): void {
+    if (this.isSavingStaff || this.staffBirthDatePickerClosing) {
+      return;
+    }
+
+    if (this.staffBirthDatePickerOpen) {
+      this.closeStaffBirthDatePicker();
+      return;
+    }
+
+    this.clearStaffBirthDatePickerTimer();
+    this.closeStaffSexDropdown(true);
+    this.closeStaffRoleDropdown(true);
+    this.staffBirthDatePickerClosing = false;
+    this.staffBirthDatePickerMode = 'days';
+    this.syncStaffBirthDatePickerMonth(this.parseInputDate(this.staffForm.data_nascita) ?? new Date());
+    this.staffBirthDatePickerOpen = true;
+    this.refreshView();
+  }
+
+  closeStaffBirthDatePicker(immediate = false): void {
+    if (!this.staffBirthDatePickerOpen && !this.staffBirthDatePickerClosing) {
+      return;
+    }
+
+    this.clearStaffBirthDatePickerTimer();
+
+    if (immediate) {
+      this.staffBirthDatePickerOpen = false;
+      this.staffBirthDatePickerClosing = false;
+      this.staffBirthDatePickerMode = 'days';
+      return;
+    }
+
+    this.staffBirthDatePickerClosing = true;
+    this.staffBirthDatePickerCloseTimeout = setTimeout(() => {
+      this.staffBirthDatePickerOpen = false;
+      this.staffBirthDatePickerClosing = false;
+      this.staffBirthDatePickerMode = 'days';
+      this.staffBirthDatePickerCloseTimeout = null;
+      this.refreshView();
+    }, 180);
+  }
+
+  toggleStaffBirthDatePickerYears(): void {
+    this.staffBirthDatePickerMode = this.staffBirthDatePickerMode === 'years' ? 'days' : 'years';
+    this.refreshView();
+
+    if (this.staffBirthDatePickerMode === 'years') {
+      this.scrollSelectedStaffBirthDatePickerYearIntoView();
+    }
+  }
+
+  previousStaffBirthDatePickerMonth(): void {
+    this.syncStaffBirthDatePickerMonth(new Date(
+      this.staffBirthDatePickerMonth.getFullYear(),
+      this.staffBirthDatePickerMonth.getMonth() - 1,
+      1
+    ));
+  }
+
+  nextStaffBirthDatePickerMonth(): void {
+    this.syncStaffBirthDatePickerMonth(new Date(
+      this.staffBirthDatePickerMonth.getFullYear(),
+      this.staffBirthDatePickerMonth.getMonth() + 1,
+      1
+    ));
+  }
+
+  selectStaffBirthDatePickerDay(day: CalendarPickerDay): void {
+    this.staffForm.data_nascita = this.formatDateForInput(day.date);
+    this.syncStaffBirthDatePickerMonth(day.date);
+    this.closeStaffBirthDatePicker();
+    this.persistStaffEditorState();
+    this.refreshView();
+  }
+
+  selectStaffBirthDatePickerYear(year: number | string): void {
+    const parsedYear = Number(year);
+
+    if (!Number.isFinite(parsedYear)) {
+      return;
+    }
+
+    const currentDate = this.parseInputDate(this.staffForm.data_nascita);
+    const currentMonth = currentDate?.getMonth() ?? this.staffBirthDatePickerMonth.getMonth();
+    const currentDay = currentDate?.getDate() ?? 1;
+    const nextDate = this.createClampedDate(parsedYear, currentMonth, currentDay);
+
+    this.staffForm.data_nascita = this.formatDateForInput(nextDate);
+    this.syncStaffBirthDatePickerMonth(nextDate);
+    this.staffBirthDatePickerMode = 'days';
+    this.persistStaffEditorState();
+    this.refreshView();
+  }
+
+  toggleStaffSexDropdown(): void {
+    if (this.isSavingStaff) {
+      return;
+    }
+
+    if (this.staffSexDropdownOpen) {
+      this.closeStaffSexDropdown();
+      return;
+    }
+
+    this.clearStaffSexDropdownTimer();
+    this.closeStaffBirthDatePicker(true);
+    this.closeStaffRoleDropdown(true);
+    this.staffSexDropdownClosing = false;
+    this.staffSexDropdownOpen = true;
+    this.refreshView();
+  }
+
+  selectStaffSex(value: StaffForm['sesso']): void {
+    this.staffForm.sesso = value;
+    this.closeStaffSexDropdown();
+    this.persistStaffEditorState();
+    this.refreshView();
+  }
+
+  closeStaffSexDropdown(immediate = false): void {
+    if (!this.staffSexDropdownOpen && !this.staffSexDropdownClosing) {
+      return;
+    }
+
+    this.clearStaffSexDropdownTimer();
+
+    if (immediate) {
+      this.staffSexDropdownOpen = false;
+      this.staffSexDropdownClosing = false;
+      return;
+    }
+
+    this.staffSexDropdownClosing = true;
+    this.staffSexDropdownCloseTimeout = setTimeout(() => {
+      this.staffSexDropdownOpen = false;
+      this.staffSexDropdownClosing = false;
+      this.staffSexDropdownCloseTimeout = null;
+      this.refreshView();
+    }, 160);
+  }
+
+  toggleStaffRoleDropdown(): void {
+    if (this.isSavingStaff) {
+      return;
+    }
+
+    if (this.staffRoleDropdownOpen) {
+      this.closeStaffRoleDropdown();
+      return;
+    }
+
+    this.clearStaffRoleDropdownTimer();
+    this.closeStaffBirthDatePicker(true);
+    this.closeStaffSexDropdown(true);
+    this.staffRoleDropdownClosing = false;
+    this.staffRoleDropdownOpen = true;
+    this.refreshView();
+  }
+
+  selectStaffRole(value: StaffForm['ruolo']): void {
+    this.staffForm.ruolo = value;
+    this.closeStaffRoleDropdown();
+    this.persistStaffEditorState();
+    this.refreshView();
+  }
+
+  closeStaffRoleDropdown(immediate = false): void {
+    if (!this.staffRoleDropdownOpen && !this.staffRoleDropdownClosing) {
+      return;
+    }
+
+    this.clearStaffRoleDropdownTimer();
+
+    if (immediate) {
+      this.staffRoleDropdownOpen = false;
+      this.staffRoleDropdownClosing = false;
+      return;
+    }
+
+    this.staffRoleDropdownClosing = true;
+    this.staffRoleDropdownCloseTimeout = setTimeout(() => {
+      this.staffRoleDropdownOpen = false;
+      this.staffRoleDropdownClosing = false;
+      this.staffRoleDropdownCloseTimeout = null;
+      this.refreshView();
+    }, 160);
+  }
+
+  onStaffPhoneNumberChange(phoneNumber: string): void {
+    this.staffForm.telefono = phoneNumber || '';
+    this.persistStaffEditorState();
+  }
+
+  onStaffPhoneValidityChange(isValid: boolean): void {
+    this.isStaffPhoneValid = isValid;
     this.refreshView();
   }
 
@@ -418,6 +718,11 @@ export class StaffComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (payload.telefono && !this.isStaffPhoneValid) {
+      this.showFeedback('Controlla il numero di telefono: prefisso e formato devono essere validi.', 'error', 'Telefono non valido');
+      return;
+    }
+
     this.isSavingStaff = true;
     this.clearFeedback();
     this.refreshView();
@@ -431,6 +736,9 @@ export class StaffComponent implements OnInit, OnDestroy {
         this.isSavingStaff = false;
         this.isStaffModalOpen = false;
         this.staffForm = this.getEmptyStaffForm();
+        this.isStaffPhoneValid = true;
+        this.resetStaffCustomInputs();
+        this.clearStaffEditorState();
         this.selectedOperator = savedStaff.idUtente;
         this.showFeedback(
           this.staffFormMode === 'edit' ? 'Persona aggiornata con successo.' : 'Persona aggiunta con successo.',
@@ -607,7 +915,7 @@ export class StaffComponent implements OnInit, OnDestroy {
   }
 
   private loadAppointments(): void {
-    if (!this.selectedOperator) {
+    if (!this.selectedOperator || !this.isOperatorCalendarOpen) {
       this.events = [];
       this.availabilityMaskEvents = [];
       this.syncCalendarEvents();
@@ -708,8 +1016,20 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.updateCalendarPickerPosition();
   }
 
-  closeCalendarPicker(): void {
+  closeCalendarPicker(immediate = false): void {
     if (!this.calendarPickerOpen || this.calendarPickerClosing) {
+      return;
+    }
+
+    if (immediate) {
+      if (this.calendarPickerCloseTimeout) {
+        clearTimeout(this.calendarPickerCloseTimeout);
+        this.calendarPickerCloseTimeout = null;
+      }
+
+      this.calendarPickerOpen = false;
+      this.calendarPickerClosing = false;
+      this.syncCalendarTitleState();
       return;
     }
 
@@ -1190,8 +1510,21 @@ export class StaffComponent implements OnInit, OnDestroy {
     this.refreshView();
   }
 
-  closeAppointmentDetail(): void {
+  closeAppointmentDetail(immediate = false): void {
     if (!this.isAppointmentDetailOpen || this.isAppointmentDetailClosing) {
+      return;
+    }
+
+    if (immediate) {
+      if (this.appointmentDetailCloseTimeout) {
+        clearTimeout(this.appointmentDetailCloseTimeout);
+        this.appointmentDetailCloseTimeout = null;
+      }
+
+      this.isAppointmentDetailOpen = false;
+      this.isAppointmentDetailClosing = false;
+      this.selectedAppointment = null;
+      this.selectedAppointmentLabel = '';
       return;
     }
 
@@ -1397,6 +1730,19 @@ export class StaffComponent implements OnInit, OnDestroy {
       : new Intl.DateTimeFormat('it-IT').format(date);
   }
 
+  formatPhoneDisplay(value?: string | null): string {
+    const phone = String(value ?? '').trim();
+
+    if (!phone) {
+      return 'Telefono non inserito';
+    }
+
+    return phone
+      .replace(/^\+39\s*/, '+39 ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
   private buildAvailabilityMaskEvents(): EventInput[] {
     if (!this.visibleRangeStart || !this.visibleRangeEnd) {
       return [];
@@ -1477,6 +1823,115 @@ export class StaffComponent implements OnInit, OnDestroy {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+  private resetStaffCustomInputs(): void {
+    this.closeStaffBirthDatePicker(true);
+    this.closeStaffSexDropdown(true);
+    this.closeStaffRoleDropdown(true);
+    this.syncStaffBirthDatePickerMonth(this.parseInputDate(this.staffForm.data_nascita) ?? new Date());
+  }
+
+  private clearStaffCustomInputTimers(): void {
+    this.clearStaffBirthDatePickerTimer();
+    this.clearStaffSexDropdownTimer();
+    this.clearStaffRoleDropdownTimer();
+  }
+
+  private clearStaffBirthDatePickerTimer(): void {
+    if (this.staffBirthDatePickerCloseTimeout) {
+      clearTimeout(this.staffBirthDatePickerCloseTimeout);
+      this.staffBirthDatePickerCloseTimeout = null;
+    }
+  }
+
+  private clearStaffSexDropdownTimer(): void {
+    if (this.staffSexDropdownCloseTimeout) {
+      clearTimeout(this.staffSexDropdownCloseTimeout);
+      this.staffSexDropdownCloseTimeout = null;
+    }
+  }
+
+  private clearStaffRoleDropdownTimer(): void {
+    if (this.staffRoleDropdownCloseTimeout) {
+      clearTimeout(this.staffRoleDropdownCloseTimeout);
+      this.staffRoleDropdownCloseTimeout = null;
+    }
+  }
+
+  private persistOperatorCalendarState(): void {
+    if (typeof window === 'undefined' || !this.selectedOperator || !this.isOperatorCalendarOpen) {
+      return;
+    }
+
+    window.sessionStorage.setItem(this.operatorCalendarStorageKey, String(this.selectedOperator));
+  }
+
+  private restoreOperatorCalendarState(): void {
+    if (typeof window === 'undefined' || this.isOperatorCalendarOpen) {
+      return;
+    }
+
+    const storedOperatorId = Number(window.sessionStorage.getItem(this.operatorCalendarStorageKey));
+
+    if (!Number.isFinite(storedOperatorId)) {
+      return;
+    }
+
+    const operatorExists = this.staff.some((utente) => utente.idUtente === storedOperatorId);
+
+    if (!operatorExists) {
+      this.clearOperatorCalendarState();
+      return;
+    }
+
+    this.selectedOperator = storedOperatorId;
+    this.isOperatorCalendarOpen = true;
+  }
+
+  private clearOperatorCalendarState(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.sessionStorage.removeItem(this.operatorCalendarStorageKey);
+  }
+
+  private syncStaffBirthDatePickerMonth(baseDate: Date): void {
+    this.staffBirthDatePickerMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    this.staffBirthDatePickerDays = this.buildCalendarPickerDays(
+      this.staffBirthDatePickerMonth,
+      this.staffForm.data_nascita
+    );
+  }
+
+  private buildBirthDatePickerYears(): number[] {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+
+    for (let year = currentYear; year >= 1900; year--) {
+      years.push(year);
+    }
+
+    return years;
+  }
+
+  private createClampedDate(year: number, month: number, day: number): Date {
+    const lastDayOfTargetMonth = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDayOfTargetMonth));
+  }
+
+  private scrollSelectedStaffBirthDatePickerYearIntoView(): void {
+    window.requestAnimationFrame(() => {
+      const selectedYear = this.elementRef.nativeElement.querySelector(
+        '.staff-birthdate-picker .staff-year-option.is-selected'
+      ) as HTMLElement | null;
+
+      selectedYear?.scrollIntoView({
+        block: 'center',
+        inline: 'nearest'
+      });
+    });
+  }
+
   private parseInputDate(value: string): Date | null {
     if (!value) {
       return null;
@@ -1488,6 +1943,89 @@ export class StaffComponent implements OnInit, OnDestroy {
 
   private normalizeRole(role?: string | null): string {
     return String(role ?? '').trim().toLowerCase();
+  }
+
+  persistStaffEditorState(): void {
+    if (typeof sessionStorage === 'undefined' || !this.isStaffModalOpen) {
+      return;
+    }
+
+    const state: StaffEditorState = {
+      mode: this.staffFormMode,
+      staffForm: this.staffForm
+    };
+
+    try {
+      sessionStorage.setItem(this.staffEditorStateStorageKey, JSON.stringify(state));
+    } catch {
+      // Storage can fail in private browsing; the editor still works normally.
+    }
+  }
+
+  private restoreStaffEditorState(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const rawState = sessionStorage.getItem(this.staffEditorStateStorageKey);
+
+      if (!rawState) {
+        return false;
+      }
+
+      const state = JSON.parse(rawState) as StaffEditorState;
+
+      if (state.mode === 'edit' && state.staffForm.idUtente) {
+        const staffMember = this.staff.find((utente) => utente.idUtente === state.staffForm.idUtente);
+
+        if (!staffMember) {
+          this.clearStaffEditorState();
+          return false;
+        }
+      }
+
+      this.staffFormMode = state.mode;
+      this.staffForm = {
+        ...this.getEmptyStaffForm(),
+        ...state.staffForm
+      };
+      this.isStaffModalOpen = true;
+      this.isStaffPhoneValid = true;
+      this.resetStaffCustomInputs();
+      return true;
+    } catch {
+      this.clearStaffEditorState();
+    }
+
+    return false;
+  }
+
+  private clearStaffEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(this.staffEditorStateStorageKey);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
+  }
+
+  private sortStaff(staff: Utente[]): Utente[] {
+    return [...staff].sort((a, b) => {
+      const roleOrder = (utente: Utente): number =>
+        this.normalizeRole(utente.ruolo) === 'titolare' ? 0 : 1;
+
+      const byRole = roleOrder(a) - roleOrder(b);
+
+      if (byRole !== 0) {
+        return byRole;
+      }
+
+      return Number(a.idUtente) - Number(b.idUtente);
+    });
   }
 
   private normalizeDateInput(value?: string | null): string {

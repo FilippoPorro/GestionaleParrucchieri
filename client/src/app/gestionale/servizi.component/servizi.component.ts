@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SidenavComponent } from '../sidenav.component/sidenav.component';
 import { ServiziService } from '../../services/servizio';
@@ -17,6 +17,16 @@ interface ServizioFormDraft {
   visualizzazioneSito: boolean;
 }
 
+type BookingType = ServizioFormDraft['tipoPrenotazione'];
+type BookingDropdownMode = 'create' | 'edit';
+
+interface ServiziEditorState {
+  mode: 'create' | 'edit';
+  selectedId?: number;
+  newServizio?: ServizioFormDraft;
+  draftServizio?: Servizio;
+}
+
 @Component({
   selector: 'app-servizi.component',
   standalone: true,
@@ -25,6 +35,7 @@ interface ServizioFormDraft {
   styleUrl: './servizi.component.css',
 })
 export class ServiziComponent implements OnInit, OnDestroy {
+  private readonly editorStateStorageKey = 'gestionale.servizi.editorState';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private createCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -46,6 +57,27 @@ export class ServiziComponent implements OnInit, OnDestroy {
   isCreateClosing = false;
   isEditClosing = false;
   isDeleting = false;
+  openBookingTypeDropdown: BookingDropdownMode | null = null;
+  readonly bookingTypeOptions: Array<{ value: BookingType; label: string; description: string; icon: string }> = [
+    {
+      value: 'sito',
+      label: 'Sito',
+      description: 'Prenotazione online',
+      icon: 'bi-globe'
+    },
+    {
+      value: 'telefono',
+      label: 'Telefono',
+      description: 'Solo chiamata',
+      icon: 'bi-telephone'
+    },
+    {
+      value: 'consulenza',
+      label: 'Consulenza',
+      description: 'Pre-approvazione',
+      icon: 'bi-chat-square-text'
+    }
+  ];
   
   feedbackMessage = '';
   feedbackType: 'success' | 'error' | '' = '';
@@ -144,6 +176,37 @@ export class ServiziComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:click')
+  closeBookingTypeDropdown(): void {
+    this.openBookingTypeDropdown = null;
+  }
+
+  toggleBookingTypeDropdown(mode: BookingDropdownMode, event: Event): void {
+    event.stopPropagation();
+    this.openBookingTypeDropdown = this.openBookingTypeDropdown === mode ? null : mode;
+  }
+
+  selectBookingType(mode: BookingDropdownMode, value: BookingType, event: Event): void {
+    event.stopPropagation();
+
+    if (mode === 'create') {
+      this.newServizio.tipoPrenotazione = value;
+    } else if (this.draftServizio) {
+      this.draftServizio.tipoPrenotazione = value;
+    }
+
+    this.openBookingTypeDropdown = null;
+    this.persistEditorState();
+  }
+
+  getBookingTypeLabel(value?: string | null): string {
+    return this.bookingTypeOptions.find((option) => option.value === value)?.label ?? 'Sito';
+  }
+
+  getBookingTypeDescription(value?: string | null): string {
+    return this.bookingTypeOptions.find((option) => option.value === value)?.description ?? 'Prenotazione online';
+  }
+
   toggleSidenav(): void {
     this.isSidenavCollapsed = !this.isSidenavCollapsed;
   }
@@ -175,13 +238,14 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.servizi = this.sortServizi(servizi);
         this.currentPage = 1;
         this.pendingDeleteServizio = null;
-        if (this.selectedServizio) {
+        if (!this.restorePersistedEditorState() && this.selectedServizio) {
           const updatedSelection = this.servizi.find((s) => s.idServizio === this.selectedServizio?.idServizio) ?? null;
           if (updatedSelection) {
             this.selectServizio(updatedSelection);
           } else {
             this.selectedServizio = null;
             this.draftServizio = null;
+            this.clearPersistedEditorState();
           }
         }
         this.isLoading = false;
@@ -216,6 +280,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
       visualizzazioneSito: servizio.visualizzazioneSito !== undefined ? servizio.visualizzazioneSito : true
     };
     this.clearFeedback();
+    this.persistEditorState();
 
     if (scrollToEditor) {
       this.scrollToEditor();
@@ -230,6 +295,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
     if (this.selectedServizio || this.draftServizio) {
       this.isEditClosing = true;
       this.clearFeedback();
+      this.clearPersistedEditorState();
       this.refreshView();
 
       this.editCloseTimeout = setTimeout(() => {
@@ -238,6 +304,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.isCreateMode = false;
         this.isEditClosing = false;
         this.editCloseTimeout = null;
+        this.clearPersistedEditorState();
         this.refreshView();
       }, this.panelCloseAnimationMs);
 
@@ -248,6 +315,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
     this.draftServizio = null;
     this.isCreateMode = false;
     this.clearFeedback();
+    this.clearPersistedEditorState();
   }
 
   startCreateServizio(): void {
@@ -259,6 +327,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
     this.draftServizio = null;
     this.newServizio = this.createEmptyServizioDraft();
     this.clearFeedback();
+    this.persistEditorState();
     this.scrollToEditor();
   }
 
@@ -269,6 +338,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
 
     this.isCreateClosing = true;
     this.clearFeedback();
+    this.clearPersistedEditorState();
     this.refreshView();
 
     this.createCloseTimeout = setTimeout(() => {
@@ -276,8 +346,38 @@ export class ServiziComponent implements OnInit, OnDestroy {
       this.isCreateClosing = false;
       this.newServizio = this.createEmptyServizioDraft();
       this.createCloseTimeout = null;
+      this.clearPersistedEditorState();
       this.refreshView();
     }, this.panelCloseAnimationMs);
+  }
+
+  persistEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    const state: ServiziEditorState | null = this.isCreateMode
+      ? {
+          mode: 'create',
+          newServizio: this.newServizio
+        }
+      : this.selectedServizio && this.draftServizio
+        ? {
+            mode: 'edit',
+            selectedId: this.selectedServizio.idServizio,
+            draftServizio: this.draftServizio
+          }
+        : null;
+
+    try {
+      if (state) {
+        sessionStorage.setItem(this.editorStateStorageKey, JSON.stringify(state));
+      } else {
+        sessionStorage.removeItem(this.editorStateStorageKey);
+      }
+    } catch {
+      // Storage can fail in private browsing; the editor still works normally.
+    }
   }
 
   requestDeleteServizio(servizio: Servizio): void {
@@ -370,6 +470,7 @@ export class ServiziComponent implements OnInit, OnDestroy {
         this.isCreateClosing = true;
         this.selectedServizio = null;
         this.draftServizio = null;
+        this.clearPersistedEditorState();
         this.showFeedback(
           'Servizio inserito con successo.',
           'success',
@@ -454,6 +555,73 @@ export class ServiziComponent implements OnInit, OnDestroy {
     if (this.editCloseTimeout) {
       clearTimeout(this.editCloseTimeout);
       this.editCloseTimeout = null;
+    }
+  }
+
+  private restorePersistedEditorState(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const rawState = sessionStorage.getItem(this.editorStateStorageKey);
+
+      if (!rawState) {
+        return false;
+      }
+
+      const state = JSON.parse(rawState) as ServiziEditorState;
+
+      if (state.mode === 'create' && state.newServizio) {
+        this.clearPanelCloseTimers();
+        this.isCreateMode = true;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedServizio = null;
+        this.draftServizio = null;
+        this.newServizio = {
+          ...this.createEmptyServizioDraft(),
+          ...state.newServizio
+        };
+        return true;
+      }
+
+      if (state.mode === 'edit' && state.selectedId && state.draftServizio) {
+        const selectedServizio = this.servizi.find((servizio) => servizio.idServizio === state.selectedId);
+
+        if (!selectedServizio) {
+          this.clearPersistedEditorState();
+          return false;
+        }
+
+        this.clearPanelCloseTimers();
+        this.isCreateMode = false;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedServizio = selectedServizio;
+        this.draftServizio = {
+          ...selectedServizio,
+          ...state.draftServizio,
+          idServizio: selectedServizio.idServizio
+        };
+        return true;
+      }
+    } catch {
+      this.clearPersistedEditorState();
+    }
+
+    return false;
+  }
+
+  private clearPersistedEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(this.editorStateStorageKey);
+    } catch {
+      // Ignore storage cleanup failures.
     }
   }
 

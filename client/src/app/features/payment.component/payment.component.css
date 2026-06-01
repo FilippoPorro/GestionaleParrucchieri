@@ -7,9 +7,17 @@
     radial-gradient(circle at 80% 70%, rgba(212, 176, 106, 0.07), transparent 45%);
   background-size: cover, cover, cover;
   background-position: center, center, center;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
+  background-color: #050403;
   isolation: isolate;
+}
+
+@media (max-width: 768px) {
+  .payment-page {
+    background-size: auto 100vh, cover, cover;
+    background-attachment: fixed;
+  }
 }
 
 .payment-page::before {

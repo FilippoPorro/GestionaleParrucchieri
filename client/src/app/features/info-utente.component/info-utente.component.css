@@ -37,8 +37,17 @@
     linear-gradient(135deg, rgba(9, 8, 7, 0.54), rgba(6, 6, 6, 0.42)),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg");
   background-size: cover;
-  background-position: center;
+  background-position: center, center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
+  background-color: #050403;
+}
+
+@media (max-width: 768px) {
+  :host {
+    background-size: cover, cover, cover, auto 100vh;
+    background-attachment: fixed;
+  }
 }
 
 *,
@@ -79,7 +88,7 @@
 .profile-shell {
   position: relative;
   z-index: 3;
-  width: min(1320px, calc(100% - 34px));
+  width: min(1520px, calc(100% - 48px));
   margin: 0 auto;
   padding: 118px 0 104px;
 }
@@ -2190,6 +2199,50 @@ button.info-chip {
   to {
     opacity: 0;
     transform: translateY(8px) scale(0.96);
+  }
+}
+
+@media (min-width: 1500px) {
+  .profile-shell {
+    width: min(1680px, calc(100% - 72px));
+  }
+
+  .profile-hero-card {
+    grid-template-columns: minmax(0, 1.35fr) minmax(220px, auto);
+    padding: 44px 48px;
+  }
+
+  .identity-panel {
+    grid-template-columns: minmax(0, 1.35fr) minmax(380px, 0.75fr);
+    padding: 42px;
+  }
+
+  .profile-content-grid,
+  .editor-form-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(390px, 0.75fr);
+    gap: 30px;
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .detail-card {
+    grid-column: span 2;
+  }
+
+  .detail-card.feature {
+    grid-column: span 3;
+  }
+
+  .detail-card.wide {
+    grid-column: span 4;
+  }
+
+  .content-panel,
+  .editor-main-panel,
+  .editor-side-panel {
+    padding: 34px;
   }
 }
 

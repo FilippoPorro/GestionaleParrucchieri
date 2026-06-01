@@ -16,7 +16,16 @@
 
   background-size: cover, cover, cover, cover;
   background-position: center 32%, center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
+  background-color: #050403;
+}
+
+@media (max-width: 768px) {
+  .services-page {
+    background-size: auto 100vh, cover, cover, cover;
+    background-attachment: fixed;
+  }
 }
 
 

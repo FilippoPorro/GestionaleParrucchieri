@@ -265,3 +265,82 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 640px) {
+  .service-card-body {
+    padding: 16px;
+  }
+
+  .service-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .service-title {
+    font-size: 17px;
+  }
+
+  .service-mini-text {
+    margin-top: 5px;
+    font-size: 11px;
+  }
+
+  .duration-badge {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  .service-description {
+    display: -webkit-box;
+    margin-bottom: 12px;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .service-info-row {
+    max-height: 28px;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .service-info-pill {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+
+  .service-footer {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding-top: 12px;
+  }
+
+  .service-price-label {
+    font-size: 9px;
+  }
+
+  .service-price {
+    font-size: 22px;
+  }
+
+  .btn-book {
+    width: auto;
+    min-width: 42px;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 0;
+  }
+
+  .btn-book::before {
+    margin: 0;
+    font-size: 16px;
+  }
+}

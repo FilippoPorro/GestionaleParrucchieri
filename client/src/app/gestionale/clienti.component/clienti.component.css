@@ -5,6 +5,15 @@
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.48) 0%, rgba(16, 12, 9, 0.42) 48%, rgba(4, 3, 2, 0.58) 100%),
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg") center / cover fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-color: #050403;
+}
+
+@media (max-width: 768px) {
+  :host {
+    background-size: cover, auto 100vh;
+    background-attachment: fixed, fixed;
+  }
 }
 
 .management-layout {
@@ -1367,10 +1376,8 @@
 ::ng-deep .customers-field intl-tel-input .iti__dropdown-content,
 ::ng-deep .customers-field intl-tel-input .iti__country-list {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.028)),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(244, 239, 231, 0.016)),
-    radial-gradient(circle at top right, rgba(212, 176, 106, 0.08), transparent 40%),
-    #17120d !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    rgba(8, 7, 6, 0.96) !important;
   color: #f8f1e7 !important;
 }
 
@@ -1378,34 +1385,36 @@
   top: calc(100% + 8px) !important;
   bottom: auto !important;
   display: block !important;
+  min-width: min(420px, calc(100vw - 44px)) !important;
+  max-width: calc(100vw - 44px) !important;
   visibility: hidden;
   pointer-events: none;
   overflow: hidden !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 18px !important;
+  border: 1px solid rgba(212, 176, 106, 0.24) !important;
+  border-radius: 10px !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 20px 40px rgba(0, 0, 0, 0.18) !important;
-  clip-path: inset(0 0 100% 0 round 18px);
-  transform: perspective(900px) rotateX(-10deg) scaleY(0.94);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 22px 46px rgba(0, 0, 0, 0.3) !important;
+  clip-path: inset(0 0 100% 0 round 10px);
+  transform: translateY(-8px) scale(0.98);
   transform-origin: top center;
   transition:
-    clip-path 0.34s cubic-bezier(0.2, 0.9, 0.24, 1),
-    transform 0.34s cubic-bezier(0.2, 0.9, 0.24, 1),
-    visibility 0s linear 0.34s;
-  z-index: 100 !important;
-  backdrop-filter: blur(26px) saturate(130%);
-  -webkit-backdrop-filter: blur(26px) saturate(130%);
+    clip-path 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.22s;
+  z-index: 160 !important;
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
 ::ng-deep .customers-field intl-tel-input .iti__dropdown-content:not(.iti__hide) {
   visibility: visible;
   pointer-events: auto;
-  clip-path: inset(0 0 0 0 round 18px);
-  transform: perspective(900px) rotateX(0) scaleY(1);
+  clip-path: inset(0 0 0 0 round 10px);
+  transform: translateY(0) scale(1);
   transition:
-    clip-path 0.34s cubic-bezier(0.2, 0.9, 0.24, 1),
-    transform 0.34s cubic-bezier(0.2, 0.9, 0.24, 1),
+    clip-path 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
     visibility 0s linear 0s;
 }
 
@@ -1413,8 +1422,8 @@
   display: block !important;
   visibility: hidden;
   pointer-events: none;
-  clip-path: inset(0 0 100% 0 round 18px);
-  transform: perspective(900px) rotateX(-8deg) scaleY(0.94);
+  clip-path: inset(0 0 100% 0 round 10px);
+  transform: translateY(-8px) scale(0.98);
 }
 
 ::ng-deep .customers-field intl-tel-input .iti__country-list {
@@ -1439,9 +1448,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
-  padding: 12px 14px !important;
-  border-radius: 14px !important;
+  margin-bottom: 3px;
+  padding: 11px 12px !important;
+  border-radius: 8px !important;
   border: 1px solid transparent !important;
   color: #f8f1e7 !important;
   background: transparent !important;
@@ -1451,18 +1460,18 @@
 ::ng-deep .customers-field intl-tel-input .iti__country:hover,
 ::ng-deep .customers-field intl-tel-input .iti__highlight {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(212, 176, 106, 0.22) !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
-    rgba(212, 176, 106, 0.08) !important;
+    linear-gradient(180deg, rgba(212, 176, 106, 0.18), rgba(212, 176, 106, 0.06)),
+    rgba(255, 255, 255, 0.035) !important;
 }
 
 ::ng-deep .customers-field intl-tel-input .iti__country.iti__active,
 ::ng-deep .customers-field intl-tel-input .iti__country[aria-selected="true"] {
-  border-color: rgba(212, 176, 106, 0.16) !important;
+  border-color: rgba(212, 176, 106, 0.34) !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)),
-    rgba(212, 176, 106, 0.1) !important;
+    linear-gradient(180deg, rgba(212, 176, 106, 0.2), rgba(212, 176, 106, 0.08)),
+    rgba(255, 255, 255, 0.04) !important;
 }
 
 ::ng-deep .customers-field intl-tel-input .iti__country-name,
@@ -1483,11 +1492,11 @@
   margin: 10px !important;
   min-height: 46px !important;
   padding: 12px 14px 12px 46px !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(212, 176, 106, 0.18) !important;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
-    rgba(255, 255, 255, 0.025) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    rgba(5, 4, 3, 0.68) !important;
   color: #fffaf1 !important;
   outline: none !important;
 }

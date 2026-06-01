@@ -106,7 +106,7 @@
             <tbody>
               <tr
                 *ngFor="let utente of filteredStaff"
-                [class.is-selected]="selectedOperator === utente.idUtente"
+                [class.is-selected]="isOperatorCalendarOpen && selectedOperator === utente.idUtente"
               >
                 <td class="customers-cell-id" data-label="ID">#{{ utente.idUtente }}</td>
                 <td class="customers-cell-primary" data-label="Operatore">
@@ -120,7 +120,7 @@
                 </td>
                 <td class="customers-cell-contact" data-label="Contatti">
                   <span class="customers-cell-email">{{ utente.email || '-' }}</span>
-                  <span class="customers-cell-phone">{{ utente.telefono || 'Telefono non inserito' }}</span>
+                  <span class="customers-cell-phone">{{ formatPhoneDisplay(utente.telefono) }}</span>
                 </td>
                 <td class="customers-cell-date" data-label="Data nascita">{{ formatDate(utente.data_nascita) }}</td>
                 <td data-label="Ruolo">
@@ -130,8 +130,14 @@
                 </td>
                 <td class="customers-actions-cell" data-label="Azioni">
                   <div class="customers-actions" aria-label="Azioni personale">
-                    <button type="button" class="customers-action-button" (click)="selectOperator(utente)" title="Apri agenda" aria-label="Apri agenda">
-                      <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    <button
+                      type="button"
+                      class="customers-action-button"
+                      (click)="selectOperator(utente)"
+                      [attr.title]="isOperatorCalendarOpen && selectedOperator === utente.idUtente ? 'Chiudi agenda' : 'Apri agenda'"
+                      [attr.aria-label]="isOperatorCalendarOpen && selectedOperator === utente.idUtente ? 'Chiudi agenda' : 'Apri agenda'"
+                    >
+                      <i class="bi" [ngClass]="isOperatorCalendarOpen && selectedOperator === utente.idUtente ? 'bi-calendar-x' : 'bi-calendar3'" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="customers-action-button" (click)="selectStaffForEdit(utente, $event)" title="Modifica personale" aria-label="Modifica personale">
                       <i class="bi bi-pencil-square" aria-hidden="true"></i>
@@ -173,6 +179,8 @@
           [class.customers-form--create]="staffFormMode === 'create'"
           [class.customers-form--edit]="staffFormMode === 'edit'"
           (ngSubmit)="saveStaff()"
+          (input)="persistStaffEditorState()"
+          (change)="persistStaffEditorState()"
         >
           <div class="customers-create-header" [class.customers-create-header--new]="staffFormMode === 'create'" [class.customers-edit-header]="staffFormMode === 'edit'">
             <span class="customers-avatar customers-avatar--large customers-avatar--create">
@@ -188,7 +196,7 @@
                 </span>
                 <span class="customers-profile-tag" [class.is-muted]="!staffForm.telefono">
                   <i class="bi bi-telephone" aria-hidden="true"></i>
-                  {{ staffForm.telefono || 'Telefono da inserire' }}
+                  {{ formatPhoneDisplay(staffForm.telefono) }}
                 </span>
                 <span *ngIf="staffFormMode === 'create'" class="customers-profile-tag">
                   <i class="bi bi-envelope-check" aria-hidden="true"></i>
@@ -199,48 +207,156 @@
           </div>
 
           <div class="customers-create-shell">
-            <div class="customers-form__grid customers-form__grid--create">
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+            <div
+              *ngIf="staffFormMode === 'create'"
+              class="staff-password-notice"
+              role="status"
+            >
+              <div class="staff-password-notice__icon">
+                <i class="bi bi-envelope-check" aria-hidden="true"></i>
+              </div>
+              <span>Il sistema generera una password temporanea sicura e inviera al personale il link per impostarne una personale.</span>
+            </div>
+
+            <div class="customers-form__grid customers-form__grid--create staff-form-grid">
+              <label class="customers-field customers-edit-field staff-field staff-field--half">
                 <span>Nome</span>
                 <input type="text" name="staffNome" [(ngModel)]="staffForm.nome" [disabled]="isSavingStaff" required />
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+              <label class="customers-field customers-edit-field staff-field staff-field--half">
                 <span>Cognome</span>
                 <input type="text" name="staffCognome" [(ngModel)]="staffForm.cognome" [disabled]="isSavingStaff" required />
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--full">
+              <label class="customers-field customers-edit-field staff-field staff-field--wide">
                 <span>Email</span>
                 <input type="email" name="staffEmail" [(ngModel)]="staffForm.email" [disabled]="isSavingStaff" required />
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+              <label class="customers-field customers-edit-field staff-field staff-field--phone">
                 <span>Telefono</span>
-                <input type="tel" name="staffTelefono" [(ngModel)]="staffForm.telefono" [disabled]="isSavingStaff" />
+                <intl-tel-input
+                  name="staffTelefono"
+                  [initialValue]="staffForm.telefono || ''"
+                  [initOptions]="staffPhoneOptions"
+                  [inputProps]="{
+                    id: 'staffTelefono',
+                    class: 'customers-phone-input',
+                    placeholder: 'Inserisci il numero'
+                  }"
+                  (numberChange)="onStaffPhoneNumberChange($event)"
+                  (validityChange)="onStaffPhoneValidityChange($event)"
+                ></intl-tel-input>
               </label>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+              <div class="customers-field customers-edit-field staff-field staff-field--third staff-birthdate-picker">
                 <span>Data nascita</span>
-                <input type="date" name="staffDataNascita" [(ngModel)]="staffForm.data_nascita" [disabled]="isSavingStaff" />
-              </label>
+                <button
+                  type="button"
+                  class="staff-picker-trigger"
+                  [class.has-value]="!!staffForm.data_nascita"
+                  [attr.aria-expanded]="staffBirthDatePickerOpen"
+                  (click)="toggleStaffBirthDatePicker()"
+                  [disabled]="isSavingStaff"
+                >
+                  <span>{{ staffBirthDateDisplayValue }}</span>
+                  <i class="bi bi-calendar-date" aria-hidden="true"></i>
+                </button>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <div
+                  *ngIf="staffBirthDatePickerOpen || staffBirthDatePickerClosing"
+                  class="staff-date-picker-panel"
+                  [class.is-closing]="staffBirthDatePickerClosing"
+                >
+                  <div class="staff-date-picker-header">
+                    <button type="button" class="staff-date-nav" (click)="previousStaffBirthDatePickerMonth()" aria-label="Mese precedente">
+                      <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="staff-date-month"
+                      [class.is-active]="staffBirthDatePickerMode === 'years'"
+                      (click)="toggleStaffBirthDatePickerYears()"
+                    >
+                      {{ staffBirthDatePickerMonthLabel }}
+                      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="staff-date-nav" (click)="nextStaffBirthDatePickerMonth()" aria-label="Mese successivo">
+                      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+
+                  <div *ngIf="staffBirthDatePickerMode === 'days'" class="staff-date-weekdays">
+                    <span *ngFor="let weekday of calendarPickerWeekdays">{{ weekday }}</span>
+                  </div>
+
+                  <div *ngIf="staffBirthDatePickerMode === 'days'" class="staff-date-grid">
+                    <button
+                      *ngFor="let day of staffBirthDatePickerDays"
+                      type="button"
+                      class="staff-date-day"
+                      [class.is-outside]="!day.currentMonth"
+                      [class.is-today]="day.isToday"
+                      [class.is-selected]="day.isSelected"
+                      (click)="selectStaffBirthDatePickerDay(day)"
+                    >
+                      {{ day.label }}
+                    </button>
+                  </div>
+
+                  <div *ngIf="staffBirthDatePickerMode === 'years'" class="staff-date-years">
+                    <button
+                      *ngFor="let year of staffBirthDatePickerYears"
+                      type="button"
+                      class="staff-year-option"
+                      [class.is-selected]="year === staffBirthDatePickerYear"
+                      (click)="selectStaffBirthDatePickerYear(year)"
+                    >
+                      {{ year }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="customers-field customers-edit-field staff-field staff-field--third staff-select-picker staff-sex-picker">
                 <span>Sesso</span>
-                <select name="staffSesso" [(ngModel)]="staffForm.sesso" [disabled]="isSavingStaff">
-                  <option value="">Non indicato</option>
-                  <option value="f">Femmina</option>
-                  <option value="m">Maschio</option>
-                </select>
-              </label>
+                <button
+                  type="button"
+                  class="staff-picker-trigger"
+                  [attr.aria-expanded]="staffSexDropdownOpen"
+                  (click)="toggleStaffSexDropdown()"
+                  [disabled]="isSavingStaff"
+                >
+                  <span>{{ staffSexDisplayValue }}</span>
+                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </button>
 
-              <label class="customers-field customers-edit-field customers-edit-field--half">
+                <div *ngIf="staffSexDropdownOpen || staffSexDropdownClosing" class="staff-select-panel" [class.is-closing]="staffSexDropdownClosing">
+                  <button type="button" class="staff-select-option" [class.is-selected]="staffForm.sesso === ''" (click)="selectStaffSex('')">Non indicato</button>
+                  <button type="button" class="staff-select-option" [class.is-selected]="staffForm.sesso === 'f'" (click)="selectStaffSex('f')">Femmina</button>
+                  <button type="button" class="staff-select-option" [class.is-selected]="staffForm.sesso === 'm'" (click)="selectStaffSex('m')">Maschio</button>
+                </div>
+              </div>
+
+              <div class="customers-field customers-edit-field staff-field staff-field--third staff-select-picker staff-role-picker">
                 <span>Ruolo</span>
-                <select name="staffRuolo" [(ngModel)]="staffForm.ruolo" [disabled]="isSavingStaff">
-                  <option value="operatore">Operatore</option>
-                  <option value="titolare">Titolare</option>
-                </select>
-              </label>
+                <button
+                  type="button"
+                  class="staff-picker-trigger"
+                  [attr.aria-expanded]="staffRoleDropdownOpen"
+                  (click)="toggleStaffRoleDropdown()"
+                  [disabled]="isSavingStaff"
+                >
+                  <span>{{ staffRoleDisplayValue }}</span>
+                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </button>
+
+                <div *ngIf="staffRoleDropdownOpen || staffRoleDropdownClosing" class="staff-select-panel" [class.is-closing]="staffRoleDropdownClosing">
+                  <button type="button" class="staff-select-option" [class.is-selected]="staffForm.ruolo === 'operatore'" (click)="selectStaffRole('operatore')">Operatore</button>
+                  <button type="button" class="staff-select-option" [class.is-selected]="staffForm.ruolo === 'titolare'" (click)="selectStaffRole('titolare')">Titolare</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -257,21 +373,27 @@
         </form>
       </article>
 
-      <article #calendarSection class="customers-card staff-calendar-card">
-        <div class="customers-card__head">
-            <div>
-              <p class="customers-card__eyebrow">Calendario</p>
+      <article *ngIf="isOperatorCalendarOpen" #calendarSection class="customers-card staff-calendar-card">
+        <div class="customers-card__head staff-calendar-head">
+          <div class="staff-calendar-title">
+            <p class="customers-card__eyebrow">Calendario</p>
             <h2>Appuntamenti e permessi</h2>
-            </div>
-          <div class="staff-calendar-selected" style="display: flex; align-items: center; gap: 14px;">
-            <button *ngIf="selectedOperator" type="button" class="customers-icon-button add-ferie-btn" (click)="openFerieModal()">
-              <i class="bi bi-airplane-fill" aria-hidden="true" style="margin-right: 6px;"></i>
+          </div>
+
+          <div class="staff-calendar-summary">
+            <span>Agenda selezionata</span>
+            <strong>{{ selectedOperatorLabel }}</strong>
+          </div>
+
+          <div class="staff-calendar-actions">
+            <button *ngIf="selectedOperator" type="button" class="customers-icon-button add-ferie-btn staff-calendar-action" (click)="openFerieModal()">
+              <i class="bi bi-airplane-fill" aria-hidden="true"></i>
               <span>Aggiungi ferie</span>
             </button>
-            <div style="text-align: right;">
-              <span>Agenda</span>
-              <strong>{{ selectedOperatorLabel }}</strong>
-            </div>
+            <button type="button" class="customers-icon-button customers-icon-button--ghost staff-calendar-action staff-calendar-close" (click)="closeOperatorCalendar()" title="Chiudi agenda">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+              <span>Chiudi</span>
+            </button>
           </div>
         </div>
 

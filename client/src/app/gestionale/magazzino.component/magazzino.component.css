@@ -221,6 +221,10 @@
   white-space: nowrap;
 }
 
+.services-table--products .services-person {
+  gap: 14px;
+}
+
 .product-photo {
   background: rgba(255, 255, 255, 0.055) !important;
   color: #f2d18b !important;

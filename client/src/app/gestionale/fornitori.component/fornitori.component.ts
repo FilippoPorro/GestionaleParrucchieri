@@ -14,6 +14,13 @@ interface FornitoreFormDraft {
   partitaIva: string;
 }
 
+interface FornitoriEditorState {
+  mode: 'create' | 'edit';
+  selectedId?: number;
+  newFornitore?: FornitoreFormDraft;
+  draftFornitore?: Fornitore;
+}
+
 @Component({
   selector: 'app-fornitori',
   standalone: true,
@@ -22,6 +29,7 @@ interface FornitoreFormDraft {
   styleUrl: './fornitori.component.css',
 })
 export class FornitoriComponent implements OnInit, OnDestroy {
+  private readonly editorStateStorageKey = 'gestionale.fornitori.editorState';
   private feedbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private createCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private editCloseTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -138,7 +146,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.fornitori = fornitori;
         this.pendingDeleteFornitore = null;
 
-        if (this.selectedFornitore) {
+        if (!this.restorePersistedEditorState() && this.selectedFornitore) {
           const updatedSelection = fornitori.find(
             (fornitore) => fornitore.idFornitore === this.selectedFornitore?.idFornitore
           ) ?? null;
@@ -148,6 +156,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
           } else {
             this.selectedFornitore = null;
             this.draftFornitore = null;
+            this.clearPersistedEditorState();
           }
         }
 
@@ -181,6 +190,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
     };
     this.isEditPhoneValid = true;
     this.clearFeedback();
+    this.persistEditorState();
 
     if (scrollToEditor) {
       this.scrollToEditor();
@@ -195,6 +205,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
     if (this.selectedFornitore || this.draftFornitore) {
       this.isEditClosing = true;
       this.clearFeedback();
+      this.clearPersistedEditorState();
       this.refreshView();
 
       this.editCloseTimeout = setTimeout(() => {
@@ -203,6 +214,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.isCreateMode = false;
         this.isEditClosing = false;
         this.editCloseTimeout = null;
+        this.clearPersistedEditorState();
         this.refreshView();
       }, this.panelCloseAnimationMs);
 
@@ -213,6 +225,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
     this.draftFornitore = null;
     this.isCreateMode = false;
     this.clearFeedback();
+    this.clearPersistedEditorState();
   }
 
   startCreateFornitore(): void {
@@ -225,6 +238,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
     this.newFornitore = this.createEmptyFornitoreDraft();
     this.isNewPhoneValid = true;
     this.clearFeedback();
+    this.persistEditorState();
     this.scrollToEditor();
   }
 
@@ -235,6 +249,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
 
     this.isCreateClosing = true;
     this.clearFeedback();
+    this.clearPersistedEditorState();
     this.refreshView();
 
     this.createCloseTimeout = setTimeout(() => {
@@ -243,12 +258,14 @@ export class FornitoriComponent implements OnInit, OnDestroy {
       this.newFornitore = this.createEmptyFornitoreDraft();
       this.isNewPhoneValid = true;
       this.createCloseTimeout = null;
+      this.clearPersistedEditorState();
       this.refreshView();
     }, this.panelCloseAnimationMs);
   }
 
   onNewPhoneNumberChange(phoneNumber: string): void {
     this.newFornitore.telefono = phoneNumber || '';
+    this.persistEditorState();
   }
 
   onNewPhoneValidityChange(isValid: boolean): void {
@@ -262,6 +279,33 @@ export class FornitoriComponent implements OnInit, OnDestroy {
     }
 
     this.draftFornitore.telefono = phoneNumber || '';
+    this.persistEditorState();
+  }
+
+  persistEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    const state: FornitoriEditorState | null = this.isCreateMode
+      ? { mode: 'create', newFornitore: this.newFornitore }
+      : this.selectedFornitore && this.draftFornitore
+        ? {
+            mode: 'edit',
+            selectedId: this.selectedFornitore.idFornitore,
+            draftFornitore: this.draftFornitore
+          }
+        : null;
+
+    try {
+      if (state) {
+        sessionStorage.setItem(this.editorStateStorageKey, JSON.stringify(state));
+      } else {
+        sessionStorage.removeItem(this.editorStateStorageKey);
+      }
+    } catch {
+      // Storage can fail in private browsing; the editor still works normally.
+    }
   }
 
   onEditPhoneValidityChange(isValid: boolean): void {
@@ -361,6 +405,7 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.isCreateClosing = true;
         this.selectedFornitore = null;
         this.draftFornitore = null;
+        this.clearPersistedEditorState();
         this.showFeedback('Fornitore inserito con successo.', 'success', 'Fornitore creato', 'create');
         this.refreshView();
 
@@ -423,6 +468,75 @@ export class FornitoriComponent implements OnInit, OnDestroy {
         this.refreshView();
       }
     });
+  }
+
+  private restorePersistedEditorState(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+
+    try {
+      const rawState = sessionStorage.getItem(this.editorStateStorageKey);
+
+      if (!rawState) {
+        return false;
+      }
+
+      const state = JSON.parse(rawState) as FornitoriEditorState;
+
+      if (state.mode === 'create' && state.newFornitore) {
+        this.clearPanelCloseTimers();
+        this.isCreateMode = true;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedFornitore = null;
+        this.draftFornitore = null;
+        this.newFornitore = {
+          ...this.createEmptyFornitoreDraft(),
+          ...state.newFornitore
+        };
+        this.isNewPhoneValid = true;
+        return true;
+      }
+
+      if (state.mode === 'edit' && state.selectedId && state.draftFornitore) {
+        const selectedFornitore = this.fornitori.find((fornitore) => fornitore.idFornitore === state.selectedId);
+
+        if (!selectedFornitore) {
+          this.clearPersistedEditorState();
+          return false;
+        }
+
+        this.clearPanelCloseTimers();
+        this.isCreateMode = false;
+        this.isCreateClosing = false;
+        this.isEditClosing = false;
+        this.selectedFornitore = selectedFornitore;
+        this.draftFornitore = {
+          ...selectedFornitore,
+          ...state.draftFornitore,
+          idFornitore: selectedFornitore.idFornitore
+        };
+        this.isEditPhoneValid = true;
+        return true;
+      }
+    } catch {
+      this.clearPersistedEditorState();
+    }
+
+    return false;
+  }
+
+  private clearPersistedEditorState(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(this.editorStateStorageKey);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
   }
 
   private createEmptyFornitoreDraft(): FornitoreFormDraft {

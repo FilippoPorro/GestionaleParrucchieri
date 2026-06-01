@@ -131,14 +131,11 @@
             <tbody>
               <tr
                 *ngFor="let servizio of paginatedServizi"
-                [class.is-selected]="selectedServizio?.idServizio === servizio.idServizio"
+                [class.is-selected]="!isCreateMode && selectedServizio?.idServizio === servizio.idServizio"
               >
                 <td class="services-cell-id" data-label="ID">#{{ servizio.idServizio }}</td>
                 <td class="services-cell-primary" data-label="Servizio">
                   <button type="button" class="services-person" (click)="selectServizio(servizio)">
-                    <span class="services-avatar">
-                      {{ getInitials(servizio) }}
-                    </span>
                     <span>
                       <strong>{{ servizio.nome }}</strong>
                       <small class="services-person__description">{{ servizio.descrizione || servizio.tipoPrenotazione }}</small>
@@ -254,6 +251,8 @@
           class="services-form services-form--create services-panel-form"
           [class.is-closing]="isCreateClosing"
           (ngSubmit)="saveNewServizio()"
+          (input)="persistEditorState()"
+          (change)="persistEditorState()"
         >
           <div class="services-create-header services-create-header--new">
             <span class="services-avatar services-avatar--large services-avatar--create">
@@ -311,14 +310,42 @@
                 <input [(ngModel)]="newServizio.sottocategoria" name="newSottocategoria" type="text" />
               </label>
 
-              <label class="services-field services-create-field services-create-field--half">
+              <div class="services-field services-create-field services-create-field--half">
                 <span>Tipo Prenotazione</span>
-                <select [(ngModel)]="newServizio.tipoPrenotazione" name="newTipoPrenotazione">
-                  <option value="sito">Sito (Prenotazione online)</option>
-                  <option value="telefono">Telefono (Solo chiamata)</option>
-                  <option value="consulenza">Consulenza (Pre-approvazione)</option>
-                </select>
-              </label>
+                <div class="services-booking-select" [class.is-open]="openBookingTypeDropdown === 'create'" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="services-booking-select__trigger"
+                    (click)="toggleBookingTypeDropdown('create', $event)"
+                    [attr.aria-expanded]="openBookingTypeDropdown === 'create'"
+                    aria-haspopup="listbox"
+                  >
+                    <span class="services-booking-select__value">
+                      <strong>{{ getBookingTypeLabel(newServizio.tipoPrenotazione) }}</strong>
+                      <small>{{ getBookingTypeDescription(newServizio.tipoPrenotazione) }}</small>
+                    </span>
+                    <i class="bi bi-chevron-down services-booking-select__arrow" aria-hidden="true"></i>
+                  </button>
+
+                  <div *ngIf="openBookingTypeDropdown === 'create'" class="services-booking-select__panel" role="listbox">
+                    <button
+                      *ngFor="let option of bookingTypeOptions"
+                      type="button"
+                      class="services-booking-select__option"
+                      [class.is-selected]="newServizio.tipoPrenotazione === option.value"
+                      (click)="selectBookingType('create', option.value, $event)"
+                      role="option"
+                      [attr.aria-selected]="newServizio.tipoPrenotazione === option.value"
+                    >
+                      <i class="bi" [ngClass]="option.icon" aria-hidden="true"></i>
+                      <span>
+                        <strong>{{ option.label }}</strong>
+                        <small>{{ option.description }}</small>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <label class="services-field services-create-field services-create-field--half services-check-field">
                 <input [(ngModel)]="newServizio.visualizzazioneSito" name="newVisualizzazioneSito" type="checkbox" />
@@ -349,6 +376,8 @@
           class="services-form services-form--edit services-panel-form"
           [class.is-closing]="isEditClosing"
           (ngSubmit)="saveServizio()"
+          (input)="persistEditorState()"
+          (change)="persistEditorState()"
         >
           <div class="services-create-header services-edit-header">
             <span class="services-avatar services-avatar--large services-avatar--create">
@@ -402,14 +431,42 @@
                 <input [(ngModel)]="draftServizio.sottocategoria" name="sottocategoria" type="text" />
               </label>
 
-              <label class="services-field services-edit-field services-edit-field--half">
+              <div class="services-field services-edit-field services-edit-field--half">
                 <span>Tipo Prenotazione</span>
-                <select [(ngModel)]="draftServizio.tipoPrenotazione" name="tipoPrenotazione">
-                  <option value="sito">Sito (Prenotazione online)</option>
-                  <option value="telefono">Telefono (Solo chiamata)</option>
-                  <option value="consulenza">Consulenza (Pre-approvazione)</option>
-                </select>
-              </label>
+                <div class="services-booking-select" [class.is-open]="openBookingTypeDropdown === 'edit'" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="services-booking-select__trigger"
+                    (click)="toggleBookingTypeDropdown('edit', $event)"
+                    [attr.aria-expanded]="openBookingTypeDropdown === 'edit'"
+                    aria-haspopup="listbox"
+                  >
+                    <span class="services-booking-select__value">
+                      <strong>{{ getBookingTypeLabel(draftServizio.tipoPrenotazione) }}</strong>
+                      <small>{{ getBookingTypeDescription(draftServizio.tipoPrenotazione) }}</small>
+                    </span>
+                    <i class="bi bi-chevron-down services-booking-select__arrow" aria-hidden="true"></i>
+                  </button>
+
+                  <div *ngIf="openBookingTypeDropdown === 'edit'" class="services-booking-select__panel" role="listbox">
+                    <button
+                      *ngFor="let option of bookingTypeOptions"
+                      type="button"
+                      class="services-booking-select__option"
+                      [class.is-selected]="draftServizio.tipoPrenotazione === option.value"
+                      (click)="selectBookingType('edit', option.value, $event)"
+                      role="option"
+                      [attr.aria-selected]="draftServizio.tipoPrenotazione === option.value"
+                    >
+                      <i class="bi" [ngClass]="option.icon" aria-hidden="true"></i>
+                      <span>
+                        <strong>{{ option.label }}</strong>
+                        <small>{{ option.description }}</small>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <label class="services-field services-edit-field services-edit-field--half services-check-field">
                 <input [(ngModel)]="draftServizio.visualizzazioneSito" name="visualizzazioneSito" type="checkbox" />
