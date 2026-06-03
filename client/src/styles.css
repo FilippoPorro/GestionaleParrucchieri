@@ -138,13 +138,31 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  background: #050403;
 }
 
 html,
 body {
-  color-scheme: light;
-  background: #f6f0e6;
+  min-height: 100%;
+  color-scheme: dark;
+  background-color: #050403;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior-y: none;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+  min-height: 100svh;
+  background-color: #050403;
 }
 
 input[type="number"]::-webkit-outer-spin-button,

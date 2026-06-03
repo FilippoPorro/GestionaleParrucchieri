@@ -6,6 +6,8 @@
 .service-showcase {
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   padding: 150px 80px 100px;
   display: grid;
   grid-template-columns: 1.6fr 0.82fr 0.95fr;
@@ -27,7 +29,7 @@
   background-size: cover, cover, cover, cover;
   background-position: center;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll, scroll, scroll, scroll;
   background-color: #050403;
   overflow: hidden;
 }
@@ -481,9 +483,12 @@
 
 @media (max-width: 768px) {
   .service-showcase {
+    min-height: 100svh;
+    min-height: 100dvh;
     padding: 105px 20px 60px;
-    background-size: auto 100vh, cover, cover, cover;
-    background-attachment: fixed;
+    background-size: cover, cover, cover, cover;
+    background-position: center top, center, center, center;
+    background-attachment: scroll, scroll, scroll, scroll;
   }
 
   .service-showcase-title {

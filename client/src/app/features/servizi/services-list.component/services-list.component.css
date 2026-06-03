@@ -1,6 +1,8 @@
 .services-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
 
   background-image:
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1776087249/SnapInsta.to_628970968_18423105787141459_241617188856953247_n_u7jdbd.webp"),
@@ -17,14 +19,15 @@
   background-size: cover, cover, cover, cover;
   background-position: center 32%, center, center, center;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll, scroll, scroll, scroll;
   background-color: #050403;
 }
 
 @media (max-width: 768px) {
   .services-page {
-    background-size: auto 100vh, cover, cover, cover;
-    background-attachment: fixed;
+    background-size: cover, cover, cover, cover;
+    background-position: center top, center, center, center;
+    background-attachment: scroll, scroll, scroll, scroll;
   }
 }
 

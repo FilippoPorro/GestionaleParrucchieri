@@ -1,6 +1,8 @@
 .products-page {
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   background-image:
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1773664284/daniel-zamboni--vh8EALTGII-unsplash_xr0xqu.jpg"),
     radial-gradient(circle at 20% 30%, rgba(212, 176, 106, 0.10), transparent 40%),
@@ -8,15 +10,16 @@
   background-size: cover, cover, cover;
   background-position: center, center, center;
   background-repeat: no-repeat, no-repeat, no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll, scroll, scroll;
   background-color: #050403;
   isolation: isolate;
 }
 
 @media (max-width: 768px) {
   .products-page {
-    background-size: auto 100vh, cover, cover;
-    background-attachment: fixed;
+    background-size: cover, cover, cover;
+    background-position: center top, center, center;
+    background-attachment: scroll, scroll, scroll;
   }
 }
 

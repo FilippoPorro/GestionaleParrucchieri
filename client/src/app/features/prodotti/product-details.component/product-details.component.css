@@ -5,6 +5,8 @@
 .product-showcase {
   position: relative;
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   padding: 180px 64px 80px;
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr) minmax(320px, 0.9fr);
@@ -20,10 +22,10 @@
       rgba(8, 8, 8, 0.72) 0%,
       rgba(14, 14, 14, 0.62) 35%,
       rgba(18, 18, 18, 0.72) 100%);
-  background-size: cover;
+  background-size: cover, cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll, scroll;
   background-color: #050403;
 }
 
@@ -711,12 +713,14 @@
 
 @media (max-width: 768px) {
   .product-showcase {
-    min-height: auto;
+    min-height: 100svh;
+    min-height: 100dvh;
     padding: 90px 20px 48px;
     grid-template-columns: 1fr;
     gap: 20px;
-    background-size: auto 100vh, cover;
-    background-attachment: fixed;
+    background-size: cover, cover;
+    background-position: center top, center;
+    background-attachment: scroll, scroll;
   }
 
   .product-showcase-left,
