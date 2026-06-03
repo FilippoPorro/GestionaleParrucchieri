@@ -15,8 +15,9 @@
 
 @media (max-width: 768px) {
   .cart-page {
-    background-size: auto 100vh, cover, cover;
-    background-attachment: fixed;
+    background-size: auto max(100svh, 100dvh), cover, cover;
+    background-position: center top, center, center;
+    background-attachment: scroll, scroll, scroll;
   }
 }
 
@@ -908,7 +909,7 @@
 
 @media (max-width: 768px) {
   .cart-section {
-    padding-top: 105px;
+    padding-top: max(122px, calc(102px + env(safe-area-inset-top)));
     padding-bottom: 60px;
   }
 

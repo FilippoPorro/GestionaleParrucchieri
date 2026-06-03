@@ -35,8 +35,9 @@
 
 @media (max-width: 768px) {
   .appointments-page {
-    background-size: auto 100vh, cover, cover;
-    background-attachment: fixed;
+    background-size: auto max(100svh, 100dvh), cover, cover;
+    background-position: center top, center, center;
+    background-attachment: scroll, scroll, scroll;
   }
 }
 

@@ -45,8 +45,9 @@
 
 @media (max-width: 768px) {
   :host {
-    background-size: cover, cover, cover, auto 100vh;
-    background-attachment: fixed;
+    background-size: cover, cover, cover, auto max(100svh, 100dvh);
+    background-position: center, center, center, center top;
+    background-attachment: scroll, scroll, scroll, scroll;
   }
 }
 
@@ -2258,7 +2259,7 @@ button.info-chip {
 @media (max-width: 768px) {
   .profile-shell {
     width: min(100%, calc(100% - 20px));
-    padding: 102px 0 56px;
+    padding: max(122px, calc(102px + env(safe-area-inset-top))) 0 56px;
   }
 
   .profile-hero-card,

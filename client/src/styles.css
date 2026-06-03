@@ -314,6 +314,14 @@ input[type="number"] {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+  }
+
+  app-root {
+    min-height: 100svh;
+    overflow-y: visible !important;
   }
 
   *,
@@ -335,6 +343,20 @@ input[type="number"] {
   .profile-page,
   .info-page {
     overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  .products-section,
+  .gestionale-section,
+  .appointments-section,
+  .cart-section,
+  .payment-section,
+  .product-showcase,
+  .service-showcase,
+  .success-page,
+  .profile-page,
+  .booking-page {
+    padding-top: max(122px, calc(102px + env(safe-area-inset-top)));
   }
 
   .products-section,

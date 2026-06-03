@@ -724,7 +724,7 @@
 
 @media (max-width: 768px) {
   .appointments-section {
-    padding: 90px 0 30px;
+    padding: max(122px, calc(102px + env(safe-area-inset-top))) 0 30px;
   }
 
   .appointments-select-wrapper,
@@ -1178,12 +1178,13 @@
 
 @media (max-width: 768px) {
   .booking-page {
-    background-size: auto 100vh, cover, cover;
-    background-attachment: fixed, fixed, fixed;
+    background-size: auto max(100svh, 100dvh), cover, cover;
+    background-position: center top, center, center;
+    background-attachment: scroll, scroll, scroll;
   }
 
   .booking-page.is-management-booking {
-    background-size: cover, auto 100vh !important;
-    background-attachment: fixed, fixed !important;
+    background-size: cover, auto max(100svh, 100dvh) !important;
+    background-attachment: scroll, scroll !important;
   }
 }

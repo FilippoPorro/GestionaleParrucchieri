@@ -1,8 +1,6 @@
 .services-page {
   position: relative;
   min-height: 100vh;
-  min-height: 100svh;
-  min-height: 100dvh;
 
   background-image:
     url("https://res.cloudinary.com/duimlq34k/image/upload/v1776087249/SnapInsta.to_628970968_18423105787141459_241617188856953247_n_u7jdbd.webp"),
@@ -19,13 +17,13 @@
   background-size: cover, cover, cover, cover;
   background-position: center 32%, center, center, center;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
-  background-attachment: scroll, scroll, scroll, scroll;
+  background-attachment: fixed;
   background-color: #050403;
 }
 
 @media (max-width: 768px) {
   .services-page {
-    background-size: cover, cover, cover, cover;
+    background-size: auto max(100svh, 100dvh), cover, cover, cover;
     background-position: center top, center, center, center;
     background-attachment: scroll, scroll, scroll, scroll;
   }
@@ -436,12 +434,12 @@
 
 @media (max-width: 768px) {
   .gestionale-section {
-    padding-top: 86px;
+    padding-top: max(132px, calc(112px + env(safe-area-inset-top)));
     padding-bottom: 28px;
   }
 
   .services-hero {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
     padding: 0;
     border: 0;
     border-radius: 0;
@@ -454,16 +452,19 @@
 
   .services-title {
     text-align: left;
-    font-size: 28px;
+    font-size: 42px;
     line-height: 1.18;
   }
 
-  .services-title::after,
   .services-subtitle,
   .services-eyebrow,
   .services-topbar-line,
   .services-group-subtitle {
     display: none;
+  }
+
+  .services-title::after {
+    margin: 16px 0 0;
   }
 
   .services-topbar {
@@ -554,7 +555,7 @@
   }
 
   .services-title {
-    font-size: 24px;
+    font-size: 36px;
   }
 
   .services-subtitle {
