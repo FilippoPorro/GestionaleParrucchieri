@@ -21,8 +21,7 @@ export interface AppointmentMailPayload {
   dataOraFine: string;
 }
 
-const DEFAULT_LOGO_URL =
-  "https://res.cloudinary.com/duimlq34k/image/upload/v1776668316/logo-parrucchieri-oro-bianco_jkgk5v.png";
+const DEFAULT_LOGO_URL = "https://sito-parrucchieri-seven.vercel.app/logo.png";
 
 function formatAppointmentDateTime(value: string): string {
   const date = new Date(value);
@@ -61,7 +60,7 @@ function buildAppointmentInfoBlock(params: AppointmentMailPayload): string {
 
 function getLogoUrls() {
   return {
-    light: process.env.APPOINTMENT_LOGO_URL_LIGHT || DEFAULT_LOGO_URL
+    light: process.env.APPOINTMENT_LOGO_URL_LIGHT || process.env.MAIL_LOGO_URL || DEFAULT_LOGO_URL
   };
 }
 
@@ -131,12 +130,15 @@ function wrapMailContent(
       <body style="margin:0;padding:0;background:#f6f0e6 !important;background-color:#f6f0e6 !important;color:#16120d !important;">
         <div class="mail-shell" style="margin:0;padding:32px 18px;background:#f6f0e6 !important;background-color:#f6f0e6 !important;font-family:Arial,sans-serif;color:#16120d !important;">
           <div style="max-width:760px;margin:0 auto;text-align:center;">
-            <div style="margin:0 auto 14px;width:234px;background:#1b1610 !important;background-color:#1b1610 !important;border-radius:16px;padding:18px 22px;box-sizing:border-box;">
+            <div style="margin:0 auto 14px;width:234px;background:#1b1610 !important;background-color:#1b1610 !important;border-radius:16px;padding:18px 22px;box-sizing:border-box;text-align:center;">
               <img
                 src="${logoUrls.light}"
                 alt="I Parrucchieri"
-                style="display:block;width:100%;height:auto;border:0;"
+                width="190"
+                height="64"
+                style="display:block;width:190px;max-width:100%;height:auto;border:0;margin:0 auto;color:#ffffff;font-size:18px;font-weight:800;text-align:center;"
               />
+              <div style="mso-hide:all;font-size:1px;line-height:1px;color:#1b1610;max-height:1px;overflow:hidden;">I Parrucchieri</div>
             </div>
 
             <div class="mail-card" style="margin:0 auto;max-width:718px;background:#ffffff !important;background-color:#ffffff !important;border:1px solid #e2c89b;border-radius:20px;padding:24px 34px 22px;text-align:left;box-sizing:border-box;color:#1a1a1a !important;">
@@ -165,7 +167,7 @@ function wrapMailContent(
 
             <div class="mail-meta" style="padding-top:14px;text-align:center;color:#8b7555 !important;">
               <div style="font-size:13px;line-height:1.5;color:#8b7555 !important;">I Parrucchieri, Fossano</div>
-              <div style="font-size:11px;line-height:1.6;color:#8b7555 !important;">Questa e una comunicazione automatica relativa al tuo appuntamento.</div>
+              <div style="font-size:11px;line-height:1.6;color:#8b7555 !important;">Questa &egrave; una comunicazione automatica relativa al tuo appuntamento.</div>
             </div>
           </div>
         </div>
@@ -180,7 +182,7 @@ async function sendMail(to: string, subject: string, html: string) {
 
 export async function sendAppointmentConfirmationEmail(params: AppointmentMailPayload) {
   const html = wrapMailContent(
-    "La tua prenotazione e confermata",
+    "La tua prenotazione &egrave; confermata",
     "Conferma Appuntamento",
     `Ciao ${params.cliente.nome} ${params.cliente.cognome},`,
     `abbiamo registrato con successo il tuo appuntamento presso <strong>I Parrucchieri</strong>.`,
@@ -206,10 +208,10 @@ export async function sendAppointmentReminderEmail(params: AppointmentMailPayloa
 
 export async function sendAppointmentUpdatedEmail(params: AppointmentMailPayload) {
   const html = wrapMailContent(
-    "Il tuo appuntamento è stato aggiornato",
+    "Il tuo appuntamento &egrave; stato aggiornato",
     "Appuntamento Modificato",
     `Ciao ${params.cliente.nome} ${params.cliente.cognome},`,
-    `ti confermiamo che il tuo appuntamento presso <strong>I Parrucchieri</strong> è stato aggiornato con i nuovi dettagli qui sotto.`,
+    `ti confermiamo che il tuo appuntamento presso <strong>I Parrucchieri</strong> &egrave; stato aggiornato con i nuovi dettagli qui sotto.`,
     buildAppointmentInfoBlock(params),
     "Se la modifica non ti risulta corretta, contattaci appena possibile."
   );
@@ -219,10 +221,10 @@ export async function sendAppointmentUpdatedEmail(params: AppointmentMailPayload
 
 export async function sendAppointmentCancelledEmail(params: AppointmentMailPayload) {
   const html = wrapMailContent(
-    "Il tuo appuntamento e stato annullato",
+    "Il tuo appuntamento &egrave; stato annullato",
     "Appuntamento Eliminato",
     `Ciao ${params.cliente.nome} ${params.cliente.cognome},`,
-    `ti informiamo che il tuo appuntamento presso <strong>I Parrucchieri</strong> è stato annullato.`,
+    `ti informiamo che il tuo appuntamento presso <strong>I Parrucchieri</strong> &egrave; stato annullato.`,
     buildAppointmentInfoBlock(params),
     "Se desideri fissare una nuova data, puoi prenotare nuovamente quando preferisci."
   );
