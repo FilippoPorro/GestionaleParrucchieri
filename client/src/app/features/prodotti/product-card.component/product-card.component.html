@@ -1,4 +1,4 @@
-<div class="product-card">
+<div class="product-card" role="link" tabindex="0" (click)="openDetails()" (keydown.enter)="openDetails()" (keydown.space)="openDetails($event)">
 
     <div class="card-alert error" [class.hide]="!showError" [class.shake]="shakeAnimation">
 
@@ -9,27 +9,29 @@
         </div>
     </div>
 
-    <img
-        *ngIf="hasProductImage"
-        class="product-image"
-        [src]="product.foto"
-        [alt]="product.nome"
-        (error)="onImageError()">
+    <a [routerLink]="['/product', product.idProdotto]" class="product-media-link" aria-label="Vai al dettaglio prodotto">
+        <img
+            *ngIf="hasProductImage"
+            class="product-image"
+            [src]="product.foto"
+            [alt]="product.nome"
+            (error)="onImageError()">
 
-    <div *ngIf="!hasProductImage" class="product-image product-image-fallback" aria-hidden="true">
-        <div class="product-fallback-badge">
-            {{ product.marca || 'Prodotto' }}
-        </div>
+        <div *ngIf="!hasProductImage" class="product-image product-image-fallback" aria-hidden="true">
+            <div class="product-fallback-badge">
+                {{ product.marca || 'Prodotto' }}
+            </div>
 
-        <div class="product-fallback-icon">
-            <span class="product-fallback-mark"></span>
-        </div>
+            <div class="product-fallback-icon">
+                <span class="product-fallback-mark"></span>
+            </div>
 
-        <div class="product-fallback-meta">
-            <span class="product-fallback-name">{{ product.nome }}</span>
-            <span class="product-fallback-category">{{ product.categoria }}</span>
+            <div class="product-fallback-meta">
+                <span class="product-fallback-name">{{ product.nome }}</span>
+                <span class="product-fallback-category">{{ product.categoria }}</span>
+            </div>
         </div>
-    </div>
+    </a>
 
     <div class="product-card-body">
 
@@ -71,10 +73,14 @@
                 </span>
             </div>
 
-            <button class="btn-product bi bi-bag-plus" (click)="addToCart()">
+            <button class="btn-product bi bi-bag-plus" (click)="addToCart($event)">
                 Aggiungi
             </button>
         </div>
+
+        <a [routerLink]="['/product', product.idProdotto]" class="product-mobile-detail-link" aria-label="Vai al dettaglio prodotto">
+            <i class="bi bi-arrow-right"></i>
+        </a>
 
     </div>
 </div>

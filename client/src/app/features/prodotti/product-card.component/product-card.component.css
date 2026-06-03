@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  cursor: pointer;
 
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.28),
@@ -30,6 +31,12 @@
   padding: 18px;
 
   border-bottom: 1px solid rgba(212, 176, 106, 0.18);
+}
+
+.product-media-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
 }
 
 
@@ -163,6 +170,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  cursor: pointer;
+}
+
+.product-card:focus-visible {
+  outline: 2px solid rgba(212, 176, 106, 0.78);
+  outline-offset: 3px;
 }
 
 
@@ -378,24 +391,49 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+.product-mobile-detail-link {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .product-card {
-    display: grid;
-    grid-template-columns: minmax(112px, 34%) minmax(0, 1fr);
-    min-height: 188px;
-    border-radius: 16px;
+    display: flex;
+    min-height: 0;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .product-media-link {
+    display: block;
+    background: #050505;
   }
 
   .product-image {
-    height: 100%;
-    min-height: 188px;
-    padding: 10px;
-    border-right: 1px solid rgba(212, 176, 106, 0.18);
+    width: 100%;
+    height: clamp(210px, 62vw, 330px);
+    min-height: 210px;
+    padding: 14px;
+    border-right: 0;
     border-bottom: 0;
+    background: #050505;
+    border: 1px solid rgba(212, 176, 106, 0.12);
+    border-radius: 2px;
+    object-fit: contain;
+    object-position: center;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 8px 18px rgba(0, 0, 0, 0.18);
   }
 
   .product-image-fallback {
     gap: 10px;
+    background:
+      radial-gradient(circle at top center, rgba(212, 176, 106, 0.18), transparent 42%),
+      linear-gradient(180deg, #2a2926 0%, #121212 100%);
   }
 
   .product-fallback-badge {
@@ -428,38 +466,39 @@
   }
 
   .product-card-body {
+    position: relative;
     min-width: 0;
-    padding: 14px;
+    min-height: 58px;
+    padding: 8px 30px 8px 8px;
+    background: rgba(5, 5, 5, 0.94);
+    border: 1px solid rgba(212, 176, 106, 0.12);
+    border-top: 0;
+    pointer-events: auto;
   }
 
   .product-header {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    padding-right: 0;
   }
 
   .product-title {
     display: -webkit-box;
     overflow: hidden;
-    font-size: 16px;
-    line-height: 1.22;
+    font-size: 12px;
+    line-height: 1.18;
+    letter-spacing: 0;
+    text-transform: uppercase;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    text-shadow: none;
   }
 
   .product-description {
-    display: -webkit-box;
-    margin-bottom: 10px;
-    overflow: hidden;
-    font-size: 12px;
-    line-height: 1.42;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    display: none;
   }
 
   .product-info-row {
-    max-height: 54px;
-    gap: 6px;
-    margin-bottom: 12px;
-    overflow: hidden;
+    display: none;
   }
 
   .product-info-pill {
@@ -473,45 +512,77 @@
   }
 
   .product-footer {
-    align-items: center;
-    gap: 10px;
+    display: block;
+    margin-top: 0;
   }
 
   .product-price-label {
-    font-size: 9px;
+    display: none;
   }
 
   .product-price {
-    font-size: 20px;
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #f4dfae;
   }
 
   .btn-product {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
+    position: absolute;
+    top: 7px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
     padding: 0;
     justify-content: center;
-    border-radius: 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #f0d79e;
+    box-shadow: none;
     font-size: 0;
   }
 
+  .btn-product:hover {
+    box-shadow: none;
+  }
+
   .btn-product::before {
+    content: "+";
     margin: 0;
-    font-size: 17px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 26px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .product-mobile-detail-link {
+    display: none;
+  }
+
+  .product-price-box {
+    display: block;
+  }
+
+  .product-link {
+    color: #ffffff;
+    pointer-events: auto;
   }
 }
 
 @media (max-width: 370px) {
   .product-card {
-    grid-template-columns: 104px minmax(0, 1fr);
+    display: flex;
   }
 
   .product-card-body {
-    padding: 12px;
+    padding: 8px 28px 8px 8px;
   }
 
   .product-price {
-    font-size: 18px;
+    font-size: 12px;
   }
 }
 

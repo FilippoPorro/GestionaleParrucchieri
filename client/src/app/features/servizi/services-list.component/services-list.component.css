@@ -433,27 +433,54 @@
 
 @media (max-width: 768px) {
   .gestionale-section {
-    padding-top: 105px;
-    padding-bottom: 60px;
+    padding-top: 86px;
+    padding-bottom: 28px;
+  }
+
+  .services-hero {
+    margin-bottom: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    text-align: left;
   }
 
   .services-title {
+    text-align: left;
     font-size: 28px;
+    line-height: 1.18;
   }
 
-  .services-subtitle {
-    font-size: 14px;
+  .services-title::after,
+  .services-subtitle,
+  .services-eyebrow,
+  .services-topbar-line,
+  .services-group-subtitle {
+    display: none;
   }
 
   .services-topbar {
-    margin-bottom: 20px;
+    align-items: stretch;
+    margin-bottom: 12px;
   }
 
   .services-topbar-center {
+    width: 100%;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 10px;
+    gap: 9px;
+    padding: 8px 0 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .services-search,
@@ -461,31 +488,66 @@
     width: 100%;
     max-width: none;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: none;
   }
 
   .services-count {
-    justify-content: center;
+    display: inline-flex;
+    justify-content: flex-start;
+    min-height: 42px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.34);
+    box-shadow: none;
+    white-space: nowrap;
   }
 
   .services-search input {
-    height: 48px;
-    padding-left: 54px;
-    font-size: 14px;
+    height: 42px;
+    padding: 9px 38px 9px 42px;
+    border-radius: 999px;
+    font-size: 12px;
+    box-shadow: none;
+  }
+
+  .services-search::before {
+    display: none;
   }
 
   .services-search-icon {
-    left: 13px;
-    width: 30px;
-    height: 30px;
+    left: 8px;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 0;
+    color: #f0d79e;
+  }
+
+  .services-search-clear {
+    right: 7px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .services-group-head {
+    align-items: flex-start;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
+  .services-group-line {
+    display: none;
+  }
+
+  .services-group-title {
+    font-size: 15px;
+    line-height: 1.2;
   }
 }
 
 @media (max-width: 480px) {
   .services-hero {
-    border-radius: 14px;
-    padding: 20px 16px 18px 16px;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
   }
 
   .services-title {

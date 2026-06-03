@@ -183,11 +183,50 @@ body {
   color: #d4b06a;
 }
 
+.navbar:not(.scrolled) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.navbar:not(.scrolled)::before {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.navbar:not(.scrolled) .navbar-toggler {
+  background: transparent;
+  backdrop-filter: none;
+}
+
 
 @media (max-width: 768px) {
   .navbar {
     min-height: 64px;
     padding: 8px 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .navbar::before {
+    background: linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0.22) 72%, rgba(0,0,0,0.06));
+    backdrop-filter: blur(6px);
+    transition: background 0.28s ease, backdrop-filter 0.28s ease;
+  }
+
+  .navbar:not(.scrolled)::before {
+    background: linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0.22) 72%, rgba(0,0,0,0.06));
+    backdrop-filter: blur(6px);
+  }
+
+  .navbar.scrolled {
+    background: rgba(0,0,0,0.34);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .navbar.scrolled::before {
+    background: linear-gradient(180deg, rgba(0,0,0,0.44), rgba(0,0,0,0.22) 72%, rgba(0,0,0,0.06));
+    backdrop-filter: blur(6px);
   }
 
   .navbar .container {
@@ -207,14 +246,23 @@ body {
 
   .navbar-brand img {
     height: 40px;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.55));
   }
 
   .navbar-toggler {
     justify-self: end;
     margin: 0;
-    padding: 0;
+    padding: 8px;
     line-height: 1;
     box-sizing: border-box;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.22);
+    backdrop-filter: blur(14px);
+  }
+
+  .navbar:not(.scrolled) .navbar-toggler {
+    background: rgba(0,0,0,0.18);
+    backdrop-filter: blur(10px);
   }
 
   .navbar-toggler-icon {
@@ -226,6 +274,12 @@ body {
 
   .navbar-collapse {
     grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 18px;
+    background: rgba(0,0,0,0.52);
+    backdrop-filter: blur(18px);
   }
 
   .navbar-nav .nav-link {

@@ -13,6 +13,12 @@
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.28),
     0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+
+.service-card:focus-visible {
+  outline: 2px solid rgba(212, 176, 106, 0.78);
+  outline-offset: 3px;
 }
 
 .service-card::before {
@@ -293,14 +299,7 @@
   }
 
   .service-description {
-    display: -webkit-box;
-    margin-bottom: 12px;
-    overflow: hidden;
-    font-size: 12px;
-    line-height: 1.45;
-    white-space: normal;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    display: none;
   }
 
   .service-info-row {
@@ -334,9 +333,10 @@
     width: auto;
     min-width: 42px;
     height: 42px;
-    padding: 0 12px;
+    padding: 0;
     border-radius: 12px;
     font-size: 0;
+    gap: 0;
   }
 
   .btn-book::before {

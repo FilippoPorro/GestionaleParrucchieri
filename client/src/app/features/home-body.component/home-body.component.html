@@ -11,6 +11,7 @@
           trattamenti premium per capelli sani e luminosi.</p>
 
         <div class="hero-ctas">
+          <a [routerLink]="['/prenotazione']" class="btn luxury-btn hero-booking-btn">Prenota ora</a>
           <a [routerLink]="['/services']" routerLinkActive="active" class="btn luxury-btn">Scopri i servizi</a>
           <button class="btn luxury-btn-outline" type="button" (click)="openAiFromCard()">Chiedi all'IA</button>
         </div>
@@ -28,9 +29,24 @@
       </div>
     </div>
 
+    <nav class="mobile-action-bar" aria-label="Azioni rapide">
+      <a [routerLink]="['/prenotazione']" class="mobile-action-primary">
+        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+        <span>Prenota</span>
+      </a>
+      <a [routerLink]="['/services']" class="mobile-action-secondary">
+        <i class="bi bi-scissors" aria-hidden="true"></i>
+        <span>Servizi</span>
+      </a>
+    </nav>
+
     <section class="services-section">
       <div class="services-section-head">
-        <h2 class="section-title">I nostri servizi</h2>
+        <div>
+          <span class="mobile-section-kicker">Catalogo salone</span>
+          <h2 class="section-title">I nostri servizi</h2>
+        </div>
+        <a [routerLink]="['/services']" class="mobile-section-link">Tutti</a>
       </div>
 
       <div
@@ -89,6 +105,7 @@
 
     <div class="info-strip">
       <div>
+        <span class="info-strip-kicker">Consulenza digitale</span>
         <strong>Vuoi consigli personalizzati?</strong>
         <span> Fai una domanda all'Assistente AI o prenota una consulenza nel salone.</span>
       </div>

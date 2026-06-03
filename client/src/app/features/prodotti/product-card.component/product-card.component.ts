@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, ChangeDetectorRef, OnChanges, S
 
 import { Prodotto, ProdottoService } from '../../../services/prodotto';
 import { CurrencyPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -25,7 +25,8 @@ export class ProductCardComponent implements OnChanges {
 
   constructor(
     private cdr: ChangeDetectorRef,
-    private prodottoService: ProdottoService
+    private prodottoService: ProdottoService,
+    private router: Router
   ) { }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -42,7 +43,15 @@ export class ProductCardComponent implements OnChanges {
     this.imageUnavailable = true;
   }
 
-  addToCart() {
+  openDetails(event?: Event) {
+    event?.preventDefault();
+    this.router.navigate(['/product', this.product.idProdotto]);
+  }
+
+  addToCart(event?: MouseEvent) {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     const currentQuantity = this.prodottoService.getCartItemQuantity(this.product.idProdotto);
 
     if (currentQuantity >= this.product.qta) {

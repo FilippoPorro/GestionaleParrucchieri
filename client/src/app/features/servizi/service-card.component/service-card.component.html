@@ -1,4 +1,4 @@
-<div class="service-card">
+<div class="service-card" role="link" tabindex="0" (click)="openDetails()" (keydown.enter)="openDetails()" (keydown.space)="openDetails($event)">
   <div class="service-card-body">
 
     <div class="service-header">
@@ -37,18 +37,18 @@
       </div>
 
       @if (service.tipoPrenotazione === 'telefono') {
-      <a class="btn-book phone-action bi bi-telephone" [href]="'tel:+393478085277'" (click)="callSalon()">
+      <a class="btn-book phone-action bi bi-telephone" [href]="'tel:+393478085277'" (click)="callSalon($event)">
         {{ buttonLabel }}
       </a>
       } @else if (service.tipoPrenotazione === 'consulenza') {
-      <a class="btn-book phone-action consultation-action bi bi-person-lines-fill" [href]="'tel:+393478085277'" [title]="buttonTitle" (click)="requestConsultation()">
+      <a class="btn-book phone-action consultation-action bi bi-person-lines-fill" [href]="'tel:+393478085277'" [title]="buttonTitle" (click)="requestConsultation($event)">
         {{ buttonLabel }}
       </a>
       } @else {
       <button
         class="btn-book bi bi-scissors"
         [title]="buttonTitle"
-        (click)="addToCart()">
+        (click)="addToCart($event)">
         {{ buttonLabel }}
       </button>
       }

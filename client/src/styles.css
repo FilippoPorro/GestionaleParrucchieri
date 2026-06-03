@@ -3,6 +3,140 @@
 @import "intl-tel-input/build/css/intlTelInput.css";
 @import "./app/gestionale/gestionale-theme.css";
 
+/* Global skin for intl-tel-input country picker, including body-appended dropdowns. */
+.iti__dropdown-content,
+.iti__country-list {
+  background:
+    radial-gradient(circle at top right, rgba(212, 176, 106, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(23, 20, 16, 0.98), rgba(8, 7, 6, 0.98)) !important;
+  color: #f8f5ef !important;
+}
+
+.iti__dropdown-content {
+  border: 1px solid rgba(212, 176, 106, 0.24) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 54px rgba(0, 0, 0, 0.52) !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.iti__search-input {
+  width: calc(100% - 20px) !important;
+  min-height: 46px !important;
+  margin: 10px !important;
+  padding: 11px 14px 11px 46px !important;
+  border: 1px solid rgba(212, 176, 106, 0.28) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.028)),
+    rgba(255, 255, 255, 0.04) !important;
+  color: #fff8e8 !important;
+  caret-color: #d4b06a !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.iti__search-input::placeholder {
+  color: rgba(248, 245, 239, 0.58) !important;
+}
+
+.iti__search-input:focus {
+  border-color: rgba(212, 176, 106, 0.58) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04)),
+    rgba(255, 255, 255, 0.055) !important;
+  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.12) !important;
+}
+
+.iti__search-input-wrapper {
+  position: relative;
+}
+
+.iti__search-icon {
+  left: 30px !important;
+  color: rgba(248, 245, 239, 0.66) !important;
+}
+
+.iti__search-icon-svg {
+  stroke: currentColor !important;
+}
+
+.iti__search-clear {
+  right: 18px !important;
+  color: rgba(248, 245, 239, 0.68) !important;
+}
+
+.iti__country-list {
+  max-height: min(430px, 58vh) !important;
+  padding: 6px !important;
+  border-top: 1px solid rgba(212, 176, 106, 0.12) !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 176, 106, 0.72) rgba(255, 255, 255, 0.05);
+}
+
+.iti__country-list::-webkit-scrollbar {
+  width: 9px;
+}
+
+.iti__country-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.iti__country-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(212, 176, 106, 0.68);
+}
+
+.iti__country {
+  min-height: 44px;
+  margin-bottom: 3px;
+  padding: 10px 12px !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  color: #f8f5ef !important;
+  background: transparent !important;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.iti__country:hover,
+.iti__highlight {
+  transform: translateY(-1px);
+  border-color: rgba(212, 176, 106, 0.22) !important;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.18), rgba(212, 176, 106, 0.08)),
+    rgba(255, 255, 255, 0.035) !important;
+  color: #fff6dc !important;
+}
+
+.iti__country.iti__active,
+.iti__country[aria-selected="true"] {
+  border-color: rgba(212, 176, 106, 0.36) !important;
+  background:
+    linear-gradient(180deg, rgba(212, 176, 106, 0.24), rgba(212, 176, 106, 0.11)),
+    rgba(255, 255, 255, 0.045) !important;
+}
+
+.iti__country-name {
+  color: #f8f5ef !important;
+  font-weight: 600;
+}
+
+.iti__dial-code {
+  color: rgba(237, 216, 175, 0.9) !important;
+  font-weight: 600;
+}
+
+.iti__checkmark {
+  color: #d4b06a !important;
+}
+
 :root {
   color-scheme: light;
 }

@@ -72,7 +72,15 @@ export class ServiceCardComponent {
     return 'Aggiungi il servizio alla prenotazione';
   }
 
-  addToCart(): void {
+  openDetails(event?: Event): void {
+    event?.preventDefault();
+    this.router.navigate(['/service', this.service.idServizio]);
+  }
+
+  addToCart(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     if (this.service.tipoPrenotazione !== 'sito') {
       return;
     }
@@ -84,11 +92,13 @@ export class ServiceCardComponent {
     });
   }
 
-  callSalon(): void {
+  callSalon(event?: Event): void {
+    event?.stopPropagation();
     window.location.href = this.salonPhoneHref;
   }
 
-  requestConsultation(): void {
+  requestConsultation(event?: Event): void {
+    event?.stopPropagation();
     window.location.href = this.salonPhoneHref;
   }
 }
