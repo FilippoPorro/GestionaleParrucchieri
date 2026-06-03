@@ -15,9 +15,24 @@
 
 @media (max-width: 768px) {
   .cart-page {
-    background-size: auto max(100svh, 100dvh), cover, cover;
-    background-position: center top, center, center;
-    background-attachment: fixed, scroll, scroll;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(212, 176, 106, 0.10), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(212, 176, 106, 0.07), transparent 45%);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-attachment: scroll, scroll;
+  }
+
+  .cart-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773846063/andrea-donato-MNu0n-3BIKs-unsplash_ysyxfh.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
   }
 }
 

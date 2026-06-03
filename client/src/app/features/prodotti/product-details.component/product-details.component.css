@@ -717,9 +717,27 @@
     grid-template-columns: 1fr;
     gap: 20px;
     overflow-y: visible;
-    background-size: auto max(100svh, 100dvh), cover;
-    background-position: center top, center;
-    background-attachment: fixed, scroll;
+    background-image:
+      linear-gradient(135deg,
+        rgba(8, 8, 8, 0.72) 0%,
+        rgba(14, 14, 14, 0.62) 35%,
+        rgba(18, 18, 18, 0.72) 100%);
+    background-size: cover;
+    background-position: center;
+    background-attachment: scroll;
+  }
+
+  .product-showcase::before {
+    position: fixed;
+    background:
+      linear-gradient(to bottom,
+        rgba(0, 0, 0, 0.72) 0%,
+        rgba(0, 0, 0, 0.52) 35%,
+        rgba(0, 0, 0, 0.82) 100%),
+      url("https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=1600");
+    background-size: cover, cover;
+    background-position: center, center center;
+    background-repeat: no-repeat, no-repeat;
   }
 
   .product-showcase-left,

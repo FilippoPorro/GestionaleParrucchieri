@@ -485,9 +485,34 @@
     min-height: 100dvh;
     padding: max(122px, calc(102px + env(safe-area-inset-top))) 20px 60px;
     overflow-y: visible;
-    background-size: auto max(100svh, 100dvh), cover, cover, cover;
-    background-position: center top, center, center, center;
-    background-attachment: fixed, scroll, scroll, scroll;
+    background-image:
+      linear-gradient(
+        160deg,
+        rgba(10, 10, 10, 0.34) 0%,
+        rgba(17, 17, 17, 0.28) 35%,
+        rgba(20, 20, 20, 0.28) 60%,
+        rgba(13, 13, 13, 0.36) 100%
+      ),
+      radial-gradient(circle at 18% 28%, rgba(212, 176, 106, 0.10), transparent 38%),
+      radial-gradient(circle at 82% 72%, rgba(212, 176, 106, 0.08), transparent 42%);
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-attachment: scroll, scroll, scroll;
+  }
+
+  .service-showcase::before {
+    position: fixed;
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.80) 0%,
+        rgba(0, 0, 0, 0.58) 35%,
+        rgba(0, 0, 0, 0.86) 100%
+      ),
+      url("https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg");
+    background-size: cover, cover;
+    background-position: center, center center;
+    background-repeat: no-repeat, no-repeat;
   }
 
   .service-showcase-title {

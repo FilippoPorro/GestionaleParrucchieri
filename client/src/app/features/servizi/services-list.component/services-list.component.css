@@ -45,8 +45,8 @@
     z-index: 0;
     pointer-events: none;
     background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776087249/SnapInsta.to_628970968_18423105787141459_241617188856953247_n_u7jdbd.webp");
-    background-size: auto max(112svh, 112dvh);
-    background-position: center top;
+    background-size: cover;
+    background-position: center center;
     background-repeat: no-repeat;
   }
 }

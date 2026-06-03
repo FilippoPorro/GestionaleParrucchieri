@@ -45,9 +45,26 @@
 
 @media (max-width: 768px) {
   :host {
-    background-size: cover, cover, cover, auto max(100svh, 100dvh);
-    background-position: center, center, center, center top;
-    background-attachment: scroll, scroll, scroll, fixed;
+    position: relative;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(212, 176, 106, 0.16), transparent 28%),
+      radial-gradient(circle at 85% 15%, rgba(255, 245, 221, 0.08), transparent 20%),
+      linear-gradient(135deg, rgba(9, 8, 7, 0.54), rgba(6, 6, 6, 0.42));
+    background-size: cover, cover, cover;
+    background-position: center, center, center;
+    background-attachment: scroll, scroll, scroll;
+  }
+
+  :host::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
   }
 
   .profile-page {
@@ -63,6 +80,7 @@
 
 .profile-page {
   position: relative;
+  z-index: 1;
   min-height: 100vh;
   background: transparent;
   isolation: isolate;

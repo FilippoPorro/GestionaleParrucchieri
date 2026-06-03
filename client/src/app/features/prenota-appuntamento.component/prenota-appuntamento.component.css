@@ -1178,13 +1178,28 @@
 
 @media (max-width: 768px) {
   .booking-page {
-    background-size: auto max(100svh, 100dvh), cover, cover;
-    background-position: center top, center, center;
-    background-attachment: fixed, scroll, scroll;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(212, 176, 106, 0.12), transparent 36%),
+      radial-gradient(circle at 84% 72%, rgba(212, 176, 106, 0.1), transparent 40%);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-attachment: scroll, scroll;
+  }
+
+  .booking-page::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1775802464/adam-winger-VjRpkGtS55w-unsplash_btutfm.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
   }
 
   .booking-page.is-management-booking {
-    background-size: cover, auto max(100svh, 100dvh) !important;
-    background-attachment: scroll, fixed !important;
+    background-size: cover !important;
+    background-attachment: scroll !important;
   }
 }
