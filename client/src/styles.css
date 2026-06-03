@@ -354,7 +354,6 @@ input[type="number"] {
   .product-showcase,
   .service-showcase,
   .success-page,
-  .profile-page,
   .booking-page {
     padding-top: max(122px, calc(102px + env(safe-area-inset-top)));
   }

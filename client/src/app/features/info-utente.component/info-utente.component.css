@@ -47,7 +47,11 @@
   :host {
     background-size: cover, cover, cover, auto max(100svh, 100dvh);
     background-position: center, center, center, center top;
-    background-attachment: scroll, scroll, scroll, scroll;
+    background-attachment: scroll, scroll, scroll, fixed;
+  }
+
+  .profile-page {
+    padding-top: 0 !important;
   }
 }
 

@@ -37,7 +37,7 @@
   .appointments-page {
     background-size: auto max(100svh, 100dvh), cover, cover;
     background-position: center top, center, center;
-    background-attachment: scroll, scroll, scroll;
+    background-attachment: fixed, scroll, scroll;
   }
 }
 

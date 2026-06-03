@@ -719,7 +719,7 @@
     overflow-y: visible;
     background-size: auto max(100svh, 100dvh), cover;
     background-position: center top, center;
-    background-attachment: scroll, scroll;
+    background-attachment: fixed, scroll;
   }
 
   .product-showcase-left,

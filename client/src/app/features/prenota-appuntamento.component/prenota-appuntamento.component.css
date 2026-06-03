@@ -1180,11 +1180,11 @@
   .booking-page {
     background-size: auto max(100svh, 100dvh), cover, cover;
     background-position: center top, center, center;
-    background-attachment: scroll, scroll, scroll;
+    background-attachment: fixed, scroll, scroll;
   }
 
   .booking-page.is-management-booking {
     background-size: cover, auto max(100svh, 100dvh) !important;
-    background-attachment: scroll, scroll !important;
+    background-attachment: scroll, fixed !important;
   }
 }
