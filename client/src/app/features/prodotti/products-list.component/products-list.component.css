@@ -15,6 +15,9 @@
 
 @media (max-width: 768px) {
   .products-page {
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(212, 176, 106, 0.10), transparent 40%),
       radial-gradient(circle at 80% 70%, rgba(212, 176, 106, 0.07), transparent 45%);
@@ -26,7 +29,7 @@
   .products-page::after {
     content: "";
     position: fixed;
-    inset: 0;
+    inset: 0 0 calc(0px - var(--b)) 0;
     z-index: 0;
     pointer-events: none;
     background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773664284/daniel-zamboni--vh8EALTGII-unsplash_xr0xqu.jpg");
@@ -637,7 +640,7 @@
 @media (max-width: 768px) {
   .products-section {
     padding-top: max(132px, calc(112px + env(safe-area-inset-top)));
-    padding-bottom: 28px;
+    padding-bottom: calc(48px + var(--b));
   }
 
   .products-hero {
@@ -801,7 +804,7 @@
   .cart-toast-container {
     right: 16px;
     left: 16px;
-    bottom: 18px;
+    bottom: calc(18px + var(--b));
   }
 
   .cart-toast {

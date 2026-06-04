@@ -14,6 +14,9 @@ export interface ServiceCard {
   descrizione: string;
   durata: number;
   prezzo: number;
+  categoria?: string;
+  sottocategoria?: string;
+  tipoPrenotazione?: 'sito' | 'telefono' | 'consulenza' | '';
 }
 
 export interface ProductCard {

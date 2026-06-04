@@ -597,7 +597,7 @@
   }
 
   .footer-columns > .opening-hours {
-    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+    padding-bottom: max(28px, var(--b)) !important;
     background:
       linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.58) 100%),
       linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.18) 100%),
@@ -1346,5 +1346,35 @@
     justify-content: center !important;
     line-height: 1 !important;
     text-align: center !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-footer,
+  .footer-columns {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .footer-columns > .opening-hours {
+    min-height: 100vh !important;
+    min-height: 100svh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding-bottom: max(28px, var(--b)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .footer-columns > .opening-hours .opening-hours-actions {
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .footer-columns > .opening-hours .footer-primary-action {
+    margin-bottom: 0 !important;
   }
 }

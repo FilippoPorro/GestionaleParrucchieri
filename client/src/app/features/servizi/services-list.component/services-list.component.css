@@ -23,6 +23,9 @@
 
 @media (max-width: 768px) {
   .services-page {
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     background-image:
       linear-gradient(
         160deg,
@@ -41,7 +44,7 @@
   .services-page::after {
     content: "";
     position: fixed;
-    inset: 0;
+    inset: 0 0 calc(0px - var(--b)) 0;
     z-index: 0;
     pointer-events: none;
     background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776087249/SnapInsta.to_628970968_18423105787141459_241617188856953247_n_u7jdbd.webp");
@@ -457,7 +460,7 @@
 @media (max-width: 768px) {
   .gestionale-section {
     padding-top: max(132px, calc(112px + env(safe-area-inset-top)));
-    padding-bottom: 28px;
+    padding-bottom: calc(48px + var(--b));
   }
 
   .services-hero {

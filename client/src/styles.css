@@ -138,6 +138,7 @@
 }
 
 :root {
+  --b: env(safe-area-inset-bottom);
   color-scheme: dark;
   background: #050403;
 }
@@ -337,7 +338,7 @@ input[type="number"] {
     position: fixed;
     top: -1px;
     right: -1px;
-    bottom: calc(-96px - env(safe-area-inset-bottom));
+    bottom: calc(-120px - var(--b));
     left: -1px;
     z-index: 0;
     pointer-events: none;
@@ -512,16 +513,16 @@ input[type="number"] {
   .cart-section,
   .payment-section {
     padding-top: 104px !important;
-    padding-bottom: 132px !important;
+    padding-bottom: calc(132px + var(--b)) !important;
   }
 
   .appointments-section {
-    padding-bottom: 132px !important;
+    padding-bottom: calc(132px + var(--b)) !important;
   }
 
   .products-grid,
   .services-grid {
-    padding-bottom: 120px !important;
+    padding-bottom: calc(120px + var(--b)) !important;
   }
 
   .product-showcase,
@@ -529,7 +530,7 @@ input[type="number"] {
   .booking-page,
   .profile-page,
   .success-page {
-    padding-bottom: 132px !important;
+    padding-bottom: calc(132px + var(--b)) !important;
   }
 
   .products-hero,
@@ -699,7 +700,7 @@ input[type="number"] {
     min-height: auto !important;
     grid-template-columns: 1fr !important;
     gap: 20px !important;
-    padding: 104px 16px 38px !important;
+    padding: 104px 16px calc(64px + var(--b)) !important;
   }
 
   .product-showcase-left,
@@ -846,7 +847,7 @@ input[type="number"] {
 
   .appointments-section {
     padding-top: 104px !important;
-    padding-bottom: 38px !important;
+    padding-bottom: calc(64px + var(--b)) !important;
   }
 
   .appointments-hero {
@@ -1008,6 +1009,14 @@ input[type="number"] {
 
   :root .fc .fc-timegrid-slot {
     height: 64px !important;
+  }
+
+  .management-layout__content {
+    padding-bottom: calc(40px + var(--b)) !important;
+  }
+
+  .management-sidenav {
+    padding-bottom: calc(18px + var(--b)) !important;
   }
 
   .login-layout {

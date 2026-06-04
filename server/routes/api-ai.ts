@@ -18,6 +18,9 @@ type ServiceCard = {
     descrizione: string;
     durata: number;
     prezzo: number;
+    categoria: string;
+    sottocategoria: string;
+    tipoPrenotazione: "sito" | "telefono" | "consulenza" | "";
 };
 
 type ProductCard = {
@@ -32,11 +35,78 @@ type ProductCard = {
 };
 
 function normalizeText(text: unknown): string {
-    return String(text ?? "").toLowerCase().trim();
+    return String(text ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[^a-z0-9'+ ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 function safeString(value: unknown): string {
     return String(value ?? "").trim();
+}
+
+function squeezeRepeatedLetters(text: string): string {
+    return text.replace(/([a-z])\1+/g, "$1");
+}
+
+function tokenize(text: unknown): string[] {
+    return normalizeText(text).split(" ").filter(Boolean);
+}
+
+function levenshtein(a: string, b: string): number {
+    const costs = Array.from({ length: b.length + 1 }, (_, index) => index);
+
+    for (let i = 1; i <= a.length; i += 1) {
+        let previous = i - 1;
+        costs[0] = i;
+
+        for (let j = 1; j <= b.length; j += 1) {
+            const current = costs[j];
+            costs[j] = a[i - 1] === b[j - 1]
+                ? previous
+                : Math.min(previous, costs[j], costs[j - 1]) + 1;
+            previous = current;
+        }
+    }
+
+    return costs[b.length];
+}
+
+function hasDirectTerm(text: unknown, term: string): boolean {
+    const normalizedText = normalizeText(text);
+    const normalizedTerm = normalizeText(term);
+
+    if (!normalizedText || !normalizedTerm) return false;
+    if (normalizedText.includes(normalizedTerm)) return true;
+
+    return squeezeRepeatedLetters(normalizedText).includes(squeezeRepeatedLetters(normalizedTerm));
+}
+
+function hasFuzzyWord(text: unknown, term: string): boolean {
+    const normalizedTerm = normalizeText(term);
+    if (!normalizedTerm || normalizedTerm.includes(" ") || normalizedTerm.length < 5) return false;
+
+    const allowedDistance = normalizedTerm.length >= 8 ? 2 : 1;
+    return tokenize(text).some((word) => {
+        if (Math.abs(word.length - normalizedTerm.length) > allowedDistance) return false;
+        return levenshtein(word, normalizedTerm) <= allowedDistance;
+    });
+}
+
+function hasAnyDirectTerm(text: unknown, terms: string[]): boolean {
+    return terms.some((term) => hasDirectTerm(text, term));
+}
+
+function countDirectTerms(text: unknown, terms: string[]): number {
+    return terms.reduce((count, term) => count + (hasDirectTerm(text, term) ? 1 : 0), 0);
+}
+
+function countFuzzyWords(text: unknown, terms: string[]): number {
+    return terms.reduce((count, term) => count + (hasFuzzyWord(text, term) ? 1 : 0), 0);
 }
 
 function isVisibleOnSite(record: any): boolean {
@@ -202,6 +272,46 @@ function isProductQuestion(text: string): boolean {
     );
 }
 
+function hasExplicitProductIntent(text: string): boolean {
+    return hasAnyDirectTerm(text, [
+        "prodotto",
+        "prodotti",
+        "shampoo",
+        "balsamo",
+        "maschera",
+        "olio",
+        "spray",
+        "crema",
+        "mousse",
+        "styling a casa",
+        "cosa avete per",
+        "che avete per",
+        "mostrami i prodotti",
+        "prodotti del sito"
+    ]);
+}
+
+function hasExplicitServiceIntent(text: string): boolean {
+    return hasAnyDirectTerm(text, [
+        "servizio",
+        "servizi",
+        "taglio",
+        "barba",
+        "piega",
+        "colore",
+        "tinta",
+        "balayage",
+        "schiaritura",
+        "colpi di sole",
+        "trattamento",
+        "cheratina",
+        "ricostruzione",
+        "consulenza",
+        "prenotare",
+        "appuntamento"
+    ]);
+}
+
 function isProductFollowUp(text: string): boolean {
     const t = normalizeText(text);
 
@@ -260,6 +370,257 @@ function conversationIncludesProductIntent(messages: any[]): boolean {
     );
 }
 
+type ServiceAudience = "male" | "female" | "any";
+type ServiceNeed =
+    | "haircut"
+    | "cut-beard"
+    | "beard"
+    | "color"
+    | "lightening"
+    | "styling"
+    | "treatment"
+    | "consultation"
+    | "generic";
+
+type ServiceProfile = {
+    audience: ServiceAudience;
+    need: ServiceNeed;
+    wantsShort: boolean;
+    forChild: boolean;
+};
+
+const maleAudienceTerms = [
+    "uomo",
+    "uomini",
+    "maschio",
+    "maschi",
+    "maschile",
+    "maschili",
+    "ragazzo",
+    "ragazzi",
+    "bimbo",
+    "bambino",
+    "figlio",
+    "marito",
+    "papa",
+    "padre"
+];
+
+const femaleAudienceTerms = [
+    "donna",
+    "donne",
+    "femmina",
+    "femminile",
+    "femminili",
+    "ragazza",
+    "ragazze",
+    "bimba",
+    "bambina",
+    "figlia",
+    "moglie",
+    "mamma",
+    "madre"
+];
+
+const childTerms = [
+    "bambino",
+    "bambina",
+    "bambini",
+    "bambine",
+    "bimbo",
+    "bimba",
+    "baby",
+    "figlio",
+    "figlia",
+    "ragazzino",
+    "ragazzina"
+];
+
+function serviceSearchText(service: ServiceCard): string {
+    return normalizeText([
+        service.nome,
+        service.descrizione,
+        service.categoria,
+        service.sottocategoria,
+        service.tipoPrenotazione
+    ].join(" "));
+}
+
+function detectAudience(text: unknown): ServiceAudience {
+    const maleHits =
+        countDirectTerms(text, maleAudienceTerms) +
+        countFuzzyWords(text, ["maschile", "maschili", "maschio"]);
+    const femaleHits =
+        countDirectTerms(text, femaleAudienceTerms) +
+        countFuzzyWords(text, ["femminile", "femminili", "femmina"]);
+
+    if (maleHits > femaleHits) return "male";
+    if (femaleHits > maleHits) return "female";
+    return "any";
+}
+
+function detectServiceAudience(service: ServiceCard): ServiceAudience {
+    const haystack = serviceSearchText(service);
+
+    if (hasDirectTerm(haystack, "barba")) return "male";
+    if (hasAnyDirectTerm(haystack, maleAudienceTerms)) return "male";
+    if (hasAnyDirectTerm(haystack, femaleAudienceTerms)) return "female";
+
+    return "any";
+}
+
+function detectServiceNeed(text: unknown): ServiceNeed {
+    const wantsCut = hasAnyDirectTerm(text, ["taglio", "tagliare", "spuntare", "spuntata", "corto", "corti", "scalato", "sfumatura"]);
+    const wantsBeard = hasAnyDirectTerm(text, ["barba", "rasatura", "baffi"]);
+
+    if (wantsCut && wantsBeard) return "cut-beard";
+    if (wantsBeard) return "beard";
+
+    if (hasAnyDirectTerm(text, ["balayage", "schiaritura", "schiariture", "schiarire", "meches", "colpi di sole", "decolorazione", "decolorare"])) {
+        return "lightening";
+    }
+
+    if (hasAnyDirectTerm(text, ["colore", "colorazione", "tinta", "tonalizzare", "tonalizzazione", "ricrescita", "riflesso"])) {
+        return "color";
+    }
+
+    if (hasAnyDirectTerm(text, ["piega", "phon", "piastra", "styling", "acconciatura", "messa in piega"])) {
+        return "styling";
+    }
+
+    if (hasAnyDirectTerm(text, [
+        "trattamento",
+        "cheratina",
+        "ricostruzione",
+        "ristrutturante",
+        "anticrespo",
+        "anti crespo",
+        "nutrizione",
+        "nutriente",
+        "rovinati",
+        "sfibrati",
+        "danneggiati",
+        "secchi",
+        "ricci",
+        "mossi",
+        "crespi",
+        "cute",
+        "forfora",
+        "sebo",
+        "caduta"
+    ])) {
+        return "treatment";
+    }
+
+    if (hasAnyDirectTerm(text, ["consulenza", "diagnosi", "analisi capello"])) {
+        return "consultation";
+    }
+
+    if (wantsCut) return "haircut";
+
+    return "generic";
+}
+
+function buildServiceProfile(text: unknown): ServiceProfile {
+    return {
+        audience: detectAudience(text),
+        need: detectServiceNeed(text),
+        wantsShort: hasAnyDirectTerm(text, ["corto", "corti", "short", "sfumatura", "rasato", "rasati"]),
+        forChild: hasAnyDirectTerm(text, childTerms)
+    };
+}
+
+function isChildService(service: ServiceCard): boolean {
+    const haystack = serviceSearchText(service);
+    return hasAnyDirectTerm(haystack, childTerms) || hasDirectTerm(haystack, "area baby");
+}
+
+function detectServiceNeeds(service: ServiceCard): Set<ServiceNeed> {
+    const haystack = serviceSearchText(service);
+    const needs = new Set<ServiceNeed>();
+
+    if (hasAnyDirectTerm(haystack, ["taglio", "spuntata", "scalato", "sfumatura"])) {
+        needs.add("haircut");
+    }
+
+    if (hasAnyDirectTerm(haystack, ["barba", "rasatura", "baffi"])) {
+        needs.add("beard");
+    }
+
+    if (needs.has("haircut") && needs.has("beard")) {
+        needs.add("cut-beard");
+    }
+
+    if (hasAnyDirectTerm(haystack, ["balayage", "schiar", "meches", "colpi di sole", "decolor"])) {
+        needs.add("lightening");
+        needs.add("color");
+    }
+
+    if (hasAnyDirectTerm(haystack, ["colore", "colorazione", "tinta", "tonalizz", "ricrescita"])) {
+        needs.add("color");
+    }
+
+    if (hasAnyDirectTerm(haystack, ["piega", "phon", "piastra", "styling", "acconciatura"])) {
+        needs.add("styling");
+    }
+
+    if (hasAnyDirectTerm(haystack, [
+        "trattamento",
+        "cheratina",
+        "ricostruzione",
+        "ristruttur",
+        "anticrespo",
+        "anti crespo",
+        "nutr",
+        "cute",
+        "forfora"
+    ])) {
+        needs.add("treatment");
+    }
+
+    if (hasAnyDirectTerm(haystack, ["consulenza", "diagnosi", "analisi"])) {
+        needs.add("consultation");
+    }
+
+    if (needs.size === 0) {
+        needs.add("generic");
+    }
+
+    return needs;
+}
+
+function serviceNeedMatches(requestNeed: ServiceNeed, serviceNeeds: Set<ServiceNeed>): boolean {
+    if (requestNeed === "generic") return true;
+    if (requestNeed === "cut-beard") return serviceNeeds.has("cut-beard") || (serviceNeeds.has("haircut") && serviceNeeds.has("beard"));
+    if (requestNeed === "lightening") return serviceNeeds.has("lightening");
+    if (requestNeed === "color") return serviceNeeds.has("color") || serviceNeeds.has("lightening");
+    if (requestNeed === "haircut") return serviceNeeds.has("haircut");
+    return serviceNeeds.has(requestNeed);
+}
+
+function isAudienceMismatch(profileAudience: ServiceAudience, serviceAudience: ServiceAudience): boolean {
+    return profileAudience !== "any" && serviceAudience !== "any" && profileAudience !== serviceAudience;
+}
+
+function isServiceCandidateForProfile(profile: ServiceProfile, service: ServiceCard): boolean {
+    const serviceAudience = detectServiceAudience(service);
+    const serviceNeeds = detectServiceNeeds(service);
+
+    if (isChildService(service) && !profile.forChild) {
+        return false;
+    }
+
+    if (isAudienceMismatch(profile.audience, serviceAudience)) {
+        return false;
+    }
+
+    if (!serviceNeedMatches(profile.need, serviceNeeds)) {
+        return false;
+    }
+
+    return true;
+}
+
 function buildConversationProductText(messages: any[]): string {
     const lastUserMessages = messages
         .filter((message: any) => message?.role === "user")
@@ -300,6 +661,7 @@ function isSalonFollowUp(text: string): boolean {
 
 function needsMoreInfoForAdvice(text: string): boolean {
     const t = normalizeText(text);
+    const profile = buildServiceProfile(t);
 
     const askingAdvice =
         t.includes("consigli") ||
@@ -308,12 +670,14 @@ function needsMoreInfoForAdvice(text: string): boolean {
         t.includes("adatto") ||
         t.includes("adatta") ||
         t.includes("secondo te") ||
-        t.includes("più adatto") ||
+        t.includes("piu adatto") ||
         t.includes("che taglio");
 
     if (!askingAdvice) return false;
 
     const hasUsefulDetails =
+        profile.audience !== "any" ||
+        profile.wantsShort ||
         t.includes("uomo") ||
         t.includes("donna") ||
         t.includes("ricci") ||
@@ -357,7 +721,8 @@ function buildAdviceClarificationReply(lastUser: string): string {
 async function getAllServices(): Promise<ServiceCard[]> {
     const { data, error } = await db
         .from("servizi")
-        .select("*");
+        .select("idServizio,nome,descrizione,durata,prezzo,categoria,sottocategoria,tipoPrenotazione,visualizzazioneSito")
+        .order("nome", { ascending: true });
 
     if (error) {
         throw error;
@@ -371,6 +736,9 @@ async function getAllServices(): Promise<ServiceCard[]> {
             descrizione: safeString(service.descrizione),
             durata: Number(service.durata ?? 0),
             prezzo: Number(service.prezzo ?? 0),
+            categoria: safeString(service.categoria),
+            sottocategoria: safeString(service.sottocategoria),
+            tipoPrenotazione: safeString(service.tipoPrenotazione) as ServiceCard["tipoPrenotazione"],
         }));
 }
 
@@ -660,94 +1028,108 @@ function scoreServiceMatch(userText: string, service: ServiceCard): number {
     const text = normalizeText(userText);
     const nome = normalizeText(service.nome);
     const descrizione = normalizeText(service.descrizione);
+    const haystack = serviceSearchText(service);
+    const profile = buildServiceProfile(text);
+    const serviceAudience = detectServiceAudience(service);
+    const serviceNeeds = detectServiceNeeds(service);
 
     let score = 0;
 
     if (!text) return 0;
 
-    if (text.includes(nome)) score += 100;
+    if (nome && text.includes(nome)) score += 160;
 
     const keywords = serviceKeywords();
 
     for (const key of keywords) {
-        if (text.includes(key) && nome.includes(key)) score += 25;
-        if (text.includes(key) && descrizione.includes(key)) score += 12;
+        if (hasDirectTerm(text, key) && nome.includes(normalizeText(key))) score += 24;
+        if (hasDirectTerm(text, key) && descrizione.includes(normalizeText(key))) score += 10;
+        if (hasDirectTerm(text, key) && haystack.includes(normalizeText(key))) score += 6;
+    }
+
+    if (serviceNeedMatches(profile.need, serviceNeeds)) {
+        switch (profile.need) {
+            case "cut-beard":
+                score += 120;
+                break;
+            case "haircut":
+                score += 90;
+                break;
+            case "beard":
+                score += 95;
+                break;
+            case "lightening":
+                score += 90;
+                break;
+            case "color":
+                score += 80;
+                break;
+            case "styling":
+                score += 75;
+                break;
+            case "treatment":
+                score += 80;
+                break;
+            case "consultation":
+                score += 70;
+                break;
+            default:
+                score += 0;
+        }
+    } else if (profile.need !== "generic") {
+        score -= 120;
+    }
+
+    if (profile.audience !== "any") {
+        if (serviceAudience === profile.audience) {
+            score += 130;
+        } else if (serviceAudience === "any") {
+            score += 18;
+        } else {
+            score -= 320;
+        }
+    }
+
+    if (profile.wantsShort && serviceNeeds.has("haircut")) {
+        score += serviceAudience === "male" ? 36 : 18;
+    }
+
+    if (profile.forChild && isChildService(service)) {
+        score += 90;
+    }
+
+    if (profile.need === "haircut" && serviceNeeds.has("beard") && !hasDirectTerm(text, "barba")) {
+        score -= 45;
     }
 
     if (
-        text.includes("taglio") &&
-        text.includes("barba") &&
-        nome.includes("taglio") &&
-        nome.includes("barba")
+        hasDirectTerm(text, "capelli rovinati") &&
+        serviceNeeds.has("treatment")
     ) {
-        score += 80;
+        score += 70;
     }
 
     if (
-        text.includes("capelli rovinati") &&
-        (
-            nome.includes("trattamento") ||
-            nome.includes("ricostruzione") ||
-            nome.includes("ristrutturante") ||
-            descrizione.includes("nutriente") ||
-            descrizione.includes("rigenerante") ||
-            descrizione.includes("ristruttur")
-        )
-    ) {
-        score += 60;
-    }
-
-    if (
-        (text.includes("naturale") || text.includes("schiar")) &&
-        (nome.includes("balayage") || descrizione.includes("naturale") || descrizione.includes("schiar"))
-    ) {
-        score += 40;
-    }
-
-    if (
-        text.includes("piega") &&
-        (nome.includes("piega") || descrizione.includes("piega"))
-    ) {
-        score += 50;
-    }
-
-    if (
-        text.includes("colore") &&
-        (nome.includes("colore") || descrizione.includes("colorazione"))
-    ) {
-        score += 50;
-    }
-
-    if (
-        (text.includes("ricci") || text.includes("crespi") || text.includes("rovinati")) &&
-        (
-            nome.includes("ricostruzione") ||
-            nome.includes("anticrespo") ||
-            nome.includes("tratt") ||
-            descrizione.includes("ricci") ||
-            descrizione.includes("crespo") ||
-            descrizione.includes("nutr")
-        )
+        (hasDirectTerm(text, "naturale") || hasDirectTerm(text, "schiar")) &&
+        (serviceNeeds.has("lightening") || descrizione.includes("naturale"))
     ) {
         score += 45;
     }
 
-    if (
-        (text.includes("uomo") || text.includes("maschile") || text.includes("ragazzo") || text.includes("figlio")) &&
-        nome.includes("uomo")
-    ) {
-        score += 70;
+    if (hasDirectTerm(text, "ricci") && serviceNeeds.has("treatment")) {
+        score += 28;
     }
 
-    if (
-        (text.includes("donna") || text.includes("femminile") || text.includes("ragazza")) &&
-        nome.includes("donna")
-    ) {
-        score += 70;
+    if (hasDirectTerm(text, "crespi") && serviceNeeds.has("treatment")) {
+        score += 34;
     }
 
-    if (text.includes("estivo") && nome.includes("taglio")) {
+    if (hasDirectTerm(text, "estivo") && serviceNeeds.has("haircut")) {
         score += 25;
+    }
+
+    if (safeString(service.tipoPrenotazione) === "sito") {
+        score += 8;
     }
 
     return score;
@@ -758,89 +1140,34 @@ async function getSuggestedServices(lastUser: string): Promise<ServiceCard[]> {
 
     try {
         const allServices = await getAllServices();
+        const profile = buildServiceProfile(text);
 
         if (
-            text.includes("servizi") ||
-            text.includes("servizio") ||
-            text.includes("cosa fate") ||
-            text.includes("cosa offrite") ||
-            text.includes("offrite") ||
-            text.includes("quali servizi")
+            hasAnyDirectTerm(text, [
+                "servizi",
+                "servizio",
+                "cosa fate",
+                "cosa offrite",
+                "offrite",
+                "quali servizi"
+            ])
         ) {
             return allServices.slice(0, 6);
         }
 
-        if (text.includes("taglio") || text.includes("sfumatura")) {
-            return allServices
-                .filter((service) => {
-                    const nome = normalizeText(service.nome);
-                    const descrizione = normalizeText(service.descrizione);
-                    return (
-                        nome.includes("taglio") ||
-                        nome.includes("sfumatura") ||
-                        descrizione.includes("taglio") ||
-                        descrizione.includes("sfumatura")
-                    );
-                })
-                .slice(0, 4);
+        if (profile.need === "generic" && profile.audience === "any") {
+            return [];
         }
 
-        if (text.includes("barba")) {
-            return allServices
-                .filter((service) => {
-                    const nome = normalizeText(service.nome);
-                    const descrizione = normalizeText(service.descrizione);
-                    return nome.includes("barba") || descrizione.includes("barba");
-                })
-                .slice(0, 4);
-        }
+        const candidates = allServices
+            .filter((service) => isServiceCandidateForProfile(profile, service))
+            .map((service) => ({
+                service,
+                score: Math.max(scoreServiceMatch(text, service), 1)
+            }))
+            .sort((a, b) => b.score - a.score);
 
-        if (
-            text.includes("colore") ||
-            text.includes("tinta") ||
-            text.includes("balayage") ||
-            text.includes("schiar") ||
-            text.includes("colpi di sole")
-        ) {
-            return allServices
-                .filter((service) => {
-                    const nome = normalizeText(service.nome);
-                    const descrizione = normalizeText(service.descrizione);
-                    return (
-                        nome.includes("colore") ||
-                        nome.includes("tinta") ||
-                        nome.includes("balayage") ||
-                        descrizione.includes("schiar") ||
-                        descrizione.includes("colpi di sole")
-                    );
-                })
-                .slice(0, 4);
-        }
-
-        if (
-            text.includes("trattamento") ||
-            text.includes("cheratina") ||
-            text.includes("ricostruzione") ||
-            text.includes("anti crespo") ||
-            text.includes("anticrespo")
-        ) {
-            return allServices
-                .filter((service) => {
-                    const nome = normalizeText(service.nome);
-                    const descrizione = normalizeText(service.descrizione);
-                    return (
-                        nome.includes("tratt") ||
-                        nome.includes("cheratina") ||
-                        nome.includes("ricostruzione") ||
-                        descrizione.includes("tratt") ||
-                        descrizione.includes("cheratina") ||
-                        descrizione.includes("ricostruzione")
-                    );
-                })
-                .slice(0, 4);
-        }
-
-        return [];
+        return takeDiverseServices(candidates, 4);
     } catch (err) {
         return [];
     }
@@ -858,37 +1185,19 @@ async function getBestMatchingServices(
 
         const allServices = await getAllServices();
         const text = normalizeText(lastUser);
-        const filteredServices = allServices.filter(service => {
-            const nome = normalizeText(service.nome);
-            const descrizione = normalizeText(service.descrizione);
-
-            if (text.includes("uomo") || text.includes("maschile") || text.includes("ragazzo") || text.includes("figlio")) {
-                if (nome.includes("donna") || descrizione.includes("donna")) {
-                    return false;
-                }
-            }
-
-            if (text.includes("donna") || text.includes("femminile") || text.includes("ragazza")) {
-                if (nome.includes("uomo") || descrizione.includes("uomo") || nome.includes("barba")) {
-                    return false;
-                }
-            }
-
-            if (!(text.includes("barba")) && nome.includes("barba") && !text.includes("uomo")) {
-                return false;
-            }
-
-            return true;
-        });
-
-        const sourceServices = filteredServices.length > 0 ? filteredServices : allServices;
+        const profile = buildServiceProfile(text);
+        const filteredServices = allServices.filter(service => isServiceCandidateForProfile(profile, service));
+        const sourceServices =
+            filteredServices.length > 0 || profile.need !== "generic" || profile.audience !== "any"
+                ? filteredServices
+                : allServices;
 
         const scored = sourceServices
             .map(service => ({
                 service,
                 score: scoreServiceMatch(lastUser, service)
             }))
-            .filter(item => item.score > 0)
+            .filter(item => item.score > (profile.need === "generic" && profile.audience === "any" ? 0 : 20))
             .sort((a, b) => b.score - a.score);
 
         if (scored.length === 0) {
@@ -1033,7 +1342,7 @@ function buildProductsReply(lastUser: string, products: ProductCard[]): string {
         text.includes("me li mostri") ||
         text.includes("quelli che mi hai consigliato")
     ) {
-        return "Ti mostro i prodotti del sito più coerenti con la richiesta di prima.";
+        return "Ti mostro i prodotti del sito piu coerenti con la richiesta di prima.";
     }
 
     if (
@@ -1042,7 +1351,7 @@ function buildProductsReply(lastUser: string, products: ProductCard[]): string {
         text.includes("li avete sul sito") ||
         text.includes("li trovo sul sito")
     ) {
-        return "Sì, questi prodotti sono presenti sul sito e puoi aprirli direttamente dalle schede qui sotto.";
+        return "Si, questi prodotti sono presenti sul sito e puoi aprirli direttamente dalle schede qui sotto.";
     }
 
     if (text.includes("ricci")) {
@@ -1130,10 +1439,10 @@ function buildPriceReply(service: ServiceCard): string {
 
     if (Number.isFinite(prezzo) && prezzo > 0) {
         if (Number.isFinite(durata) && durata > 0) {
-            return `${nome} costa € ${prezzo.toFixed(2)} e ha una durata di circa ${durata} minuti.`;
+            return `${nome} costa EUR ${prezzo.toFixed(2)} e ha una durata di circa ${durata} minuti.`;
         }
 
-        return `${nome} costa € ${prezzo.toFixed(2)}.`;
+        return `${nome} costa EUR ${prezzo.toFixed(2)}.`;
     }
 
     return `Al momento non ho un prezzo disponibile per ${nome}.`;
@@ -1158,7 +1467,7 @@ function buildServicesReply(services: ServiceCard[]): string {
             }
 
             if (Number.isFinite(prezzo) && prezzo > 0) {
-                detail += ` (€ ${prezzo.toFixed(2)})`;
+                detail += ` (EUR ${prezzo.toFixed(2)})`;
             }
 
             if (Number.isFinite(durata) && durata > 0) {
@@ -1170,6 +1479,84 @@ function buildServicesReply(services: ServiceCard[]): string {
         .join("\n");
 
     return `Ecco alcuni servizi disponibili nel salone:\n${formatted}`;
+}
+
+function formatServiceMeta(service: ServiceCard): string {
+    const parts: string[] = [];
+    const durata = Number(service.durata);
+    const prezzo = Number(service.prezzo);
+
+    if (Number.isFinite(durata) && durata > 0) {
+        parts.push(`durata circa ${durata} min`);
+    }
+
+    if (Number.isFinite(prezzo) && prezzo > 0) {
+        parts.push(`prezzo EUR ${prezzo.toFixed(2)}`);
+    }
+
+    return parts.length ? ` La scheda indica ${parts.join(" e ")}.` : "";
+}
+
+function buildBookingHint(service: ServiceCard): string {
+    const bookingType = normalizeText(service.tipoPrenotazione);
+
+    if (bookingType === "telefono") {
+        return " Per questo servizio e meglio contattare direttamente il salone.";
+    }
+
+    if (bookingType === "consulenza") {
+        return " Per questo servizio conviene partire da una consulenza in salone.";
+    }
+
+    if (bookingType === "sito") {
+        return " Puoi aprire la scheda per vedere i dettagli e procedere dal sito.";
+    }
+
+    return "";
+}
+
+function buildAdviceForService(lastUser: string, service: ServiceCard): string {
+    const text = normalizeText(lastUser);
+    const profile = buildServiceProfile(text);
+    const serviceName = safeString(service.nome);
+
+    if (profile.need === "haircut" && profile.audience === "male") {
+        return `Ti consiglierei ${serviceName}: e' il servizio piu coerente per un taglio maschile${profile.wantsShort ? " corto" : ""}, ordinato e facile da gestire. In salone possono adattare sfumatura e lunghezze a viso e tipo di capello.`;
+    }
+
+    if (profile.need === "haircut" && profile.audience === "female") {
+        return `Ti consiglierei ${serviceName}: e' pensato per costruire il taglio in base a viso, stile e capello. In salone possono decidere lunghezze, scalature e gestione quotidiana con piu precisione.`;
+    }
+
+    if (profile.need === "cut-beard") {
+        return `Ti consiglierei ${serviceName}: e' la scelta piu completa quando vuoi sistemare taglio e barba nello stesso passaggio, mantenendo un risultato pulito e coordinato.`;
+    }
+
+    if (profile.need === "beard") {
+        return `Ti consiglierei ${serviceName}: e' il servizio piu coerente se vuoi definire barba, contorni e ordine generale del viso.`;
+    }
+
+    if (profile.need === "lightening") {
+        return `Ti consiglierei ${serviceName}: e' piu coerente se cerchi luminosita, schiariture o un effetto naturale ma curato. La resa va sempre adattata alla base e allo stato del capello.`;
+    }
+
+    if (profile.need === "color") {
+        return `Ti consiglierei ${serviceName}: e' collegato alla parte colore e permette di lavorare su tonalita, ricrescita o riflessi senza inventare servizi fuori catalogo.`;
+    }
+
+    if (profile.need === "styling") {
+        return `Ti consiglierei ${serviceName}: e' adatto quando vuoi un risultato ordinato, rifinito e pronto per la giornata o per un'occasione.`;
+    }
+
+    if (profile.need === "treatment") {
+        return `Ti consiglierei ${serviceName}: e' piu coerente se il capello ha bisogno di nutrimento, disciplina, ricostruzione o gestione del crespo. Prima di scegliere, una valutazione del capello aiuta molto.`;
+    }
+
+    if (text.includes("mantiene") || text.includes("mantenere") || text.includes("ritocco") || text.includes("tonal")) {
+        return `Per mantenere bene il risultato, ${serviceName} va considerato insieme alla frequenza dei ritocchi e ai prodotti da usare a casa. Il salone puo indicarti la cadenza piu adatta dopo aver visto il capello.`;
+    }
+
+    return `Ti consiglierei ${serviceName}: tra i servizi disponibili e quello piu vicino alla tua richiesta. La scelta finale va adattata a capello, viso e risultato desiderato.`;
 }
 
 function buildProfessionalReply(
@@ -1185,7 +1572,10 @@ function buildProfessionalReply(
     }
 
     if (services.length > 0) {
-        const serviceName = safeString(services[0].nome);
+        const primaryService = services[0];
+        const serviceName = safeString(primaryService.nome);
+        const meta = formatServiceMeta(primaryService);
+        const bookingHint = buildBookingHint(primaryService);
 
         if (mode === "specific-service") {
             if (
@@ -1195,52 +1585,14 @@ function buildProfessionalReply(
                 text.includes("avete anche") ||
                 text.includes("fate anche")
             ) {
-                return `Si, certo: ${serviceName} e disponibile.`;
+                return `Si, certo: ${serviceName} e disponibile nel salone.${meta}${bookingHint}`;
             }
 
-            return `Certo: ${serviceName} e disponibile nel salone.`;
+            return `Certo: ${serviceName} e disponibile nel salone.${meta}${bookingHint}`;
         }
 
         if (mode === "advice") {
-            if (
-                text.includes("taglio") &&
-                (text.includes("uomo") || text.includes("maschile") || text.includes("ragazzo") || text.includes("figlio"))
-            ) {
-                const base = "Per un ragazzo, in generale conviene orientarsi su un taglio maschile pulito, fresco e facile da gestire: qualcosa che resti ordinato anche con la crescita e che sia pratico nel quotidiano, soprattutto nei mesi piu caldi.";
-                return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
-            }
-
-            if (text.includes("mantiene") || text.includes("mantenere") || text.includes("ritocco") || text.includes("tonal")) {
-                const base = "Per mantenere bene un colore o un balayage, in generale conviene programmare i ritocchi con regolarita e usare a casa prodotti che aiutino a preservare luminosita, morbidezza e uniformita del risultato tra un appuntamento e l'altro.";
-                return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
-            }
-
-            if (text.includes("taglio")) {
-                const base = "In generale, quando si sceglie un taglio conviene guardare tre aspetti: forma del viso, tipo di capello e tempo che si vuole dedicare ogni giorno alla gestione. Questo servizio e una base molto valida da cui partire.";
-                return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
-            }
-
-            if (
-                text.includes("colore") ||
-                text.includes("balayage") ||
-                text.includes("tinta") ||
-                text.includes("schiar")
-            ) {
-                const base = "In generale, per i servizi colore conviene scegliere in base all'effetto che vuoi ottenere, alla manutenzione che sei disposto a fare e allo stato attuale del capello. Questo servizio puo essere una scelta molto valida se vuoi un risultato curato e armonioso.";
-                return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
-            }
-
-            if (
-                text.includes("trattamento") ||
-                text.includes("rovinati") ||
-                text.includes("ricostruzione") ||
-                text.includes("anticrespo")
-            ) {
-                const base = "In generale, quando il capello e stressato o sensibilizzato conviene scegliere servizi che puntino a nutrimento, disciplina o ricostruzione in base al problema principale. Questo e uno dei servizi che puo avere senso considerare.";
-                return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
-            }
-
-            const base = "Questo servizio puo essere una buona base da considerare, ma la scelta migliore dipende sempre da com'e il capello e dal risultato che vuoi ottenere davvero.";
+            const base = `${buildAdviceForService(lastUser, primaryService)}${meta}${bookingHint}`;
             return addConsultationNudge ? `${base} ${consultationNudge()}` : base;
         }
     }
@@ -1254,15 +1606,6 @@ function buildProfessionalReply(
 
 router.post("/", async (req, res) => {
     try {
-
-        if (!process.env.HF_TOKEN) {
-            return res.status(500).json({
-                reply: "HF_TOKEN mancante nel file .env",
-                services: [],
-                products: []
-            });
-        }
-
         const model = process.env.HF_MODEL || "katanemo/Arch-Router-1.5B:hf-inference";
         const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
 
@@ -1270,7 +1613,8 @@ router.post("/", async (req, res) => {
         const allServices = await getAllServices();
 
         const lastUser =
-            [...messages].reverse().find((m: any) => m?.role === "user")?.content?.toLowerCase() || "";
+            safeString([...messages].reverse().find((m: any) => m?.role === "user")?.content);
+        const normalizedLastUser = normalizeText(lastUser);
         const productConversationText = buildConversationProductText(messages);
         const resolvedProductQueryText = resolveProductQueryText(lastUser, productConversationText);
         const hasProductContext = conversationIncludesProductIntent(messages);
@@ -1288,13 +1632,13 @@ router.post("/", async (req, res) => {
             "prezzo", "costo", "sito"
         ];
 
-        const containsHairKeyword = hairKeywords.some(k => lastUser.includes(k));
+        const containsHairKeyword = hasAnyDirectTerm(normalizedLastUser, hairKeywords);
 
         const conversationContext = messages
-            .map((m: any) => m.content?.toLowerCase() || "")
+            .map((m: any) => normalizeText(m.content))
             .join(" ");
 
-        const contextIsHair = hairKeywords.some(k => conversationContext.includes(k));
+        const contextIsHair = hasAnyDirectTerm(conversationContext, hairKeywords);
         const isHairRelated =
             containsHairKeyword ||
             isPriceQuestion(lastUser) ||
@@ -1310,16 +1654,16 @@ router.post("/", async (req, res) => {
             "informazioni",
             "cosa puoi fare",
             "cosa puoi dirmi"
-        ].some(k => lastUser.includes(k));
+        ].some(k => hasDirectTerm(normalizedLastUser, k));
 
-        if (lastUser && !isHairRelated && !genericOk) {
+        if (normalizedLastUser && !isHairRelated && !genericOk) {
             return res.json({
                 reply:
                     "Posso aiutarti solo con informazioni e consigli sui servizi del salone, sui capelli, sulla barba e sui prodotti.\n" +
                     "Esempi:\n" +
-                    "• Taglio e styling\n" +
-                    "• Colore / Balayage\n" +
-                    "• Servizi per capelli e barba\n\n" +
+                    "- Taglio e styling\n" +
+                    "- Colore / Balayage\n" +
+                    "- Servizi per capelli e barba\n\n" +
                     "Dimmi cosa ti interessa!",
                 services: [],
                 products: []
@@ -1330,7 +1674,7 @@ router.post("/", async (req, res) => {
             const products = await getBestMatchingProducts(resolvedProductQueryText);
 
             return res.json({
-                reply: "Sì, questi prodotti sono presenti sul sito e puoi aprirli direttamente dalle schede qui sotto.",
+                reply: "Si, questi prodotti sono presenti sul sito e puoi aprirli direttamente dalle schede qui sotto.",
                 services: [],
                 products
             });
@@ -1338,16 +1682,21 @@ router.post("/", async (req, res) => {
 
         if (isSiteCatalogQuestion(lastUser)) {
             return res.json({
-                reply: "Sì: qui sul sito puoi vedere direttamente prodotti e servizi presenti nel catalogo. Se vuoi, posso mostrarti subito prodotti adatti a un'esigenza specifica oppure i servizi disponibili.",
+                reply: "Si: qui sul sito puoi vedere direttamente prodotti e servizi presenti nel catalogo. Posso mostrarti prodotti adatti a un'esigenza specifica oppure i servizi disponibili.",
                 services: [],
                 products: []
             });
         }
 
+        const explicitProductIntent = hasExplicitProductIntent(lastUser);
+        const explicitServiceIntent = hasExplicitServiceIntent(lastUser);
+        const productFollowUpFromContext =
+            hasProductContext && isProductFollowUp(lastUser) && directIntent === "generic";
+
         if (
-            directProductConcern ||
-            isProductQuestion(lastUser) ||
-            (hasProductContext && isProductFollowUp(lastUser) && directIntent === "generic")
+            explicitProductIntent ||
+            productFollowUpFromContext ||
+            ((directProductConcern || isProductQuestion(lastUser)) && !explicitServiceIntent)
         ) {
             const products = await getBestMatchingProducts(resolvedProductQueryText);
 
@@ -1378,6 +1727,14 @@ router.post("/", async (req, res) => {
 
         const intent = detectIntent(lastUser);
         const requestType = detectRequestType(lastUser);
+
+        if (requestType === "generic" && intent === "generic" && genericOk) {
+            return res.json({
+                reply: buildProfessionalReply(lastUser, [], "generic"),
+                services: [],
+                products: []
+            });
+        }
 
         if (requestType === "advice" && needsMoreInfoForAdvice(lastUser)) {
             return res.json({
@@ -1414,6 +1771,14 @@ router.post("/", async (req, res) => {
             });
         }
 
+        if (!process.env.HF_TOKEN) {
+            return res.json({
+                reply: buildProfessionalReply(lastUser, services, "generic"),
+                services: services.slice(0, 3),
+                products: []
+            });
+        }
+
         const servicesContext =
             services.length > 0
                 ? `
@@ -1421,7 +1786,7 @@ SERVIZI REALI DISPONIBILI NEL SALONE:
 ${services
                     .map(
                         (s) =>
-                            `- ${s.nome}${s.prezzo != null ? ` (€ ${s.prezzo})` : ""}${s.durata ? `, durata: ${s.durata} minuti` : ""}${s.descrizione ? ` - ${s.descrizione}` : ""}`
+                            `- ${s.nome}${s.prezzo != null ? ` (EUR ${s.prezzo})` : ""}${s.durata ? `, durata: ${s.durata} minuti` : ""}${s.categoria ? `, categoria: ${s.categoria}` : ""}${s.sottocategoria ? `, sottocategoria: ${s.sottocategoria}` : ""}${s.tipoPrenotazione ? `, prenotazione: ${s.tipoPrenotazione}` : ""}${s.descrizione ? ` - ${s.descrizione}` : ""}`
                     )
                     .join("\n")}
 `
