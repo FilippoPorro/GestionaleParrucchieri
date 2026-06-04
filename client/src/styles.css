@@ -335,7 +335,10 @@ input[type="number"] {
   body:has(.success-page)::before {
     content: "";
     position: fixed;
-    inset: -1px;
+    top: -1px;
+    right: -1px;
+    bottom: calc(-96px - env(safe-area-inset-bottom));
+    left: -1px;
     z-index: 0;
     pointer-events: none;
     background-repeat: no-repeat;
@@ -509,7 +512,24 @@ input[type="number"] {
   .cart-section,
   .payment-section {
     padding-top: 104px !important;
-    padding-bottom: 42px !important;
+    padding-bottom: 132px !important;
+  }
+
+  .appointments-section {
+    padding-bottom: 132px !important;
+  }
+
+  .products-grid,
+  .services-grid {
+    padding-bottom: 120px !important;
+  }
+
+  .product-showcase,
+  .service-showcase,
+  .booking-page,
+  .profile-page,
+  .success-page {
+    padding-bottom: 132px !important;
   }
 
   .products-hero,

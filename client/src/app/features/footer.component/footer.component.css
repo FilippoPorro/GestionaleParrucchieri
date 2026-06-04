@@ -590,6 +590,22 @@
 }
 
 @media (max-width: 768px) {
+  .home-footer,
+  .footer-columns,
+  .footer-columns > .opening-hours {
+    min-height: auto !important;
+  }
+
+  .footer-columns > .opening-hours {
+    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.58) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.18) 100%),
+      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+  }
+}
+
+@media (max-width: 768px) {
   .home-footer {
     width: 100vw !important;
     max-width: 100vw !important;
@@ -1225,5 +1241,110 @@
 @media (max-width: 768px) {
   .footer-columns > div + div {
     margin-top: -1px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-footer {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.6) 100%),
+      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+  }
+
+  .footer-columns {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    background: transparent !important;
+  }
+
+  .footer-columns > .opening-hours {
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.6) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.2) 100%),
+      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+  }
+
+  .footer-columns > .opening-hours::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    display: block !important;
+    background: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+  }
+
+  .footer-columns > .opening-hours::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    display: block !important;
+    pointer-events: none !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.6) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.2) 100%) !important;
+  }
+
+  .footer-columns > .opening-hours > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-columns > .opening-hours .opening-hours-actions,
+  .footer-columns > .opening-hours .footer-primary-action {
+    margin-bottom: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-footer,
+  .footer-columns {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .footer-columns > .opening-hours {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: clamp(72px, 18svh, 122px) !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.16) 54%, rgba(0,0,0,0.34) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.03) 58%, rgba(0,0,0,0.16) 100%),
+      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover no-repeat !important;
+  }
+
+  .footer-columns > .opening-hours::before {
+    background: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover no-repeat !important;
+  }
+
+  .footer-columns > .opening-hours::after {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.16) 54%, rgba(0,0,0,0.34) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.03) 58%, rgba(0,0,0,0.16) 100%) !important;
+  }
+
+  .footer-columns > .opening-hours .opening-hours-actions,
+  .footer-columns > .opening-hours .footer-primary-action {
+    margin-bottom: 0 !important;
+  }
+
+  .footer-columns > .opening-hours .footer-primary-action {
+    min-height: 48px !important;
+    padding: 0 18px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    text-align: center !important;
   }
 }
