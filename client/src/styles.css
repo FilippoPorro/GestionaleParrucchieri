@@ -319,10 +319,27 @@ input[type="number"] {
   body:has(.appointments-page),
   body:has(.booking-page),
   body:has(.profile-page),
-  body:has(.success-page) {
+  body:has(.success-page),
+  body:has(.management-layout) {
+    --m1: #17120b;
+    --m2: #2b2216;
+    --m3: #080604;
+    --g: rgba(230,188,112,.2);
     position: relative;
     background-color: #050403 !important;
   }
+
+  body:has(.products-page) { --m1: #2b2113; --m2: #473722; --m3: #17110a; --g: rgba(235,196,118,.34); }
+  body:has(.services-page) { --m1: #1b1f17; --m2: #303628; --m3: #0f100b; --g: rgba(214,188,116,.25); }
+  body:has(.product-showcase) { --m1: #241912; --m2: #37271c; --m3: #100b08; --g: rgba(232,184,106,.26); }
+  body:has(.service-showcase) { --m1: #171d1a; --m2: #26352d; --m3: #0b0f0d; --g: rgba(212,176,106,.22); }
+  body:has(.cart-page) { --m1: #211912; --m2: #36271b; --m3: #0f0b08; --g: rgba(219,164,96,.24); }
+  body:has(.payment-page) { --m1: #151b1d; --m2: #25323a; --m3: #0a0e10; --g: rgba(192,165,108,.22); }
+  body:has(.appointments-page) { --m1: #1b1a12; --m2: #31301f; --m3: #0e0d08; --g: rgba(222,190,112,.24); }
+  body:has(.booking-page) { --m1: #1f1811; --m2: #332719; --m3: #0f0b07; --g: rgba(235,190,112,.25); }
+  body:has(.profile-page) { --m1: #1b1716; --m2: #312722; --m3: #0d0a09; --g: rgba(216,177,112,.22); }
+  body:has(.success-page) { --m1: #111b15; --m2: #203426; --m3: #080f0b; --g: rgba(126,220,159,.2); }
+  body:has(.management-layout) { --m1: #201a11; --m2: #382d1c; --m3: #0c0906; --g: rgba(242,209,139,.26); }
 
   body:has(.products-page)::before,
   body:has(.services-page)::before,
@@ -333,7 +350,8 @@ input[type="number"] {
   body:has(.appointments-page)::before,
   body:has(.booking-page)::before,
   body:has(.profile-page)::before,
-  body:has(.success-page)::before {
+  body:has(.success-page)::before,
+  body:has(.management-layout)::before {
     content: "";
     position: fixed;
     top: -1px;
@@ -342,47 +360,11 @@ input[type="number"] {
     left: -1px;
     z-index: 0;
     pointer-events: none;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center center;
+    background:
+      radial-gradient(circle at 16% 0, var(--g), transparent 34%),
+      radial-gradient(circle at 88% 82%, rgba(255,255,255,.06), transparent 32%),
+      linear-gradient(155deg, var(--m1), var(--m2) 48%, var(--m3));
     transform: translateZ(0);
-  }
-
-  body:has(.products-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773664284/daniel-zamboni--vh8EALTGII-unsplash_xr0xqu.jpg");
-  }
-
-  body:has(.services-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776087249/SnapInsta.to_628970968_18423105787141459_241617188856953247_n_u7jdbd.webp");
-  }
-
-  body:has(.product-showcase)::before {
-    background-image: url("https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=1600");
-  }
-
-  body:has(.service-showcase)::before {
-    background-image: url("https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg");
-  }
-
-  body:has(.cart-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773846063/andrea-donato-MNu0n-3BIKs-unsplash_ysyxfh.jpg");
-  }
-
-  body:has(.payment-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1774105039/agustin-fernandez-Znyjl9pbaUs-unsplash_pbmnuh.jpg");
-  }
-
-  body:has(.appointments-page)::before,
-  body:has(.booking-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1775802464/adam-winger-VjRpkGtS55w-unsplash_btutfm.jpg");
-  }
-
-  body:has(.profile-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1773655635/imgSaloneParrucchieri_cqmzs2.jpg");
-  }
-
-  body:has(.success-page)::before {
-    background-image: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776330293/SnapInsta.to_617214337_18076786559340505_1950730344485782016_n_c75ask.jpg");
   }
 
   body:has(.products-page) app-root,
@@ -394,7 +376,8 @@ input[type="number"] {
   body:has(.appointments-page) app-root,
   body:has(.booking-page) app-root,
   body:has(.profile-page) app-root,
-  body:has(.success-page) app-root {
+  body:has(.success-page) app-root,
+  body:has(.management-layout) app-root {
     position: relative;
     z-index: 1;
     background: transparent !important;
@@ -410,8 +393,10 @@ input[type="number"] {
   .booking-page,
   .profile-page,
   .success-page,
+  .management-layout,
+  .management-layout__content,
   app-info-utente {
-    background-color: transparent !important;
+    background: transparent !important;
   }
 
   .products-page::after,
@@ -425,24 +410,28 @@ input[type="number"] {
     display: none !important;
   }
 
+  .booking-page.is-management-booking,
+  .booking-page.is-management-booking::before {
+    background: transparent !important;
+  }
+
   .product-showcase::before {
     position: absolute !important;
     background:
       linear-gradient(to bottom,
-        rgba(0, 0, 0, 0.72) 0%,
-        rgba(0, 0, 0, 0.52) 35%,
-        rgba(0, 0, 0, 0.82) 100%),
-      radial-gradient(circle at 18% 22%, rgba(212, 176, 106, 0.14), transparent 32%),
-      radial-gradient(circle at 82% 74%, rgba(212, 176, 106, 0.10), transparent 30%) !important;
+        rgba(0, 0, 0, 0.24) 0%,
+        rgba(0, 0, 0, 0.08) 42%,
+        rgba(0, 0, 0, 0.28) 100%),
+      radial-gradient(circle at 18% 22%, rgba(230, 188, 112, 0.14), transparent 32%) !important;
   }
 
   .service-showcase::before {
     position: absolute !important;
     background: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0.80) 0%,
-      rgba(0, 0, 0, 0.58) 35%,
-      rgba(0, 0, 0, 0.86) 100%
+      rgba(0, 0, 0, 0.28) 0%,
+      rgba(0, 0, 0, 0.12) 42%,
+      rgba(0, 0, 0, 0.34) 100%
     ) !important;
   }
 
@@ -722,9 +711,14 @@ input[type="number"] {
     border-radius: 14px !important;
   }
 
+  .product-image-card {
+    height: min(52vh, 420px) !important;
+  }
+
   .product-image-card img {
-    max-height: 58vh !important;
-    object-fit: contain !important;
+    width: auto !important;
+    max-width: 100% !important;
+    max-height: calc(100% - 28px) !important;
   }
 
   .product-meta,

@@ -1,7 +1,11 @@
 
 .home-footer{
+  position: relative;
+  overflow: hidden;
   border-top: none;
-  background: transparent;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.18), rgba(15,13,11,.50) 48%, rgba(7,6,4,.74)),
+    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773416009/imgSaloneParrucchieri_fo1m2q.jpg") center 42% / 138% auto no-repeat #0f0d0b;
   backdrop-filter: none;
   padding: 18px 0;
 }
@@ -600,8 +604,7 @@
     padding-bottom: max(28px, var(--b)) !important;
     background:
       linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.58) 100%),
-      linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.18) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+      linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.18) 100%) !important;
   }
 }
 
@@ -1089,7 +1092,7 @@
     background:
       linear-gradient(180deg, rgba(0,0,0,0.08) 18%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0.93) 100%),
       linear-gradient(90deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.05) 58%, rgba(0,0,0,0.34) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776086886/SnapInsta.to_650037472_18098133971480943_8433970668867022342_n_sjramm.webp") center 35% / cover !important;
+      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776086886/SnapInsta.to_650037472_18098133971480943_8433970668867022342_n_sjramm.webp") center 35% / cover no-repeat !important;
   }
 
   .opening-hours::after {
@@ -1114,10 +1117,7 @@
   }
 
   .footer-columns > .opening-hours {
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.04) 18%, rgba(0,0,0,0.28) 58%, rgba(0,0,0,0.72) 100%),
-      linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.03) 58%, rgba(0,0,0,0.22) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 35% / cover !important;
+    background: rgba(15,13,11,.34) !important;
   }
 }
 
@@ -1133,9 +1133,7 @@
   }
 
   .home-footer {
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.46)),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover !important;
+    background: #0f0d0b !important;
   }
 
   .footer-columns > .opening-hours {
@@ -1144,10 +1142,7 @@
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
     min-height: 100svh !important;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.22) 42%, rgba(0,0,0,0.54) 100%),
-      linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.18) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover !important;
+    background: rgba(15,13,11,.34) !important;
   }
 
   .footer-columns > .opening-hours::before {
@@ -1156,7 +1151,7 @@
     inset: 0;
     z-index: 0;
     display: block;
-    background: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover;
+    background: none;
   }
 
   .footer-columns > .opening-hours::after {
@@ -1249,9 +1244,7 @@
     min-height: 0 !important;
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.6) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+    background: #0f0d0b !important;
   }
 
   .footer-columns {
@@ -1268,10 +1261,7 @@
     height: auto !important;
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.22) 44%, rgba(0,0,0,0.6) 100%),
-      linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.04) 58%, rgba(0,0,0,0.2) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+    background: #0f0d0b !important;
   }
 
   .footer-columns > .opening-hours::before {
@@ -1280,7 +1270,7 @@
     inset: 0 !important;
     z-index: 0 !important;
     display: block !important;
-    background: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center bottom / cover no-repeat !important;
+    background: none !important;
   }
 
   .footer-columns > .opening-hours::after {
@@ -1317,14 +1307,11 @@
     min-height: 0 !important;
     margin-bottom: 0 !important;
     padding-bottom: clamp(72px, 18svh, 122px) !important;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.16) 54%, rgba(0,0,0,0.34) 100%),
-      linear-gradient(90deg, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.03) 58%, rgba(0,0,0,0.16) 100%),
-      url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover no-repeat !important;
+    background: #0f0d0b !important;
   }
 
   .footer-columns > .opening-hours::before {
-    background: url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 44% / cover no-repeat !important;
+    background: none !important;
   }
 
   .footer-columns > .opening-hours::after {
@@ -1358,6 +1345,48 @@
     padding: 0 !important;
   }
 
+  .home-footer {
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate;
+    background:
+      linear-gradient(180deg, #17120b 0%, #0f0d0b 34%, #070604 100%) !important;
+  }
+
+  .home-footer::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    background: none !important;
+    opacity: .9;
+  }
+
+  .home-footer::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(15,13,11,.30) 46%, rgba(7,6,4,.62) 100%),
+      radial-gradient(circle at 18% 4%, rgba(212,176,106,.12), transparent 30%) !important;
+  }
+
+  .footer-columns {
+    position: relative !important;
+    z-index: 2 !important;
+    background: transparent !important;
+  }
+
+  .footer-columns > div {
+    background: rgba(15,13,11,.34) !important;
+  }
+
+  .footer-columns > div:not(.footer-contacts)::after {
+    display: none !important;
+  }
+
   .footer-columns > .opening-hours {
     min-height: 100vh !important;
     min-height: 100svh !important;
@@ -1366,6 +1395,21 @@
     padding-bottom: max(28px, var(--b)) !important;
     display: flex !important;
     flex-direction: column !important;
+    background:url("https://res.cloudinary.com/duimlq34k/image/upload/v1776080164/foto_prodotto_home_wvnnkf.jpg") center 35%/cover no-repeat #0f0d0b!important;
+  }
+
+  .footer-columns > .opening-hours::before {
+    display: none !important;
+    background: none !important;
+  }
+
+  .footer-columns > .opening-hours::after {
+    display: none !important;
+    background: none !important;
+  }
+
+  .footer-columns > .opening-hours .hours-panel {
+    background: rgba(0,0,0,.36) !important;
   }
 
   .footer-columns > .opening-hours .opening-hours-actions {
