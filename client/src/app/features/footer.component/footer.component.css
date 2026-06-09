@@ -3,9 +3,7 @@
   position: relative;
   overflow: hidden;
   border-top: none;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.18), rgba(15,13,11,.50) 48%, rgba(7,6,4,.74)),
-    url("https://res.cloudinary.com/duimlq34k/image/upload/v1773416009/imgSaloneParrucchieri_fo1m2q.jpg") center 42% / 138% auto no-repeat #0f0d0b;
+  background: transparent;
   backdrop-filter: none;
   padding: 18px 0;
 }
